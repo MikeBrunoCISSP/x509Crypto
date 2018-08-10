@@ -47,10 +47,20 @@ namespace x509Crypto
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="certThumbprint">The thumbprint of the encryption certificate.</param>
+        /// <param name="storeLocation">The System.Security.X509Certificates.StoreLocation where the encryption certificate resides (either CurrentUser or LocalMachine)</param>
+        public x509CryptoAgent(string certThumbprint, StoreLocation storeLocation)
+        {
+            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), storeLocation);
+        }
+
+        /// <summary>
+        /// x509CryptoAgent Constructor
+        /// </summary>
+        /// <param name="certThumbprint">The thumbprint of the encryption certificate.</param>
         /// <param name="sStoreLocation">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
         public x509CryptoAgent(string certThumbprint, string sStoreLocation)
         {
-            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), x509Utils.getStoreLocation(sStoreLocation));
+            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), x509Utils.GetStoreLocation(sStoreLocation));
         }
 
         /// <summary>
@@ -100,7 +110,7 @@ namespace x509Crypto
                 reader.Close();
             }
 
-            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), x509Utils.getStoreLocation(sStoreLocation));
+            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), x509Utils.GetStoreLocation(sStoreLocation));
         }
 
         /// <summary>
@@ -119,7 +129,7 @@ namespace x509Crypto
         private void GetRSAKeys(string certThumbprint, StoreLocation storeLocation)
         {
             certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
-            x509CryptoLog.massive(string.Format("Sanitized thumbprint: {0}", certThumbprint));
+            x509CryptoLog.Massive(string.Format("Sanitized thumbprint: {0}", certThumbprint));
             X509Certificate2Collection colletion = new X509Certificate2Collection();
             X509Store keyStore = new X509Store(storeLocation);
             keyStore.Open(OpenFlags.ReadOnly);
@@ -140,7 +150,7 @@ namespace x509Crypto
                 publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                 privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
             }
-            x509CryptoLog.info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", certThumbprint));
+            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", certThumbprint));
             valid = true;
         }
 
