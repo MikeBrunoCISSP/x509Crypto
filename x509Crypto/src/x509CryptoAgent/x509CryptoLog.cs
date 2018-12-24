@@ -13,6 +13,11 @@ namespace x509Crypto
     /// </summary>
     public static class x509CryptoLog
     {
+        const string EVENT_LOG = @"Application";
+        const int EVENT_ID = 509;
+        const string PREFERRED_EVENT_LOG_SOURCE = @"x509Crypto";
+        const string FALLBACK_EVENT_LOG_SOURCE = @".NET Runtime";
+
         const string sLEVEL_CRITICAL = @"CRITICAL";
         const string sLEVEL_ERROR    = @"ERROR";
         const string sLEVEL_WARNING  = @"WARNING";
@@ -20,9 +25,14 @@ namespace x509Crypto
         const string sLEVEL_VERBOSE  = @"VERBOSE";
         const string sLEVEL_MASSIVE  = @"MASSIVE";
 
+        const string DEFAULT_MESSAGE_TYPE = @"General";
+
+
         private static string INDENT = @"                                ";
         private static int maxTypeLength = 20;
-        const string defaultMessageType = @"General";
+
+        private static string eventSource = PREFERRED_EVENT_LOG_SOURCE;
+        private static bool eventSourceEstablished = false;
 
         private static Level level = Level.INFO;
         private static Level messageLevel = Level.INFO;
@@ -169,9 +179,28 @@ namespace x509Crypto
             return string.Format("[{0}]", DateTime.Now.ToString("MM-dd-yy hh:mm:ss.fff"));
         }
 
-        private static void Write(string message)
+        private static void AppendLog(string message)
         {
             contents = @"\r\n" + message;
+        }
+
+        private static void Write(Level level, string message, bool writeToEventLog)
+        {
+            AppendLog(message);
+
+            if (writeToEventLog)
+            {
+                EventLogEntryType entryType = EventLogEntryType.Information;
+                if (level <= Level.ERROR)
+                    entryType = EventLogEntryType.Error;
+                else
+                {
+                    if (level == Level.WARNING)
+                        entryType = EventLogEntryType.Warning;
+                }
+
+                WriteToEventLog(message, entryType);
+            }
         }
 
         private static string GetCallerInfo(StackTrace trace)
@@ -185,15 +214,15 @@ namespace x509Crypto
 
         #region Internal Methods
 
-        internal static void Critical(string text, string messageType = defaultMessageType)
+        internal static void Critical(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
         {
             messageLevel = Level.CRITICAL;
             string message = TimeStamp() + LevelLabel(Level.CRITICAL) + TypeLabel(messageType) + text;
-            Write(message);
+            Write(Level.CRITICAL, message, writeToEventLog);
 
         }
 
-        internal static void Error(string text, string messageType = defaultMessageType)
+        internal static void Error(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
         {
             messageLevel = Level.ERROR;
             string message;
@@ -201,11 +230,11 @@ namespace x509Crypto
             if (level >= messageLevel)
             {
                 message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(message);
+                Write(Level.ERROR, message, writeToEventLog);
             }
         }
 
-        internal static void Warning(string text, string messageType = defaultMessageType)
+        internal static void Warning(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
         {
             messageLevel = Level.WARNING;
             string message;
@@ -213,11 +242,11 @@ namespace x509Crypto
             if (level >= messageLevel)
             {
                 message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(message);
+                Write(Level.WARNING, message, writeToEventLog);
             }
         }
 
-        internal static void INFO(string text, string messageType = defaultMessageType)
+        internal static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
         {
             messageLevel = Level.INFO;
             string message;
@@ -225,11 +254,11 @@ namespace x509Crypto
             if (level >= messageLevel)
             {
                 message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(message);
+                Write(Level.INFO, message, writeToEventLog);
             }
         }
 
-        internal static void Verbose(string text, string messageType = defaultMessageType)
+        internal static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
         {
             messageLevel = Level.VERBOSE;
             string message;
@@ -237,12 +266,12 @@ namespace x509Crypto
             if (level >= messageLevel)
             {
                 message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(message);
+                Write(Level.VERBOSE, message, writeToEventLog);
             }
         }
 
 
-        internal static void Massive(string text, string messageType = defaultMessageType)
+        internal static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
         {
             messageLevel = Level.MASSIVE;
             string message;
@@ -250,7 +279,7 @@ namespace x509Crypto
             if (level >= messageLevel)
             {
                 message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(message);
+                Write(Level.MASSIVE, message, writeToEventLog);
             }
         }
 
@@ -261,28 +290,76 @@ namespace x509Crypto
             if (level >= messageLevel)
             {
                 string message = (indent ? INDENT.PadRight(maxTypeLength + 2) + text : text);
-                Write(message);
+                AppendLog(message);
             }
         }
 
-        internal static void Exception(Exception ex, Level lvl = Level.ERROR, string messageType = defaultMessageType, string text = @"An exception occurred")
+        internal static void Exception(Exception ex, Level lvl = Level.ERROR, string messageType = DEFAULT_MESSAGE_TYPE, string text = @"An exception occurred")
         {
             messageLevel = lvl;
 
             if (level >= messageLevel)
             {
-                Write(TimeStamp() + LevelLabel(lvl) + TypeLabel(messageType) + text);
+                AppendLog(TimeStamp() + LevelLabel(lvl) + TypeLabel(messageType) + text);
                 string[] lines = ex.ToString().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string line in lines)
                     Echo(line, lvl);
             }
         }
 
-        internal static void linefeed(Level lvl = Level.INFO)
+        internal static void Linefeed(Level lvl = Level.INFO)
         {
             messageLevel = lvl;
             if (level >= messageLevel)
-                Write(string.Empty);
+                AppendLog(string.Empty);
+        }
+
+        internal static void LogCommandResults(string command, string stdOut, string stdErr)
+        {
+            string fullMessage;
+
+            if (string.IsNullOrWhiteSpace(stdOut))
+                stdOut = @"NULL";
+            if (string.IsNullOrWhiteSpace(stdErr))
+                stdErr = @"NULL";
+
+            fullMessage = string.Format("Command: {0}\r\n\r\nStandardOutput:\r\n{1}\r\n\r\nStandard Error:\r\n{2}", command, stdOut, stdErr);
+            Verbose(string.Format("Command Execution Summary:\r\n{0}", fullMessage));
+            WriteToEventLog(fullMessage);
+        }
+
+        internal static void WriteToEventLog(string message, EventLogEntryType entryType = EventLogEntryType.Information)
+        {
+            if (!eventSourceEstablished)
+            {
+                if (!EventLogSourceExists(PREFERRED_EVENT_LOG_SOURCE))
+                {
+                    try
+                    {
+                        EventLog.CreateEventSource(PREFERRED_EVENT_LOG_SOURCE, EVENT_LOG);
+                    }
+                    catch
+                    {
+                        eventSource = FALLBACK_EVENT_LOG_SOURCE;
+                    }
+                }
+
+                eventSourceEstablished = true;
+            }
+
+            EventLog.WriteEntry(eventSource, message, entryType, EVENT_ID);
+        }
+
+        private static bool EventLogSourceExists(string sourceToCheck)
+        {
+            bool result = false;
+            try
+            {
+                result = EventLog.SourceExists(sourceToCheck);
+            }
+            catch (System.Security.SecurityException) { }
+
+            return result;
         }
 
         #endregion

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using System.IO;
 using System.Runtime.Serialization;
 
@@ -17,6 +18,8 @@ namespace x509Crypto
 
         const bool LEAVE_MEMSTREAM_OPEN = true;
         private static Regex rgx = new Regex("[^a-fA-F0-9]");
+
+        internal static bool INVOKER_IS_ADMINISTRATOR = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 
         #endregion
 
@@ -119,7 +122,7 @@ namespace x509Crypto
         private void GetRSAKeys(string certThumbprint, StoreLocation storeLocation)
         {
             certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
-            x509CryptoLog.massive(string.Format("Sanitized thumbprint: {0}", certThumbprint));
+            x509CryptoLog.Massive(string.Format("Sanitized thumbprint: {0}", certThumbprint));
             X509Certificate2Collection colletion = new X509Certificate2Collection();
             X509Store keyStore = new X509Store(storeLocation);
             keyStore.Open(OpenFlags.ReadOnly);
@@ -140,7 +143,7 @@ namespace x509Crypto
                 publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                 privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
             }
-            x509CryptoLog.info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", certThumbprint));
+            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", certThumbprint));
             valid = true;
         }
 
@@ -648,7 +651,7 @@ namespace x509Crypto
                         return true;
                     else
                     {
-                        x509CryptoLog.warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, (storeLocation == StoreLocation.CurrentUser ? x509Utils.sSTORELOCATION_CURRENTUSER : x509Utils.sSTORELOCATION_LOCALMACHINE)));
+                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, (storeLocation == StoreLocation.CurrentUser ? x509Utils.sSTORELOCATION_CURRENTUSER : x509Utils.sSTORELOCATION_LOCALMACHINE)));
                         return false;
                     }
                 }
@@ -674,7 +677,7 @@ namespace x509Crypto
                 File.Delete(exportPath);
 
             certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
-            x509CryptoLog.massive(string.Format("Sanitized certificate thumbprint: {0}", certThumbprint));
+            x509CryptoLog.Massive(string.Format("Sanitized certificate thumbprint: {0}", certThumbprint));
 
             X509Store store = new X509Store(StoreName.My, storeLocation);
             store.Open(OpenFlags.ReadOnly);
@@ -732,11 +735,11 @@ namespace x509Crypto
                     try
                     {
                         X509Certificate2 test = new X509Certificate2(exportPath);
-                        x509CryptoLog.info(string.Format("Certificate with thumbprint {0} was successfully exported to {1}", certThumbprint, exportPath));
+                        x509CryptoLog.Info(string.Format("Certificate with thumbprint {0} was successfully exported to {1}", certThumbprint, exportPath));
                     }
                     catch (CryptographicException ex)
                     {
-                        x509CryptoLog.exception(x509CryptoLog.Level.ERROR, ex, string.Format("Certificate with thumbprint {0} was exported to path \"{1}\" but the file seems to be corrupt and unusable", certThumbprint, exportPath));
+                        x509CryptoLog.Exception( ex, x509CryptoLog.Level.ERROR, string.Format("Certificate with thumbprint {0} was exported to path \"{1}\" but the file seems to be corrupt and unusable", certThumbprint, exportPath));
                     }
 
                     return exportPath;
