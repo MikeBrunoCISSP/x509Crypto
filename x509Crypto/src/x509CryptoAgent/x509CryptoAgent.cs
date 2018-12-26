@@ -17,7 +17,6 @@ namespace x509Crypto
         #region Constants and Static Fields
 
         const bool LEAVE_MEMSTREAM_OPEN = true;
-        private static Regex rgx = new Regex("[^a-fA-F0-9]");
 
         internal static bool INVOKER_IS_ADMINISTRATOR = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 
@@ -27,6 +26,33 @@ namespace x509Crypto
 
         private RSACryptoServiceProvider publicKey,
                                          privateKey;
+
+        private string thumbprint;
+        private StoreLocation certStoreLocation;
+
+        public string Thumbprint
+        {
+            get
+            {
+                return thumbprint;
+            }
+        }
+
+        public string CertStoreLocationName
+        {
+            get
+            {
+                return x509Utils.GetEnumDescription(certStoreLocation);
+            }
+        }
+
+        public StoreLocation CertStoreLocation
+        {
+            get
+            {
+                return certStoreLocation;
+            }
+        }
 
         /// <summary>
         /// Indicates whether the instantiated x509CrytoAgent object is bound to a valid certificate and corresponding private key that can be used for encryption and decryption respectively
@@ -53,7 +79,7 @@ namespace x509Crypto
         /// <param name="sStoreLocation">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
         public x509CryptoAgent(string certThumbprint, string sStoreLocation)
         {
-            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), x509Utils.getStoreLocation(sStoreLocation));
+            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), x509Utils.GetStoreLocation(sStoreLocation));
         }
 
         /// <summary>
@@ -103,7 +129,7 @@ namespace x509Crypto
                 reader.Close();
             }
 
-            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), x509Utils.getStoreLocation(sStoreLocation));
+            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), x509Utils.GetStoreLocation(sStoreLocation));
         }
 
         /// <summary>
@@ -651,7 +677,7 @@ namespace x509Crypto
                         return true;
                     else
                     {
-                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, (storeLocation == StoreLocation.CurrentUser ? x509Utils.sSTORELOCATION_CURRENTUSER : x509Utils.sSTORELOCATION_LOCALMACHINE)));
+                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, x509Utils.GetEnumDescription(storeLocation)));
                         return false;
                     }
                 }
@@ -846,7 +872,7 @@ namespace x509Crypto
     internal class CertificateNotFoundException : Exception
     {
         public CertificateNotFoundException(string certThumbprint, StoreLocation storeLocation)
-            :base(string.Format("A certificate with thumbprint {0} could not be found in the {1} store location", certThumbprint, (storeLocation==StoreLocation.CurrentUser?x509Utils.sSTORELOCATION_CURRENTUSER:x509Utils.sSTORELOCATION_LOCALMACHINE)))
+            :base(string.Format("A certificate with thumbprint {0} could not be found in the {1} store location", certThumbprint, x509Utils.GetEnumDescription(storeLocation)))
         {
         }
     }

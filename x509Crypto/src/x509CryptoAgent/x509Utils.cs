@@ -3,25 +3,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
+using System.Globalization;
 
 namespace x509Crypto
 {
-    public class x509Utils
+    public enum CertStoreLocation
+    {
+        [Description(@"CURRENTUSER")]
+        CurrentUser,
+
+        [Description(@"LOCALMACHINE")]
+        LocalMachine
+    }
+
+    public static class x509Utils
     {
         #region Constants and Static Fields
 
         /// <summary>
         /// String representation of System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser
         /// </summary>
-        public static readonly string sSTORELOCATION_CURRENTUSER = @"CURRENTUSER";
+        //public static readonly string sSTORELOCATION_CURRENTUSER = @"CURRENTUSER";
 
         /// <summary>
         /// String representation of System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine
         /// </summary>
-        public static readonly string sSTORELOCATION_LOCALMACHINE = @"LOCALMACHINE";
+        //public static readonly string sSTORELOCATION_LOCALMACHINE = @"LOCALMACHINE";
 
         #endregion
 
@@ -56,27 +67,65 @@ namespace x509Crypto
             return contents;
         }
 
+        public static string GetEnumDescription<T>(this T e) where T : IConvertible
+        {
+            if (e is Enum)
+            {
+                Type type = e.GetType();
+                Array values = System.Enum.GetValues(type);
+
+                foreach(int val in values)
+                {
+                    if (val == e.ToInt32(CultureInfo.InvariantCulture))
+                    {
+                        var memInfo = type.GetMember(type.GetEnumName(val));
+                        var descriptionAttribute = memInfo[0]
+                            .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                            .FirstOrDefault() as DescriptionAttribute;
+
+                        if (descriptionAttribute != null)
+                        {
+                            return descriptionAttribute.Description;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public static StoreLocation GetStoreLocation(string sStoreLocation)
+        {
+            Array values = Enum.GetValues(typeof(CertStoreLocation));
+
+            foreach(int val in values)
+            {
+                var memInfo = typeof(CertStoreLocation).GetMember(typeof(CertStoreLocation).GetEnumName(val));
+                var descriptionAttribute = memInfo[0]
+                    .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                    .FirstOrDefault() as DescriptionAttribute;
+
+                if (string.Equals(sStoreLocation, descriptionAttribute.Description, StringComparison.OrdinalIgnoreCase))
+                {
+                    switch ((CertStoreLocation)val)
+                    {
+                        case CertStoreLocation.CurrentUser:
+                            return StoreLocation.CurrentUser;
+                        case CertStoreLocation.LocalMachine:
+                            return StoreLocation.LocalMachine;
+                    }
+                }
+
+            }
+
+            throw new Exception(string.Format(@"{0}: Not a valid certificate store location name"));
+        }
+             
 
         #endregion
 
         #region Internal Methods
 
-        internal static StoreLocation getStoreLocation(string sStoreLocation)
-        {
-            string sStoreLocationFixed = Regex.Replace(sStoreLocation, @"\s+", "").ToUpper();
-
-            if (string.Equals(sStoreLocationFixed, sSTORELOCATION_CURRENTUSER, StringComparison.OrdinalIgnoreCase))
-                return StoreLocation.CurrentUser;
-            else
-            {
-                if (string.Equals(sStoreLocationFixed, sSTORELOCATION_LOCALMACHINE, StringComparison.OrdinalIgnoreCase))
-                {
-                    return StoreLocation.LocalMachine;
-                }
-                else
-                    throw new Exception(string.Format("Unknown value for StoreLocation {0}. Acceptable values are {1} and {2}", sStoreLocation, sSTORELOCATION_CURRENTUSER, sSTORELOCATION_LOCALMACHINE));
-            }
-        }
 
         internal static string cleanThumbprint(string certThumbprint)
         {
