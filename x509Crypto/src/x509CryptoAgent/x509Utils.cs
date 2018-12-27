@@ -24,15 +24,7 @@ namespace x509Crypto
     {
         #region Constants and Static Fields
 
-        /// <summary>
-        /// String representation of System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser
-        /// </summary>
-        //public static readonly string sSTORELOCATION_CURRENTUSER = @"CURRENTUSER";
-
-        /// <summary>
-        /// String representation of System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine
-        /// </summary>
-        //public static readonly string sSTORELOCATION_LOCALMACHINE = @"LOCALMACHINE";
+        private static string allowedThumbprintCharsPattern = "[^a-fA-F0-9]";
 
         #endregion
 
@@ -119,6 +111,16 @@ namespace x509Crypto
             }
 
             throw new Exception(string.Format(@"{0}: Not a valid certificate store location name"));
+        }
+
+        public static StoreLocation GetStoreLocation(CertStoreLocation certStoreLocation)
+        {
+            return certStoreLocation == CertStoreLocation.CurrentUser ? StoreLocation.CurrentUser : StoreLocation.LocalMachine;
+        }
+
+        public static string FormatThumbprint(string inThumbprint)
+        {
+            return Regex.Replace(inThumbprint, allowedThumbprintCharsPattern, "").ToUpper();
         }
              
 

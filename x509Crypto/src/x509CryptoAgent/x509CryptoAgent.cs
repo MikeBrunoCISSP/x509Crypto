@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -27,32 +26,9 @@ namespace x509Crypto
         private RSACryptoServiceProvider publicKey,
                                          privateKey;
 
-        private string thumbprint;
-        private StoreLocation certStoreLocation;
+        public string Thumbprint { get; private set; }
+        public CertStore Store { get; private set; }
 
-        public string Thumbprint
-        {
-            get
-            {
-                return thumbprint;
-            }
-        }
-
-        public string CertStoreLocationName
-        {
-            get
-            {
-                return x509Utils.GetEnumDescription(certStoreLocation);
-            }
-        }
-
-        public StoreLocation CertStoreLocation
-        {
-            get
-            {
-                return certStoreLocation;
-            }
-        }
 
         /// <summary>
         /// Indicates whether the instantiated x509CrytoAgent object is bound to a valid certificate and corresponding private key that can be used for encryption and decryption respectively
@@ -67,9 +43,11 @@ namespace x509Crypto
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="certThumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
-        public x509CryptoAgent(string certThumbprint)
+        public x509CryptoAgent(string certThumbprint, CertStore store)
         {
-            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), StoreLocation.CurrentUser);
+            Thumbprint = x509Utils.FormatThumbprint(certThumbprint);
+            Store = store;
+            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), Store.Location);
         }
 
         /// <summary>
