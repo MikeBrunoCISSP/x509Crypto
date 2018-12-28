@@ -15,6 +15,13 @@ namespace x509Crypto
     {
         #region Constants and Static Fields
 
+        const int AES_KEY_SIZE = 256;
+        const int AES_BLOCK_SIZE = 128;
+
+        const int AES_BYTES = 4;
+        const int AES_READ_COUNT = AES_BYTES - 1;
+        const int AES_BYTES_DOUBLED = AES_BYTES * 2;
+
         const bool LEAVE_MEMSTREAM_OPEN = true;
 
         internal static bool INVOKER_IS_ADMINISTRATOR = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
@@ -26,7 +33,19 @@ namespace x509Crypto
         private RSACryptoServiceProvider publicKey,
                                          privateKey;
 
-        public string Thumbprint { get; private set; }
+        private string thumbprint;
+
+        public string Thumbprint
+        {
+            get
+            {
+                return thumbprint;
+            }
+            private set
+            {
+                thumbprint = x509Utils.FormatThumbprint(value);
+            }
+        }
         public CertStore Store { get; private set; }
 
 
@@ -45,7 +64,7 @@ namespace x509Crypto
         /// <param name="certThumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
         public x509CryptoAgent(string Thumbprint, CertStore Store)
         {
-            this.Thumbprint = x509Utils.FormatThumbprint(Thumbprint);
+            this.Thumbprint = Thumbprint;
             this.Store = Store;
             GetRSAKeys();
         }
@@ -57,7 +76,7 @@ namespace x509Crypto
         /// <param name="sStore">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
         public x509CryptoAgent(string Thumbprint, string sStore)
         {
-            this.Thumbprint = x509Utils.FormatThumbprint(Thumbprint);
+            this.Thumbprint = Thumbprint;
             Store = CertStore.GetByName(sStore);
             GetRSAKeys();
         }
@@ -70,7 +89,7 @@ namespace x509Crypto
         {
             using (StreamReader reader = new StreamReader(inStream))
             {
-                Thumbprint = x509Utils.FormatThumbprint(reader.ReadToEnd());
+                Thumbprint = reader.ReadToEnd();
                 reader.Close();
             }
 
@@ -88,7 +107,7 @@ namespace x509Crypto
         {
             using (StreamReader reader = new StreamReader(inStream))
             {
-                Thumbprint = x509Utils.FormatThumbprint(reader.ReadToEnd());
+                Thumbprint = reader.ReadToEnd();
                 reader.Close();
             }
 
@@ -104,7 +123,7 @@ namespace x509Crypto
         {
             publicKey = null;
             privateKey = null;
-            Thumbprint = string.Empty;
+            thumbprint = string.Empty;
             Store = null;
         }
 
@@ -127,7 +146,7 @@ namespace x509Crypto
             }
 
             if (colletion.Count != 1)
-                throw new CertificateNotFoundException(Thumbprint, Store.Location);
+                throw new CertificateNotFoundException(Thumbprint, Store);
 
             foreach (X509Certificate2 cert in colletion)
             {
@@ -150,8 +169,8 @@ namespace x509Crypto
 
             using (AesManaged aesManaged = new AesManaged())
             {
-                aesManaged.KeySize = 256;
-                aesManaged.BlockSize = 128;
+                aesManaged.KeySize = AES_KEY_SIZE;
+                aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
                 using (ICryptoTransform transform = aesManaged.CreateDecryptor())
@@ -160,10 +179,10 @@ namespace x509Crypto
                     byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
 
                     //Contain the length values of the key and IV respectively
-                    byte[] KeyLengthIndicator = new byte[4];
-                    byte[] IVLengthIndicator = new byte[4];
+                    byte[] KeyLengthIndicator = new byte[AES_BYTES];
+                    byte[] IVLengthIndicator = new byte[AES_BYTES];
 
-                    //
+                    //Byte arrays to contain the length values of the key and IV
                     int keyLength = keyEncrypted.Length;
                     KeyLengthIndicator = BitConverter.GetBytes(keyLength);
 
@@ -172,8 +191,8 @@ namespace x509Crypto
 
                     using (MemoryStream memStream = new MemoryStream())
                     {
-                        memStream.Write(KeyLengthIndicator, 0, 4);
-                        memStream.Write(IVLengthIndicator, 0, 4);
+                        memStream.Write(KeyLengthIndicator, 0, AES_BYTES);
+                        memStream.Write(IVLengthIndicator, 0, AES_BYTES);
 
                         memStream.Write(keyEncrypted, 0, keyLength);
                         memStream.Write(aesManaged.IV, 0, IVLength);
@@ -183,10 +202,10 @@ namespace x509Crypto
                         {
                             int count = 0;
                             int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / 8;
-                            int bytesRead = 0;
+                            int blockSizeInBytes = aesManaged.BlockSize / AES_BYTES_DOUBLED;
 
                             byte[] data = new byte[blockSizeInBytes];
+                            int bytesRead = 0;
 
                             using (MemoryStream inStream = new MemoryStream(plainTextBytes, false))
                             {
@@ -222,8 +241,8 @@ namespace x509Crypto
         {
             using (AesManaged aesManaged = new AesManaged())
             {
-                aesManaged.KeySize = 256;
-                aesManaged.BlockSize = 128;
+                aesManaged.KeySize = AES_KEY_SIZE;
+                aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
@@ -232,10 +251,10 @@ namespace x509Crypto
                     byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
 
                     //Contain the length values of the key and IV respectively
-                    byte[] KeyLengthIndicator = new byte[4];
-                    byte[] IVLengthIndicator = new byte[4];
+                    byte[] KeyLengthIndicator = new byte[AES_BYTES];
+                    byte[] IVLengthIndicator = new byte[AES_BYTES];
 
-                    //
+                    
                     int keyLength = keyEncrypted.Length;
                     KeyLengthIndicator = BitConverter.GetBytes(keyLength);
 
@@ -244,8 +263,8 @@ namespace x509Crypto
 
                     using (FileStream outFS = new FileStream(cipherText, FileMode.Create))
                     {
-                        outFS.Write(KeyLengthIndicator, 0, 4);
-                        outFS.Write(IVLengthIndicator, 0, 4);
+                        outFS.Write(KeyLengthIndicator, 0, AES_BYTES);
+                        outFS.Write(IVLengthIndicator, 0, AES_BYTES);
 
                         outFS.Write(keyEncrypted, 0, keyLength);
                         outFS.Write(aesManaged.IV, 0, IVLength);
@@ -254,10 +273,10 @@ namespace x509Crypto
                         {
                             int count = 0;
                             int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / 8;
-                            int bytesRead = 0;
+                            int blockSizeInBytes = aesManaged.BlockSize / AES_BYTES_DOUBLED;
 
                             byte[] data = new byte[blockSizeInBytes];
+                            int bytesRead = 0;
 
                             using (FileStream inStream = new FileStream(plainText, FileMode.Open))
                             {
@@ -291,8 +310,8 @@ namespace x509Crypto
         {
             using (AesManaged aesManaged = new AesManaged())
             {
-                aesManaged.KeySize = 256;
-                aesManaged.BlockSize = 128;
+                aesManaged.KeySize = AES_KEY_SIZE;
+                aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
@@ -301,8 +320,8 @@ namespace x509Crypto
                     byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
 
                     //Contain the length values of the key and IV respectively
-                    byte[] KeyLengthIndicator = new byte[4];
-                    byte[] IVLengthIndicator = new byte[4];
+                    byte[] KeyLengthIndicator = new byte[AES_BYTES];
+                    byte[] IVLengthIndicator = new byte[AES_BYTES];
 
                     //
                     int keyLength = keyEncrypted.Length;
@@ -313,8 +332,8 @@ namespace x509Crypto
 
                     using (FileStream outFS = new FileStream(cipherText, FileMode.Create))
                     {
-                        outFS.Write(KeyLengthIndicator, 0, 4);
-                        outFS.Write(IVLengthIndicator, 0, 4);
+                        outFS.Write(KeyLengthIndicator, 0, AES_BYTES);
+                        outFS.Write(IVLengthIndicator, 0, AES_BYTES);
 
                         outFS.Write(keyEncrypted, 0, keyLength);
                         outFS.Write(aesManaged.IV, 0, IVLength);
@@ -323,10 +342,10 @@ namespace x509Crypto
                         {
                             int count = 0;
                             int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / 8;
-                            int bytesRead = 0;
+                            int blockSizeInBytes = aesManaged.BlockSize / AES_BYTES_DOUBLED;
 
                             byte[] data = new byte[blockSizeInBytes];
+                            int bytesRead = 0;
 
                             using (MemoryStream memStream = new MemoryStream(memBytes))
                             {
@@ -366,37 +385,37 @@ namespace x509Crypto
 
             using (AesManaged aesManaged = new AesManaged())
             {
-                aesManaged.KeySize = 256;
-                aesManaged.BlockSize = 128;
+                aesManaged.KeySize = AES_KEY_SIZE;
+                aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
-                byte[] KeyLengthIndicator = new byte[4];
-                byte[] IVLengthIndicator = new byte[4];
+                byte[] KeyLengthIndicator = new byte[AES_BYTES];
+                byte[] IVLengthIndicator = new byte[AES_BYTES];
 
                 using (MemoryStream inStream = new MemoryStream(cipherTextBytes))
                 {
                     inStream.Seek(0, SeekOrigin.Begin);
                     inStream.Seek(0, SeekOrigin.Begin);
-                    inStream.Read(KeyLengthIndicator, 0, 3);
+                    inStream.Read(KeyLengthIndicator, 0, (AES_BYTES-1));
 
-                    inStream.Seek(4, SeekOrigin.Begin);
-                    inStream.Read(IVLengthIndicator, 0, 3);
+                    inStream.Seek(AES_BYTES, SeekOrigin.Begin);
+                    inStream.Read(IVLengthIndicator, 0, (AES_BYTES - 1));
 
                     int keyLength = BitConverter.ToInt32(KeyLengthIndicator, 0);
                     int IVLength = BitConverter.ToInt32(IVLengthIndicator, 0);
 
-                    int cipherTextStartingPoint = keyLength + IVLength + 8;
+                    int cipherTextStartingPoint = keyLength + IVLength + AES_BYTES_DOUBLED;
                     int cipherTextLength = (int)inStream.Length - cipherTextStartingPoint;
 
                     byte[] keyEncrypted = new byte[keyLength];
                     byte[] IV = new byte[IVLength];
 
                     //Read the encrypted symetric key
-                    inStream.Seek(8, SeekOrigin.Begin);
+                    inStream.Seek(AES_BYTES_DOUBLED, SeekOrigin.Begin);
                     inStream.Read(keyEncrypted, 0, keyLength);
 
                     //Read in the Initialization Vector
-                    inStream.Seek(8 + keyLength, SeekOrigin.Begin);
+                    inStream.Seek(AES_BYTES_DOUBLED + keyLength, SeekOrigin.Begin);
                     inStream.Read(IV, 0, IVLength);
 
                     byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
@@ -407,7 +426,7 @@ namespace x509Crypto
                         {
                             int count = 0;
                             int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / 8;
+                            int blockSizeInBytes = aesManaged.BlockSize / AES_BYTES_DOUBLED;
 
                             byte[] data = new byte[blockSizeInBytes];
                             inStream.Seek(cipherTextStartingPoint, SeekOrigin.Begin);
@@ -448,35 +467,35 @@ namespace x509Crypto
         {
             using (AesManaged aesManaged = new AesManaged())
             {
-                aesManaged.KeySize = 256;
-                aesManaged.BlockSize = 128;
+                aesManaged.KeySize = AES_KEY_SIZE;
+                aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
-                byte[] KeyLengthIndicator = new byte[4];
-                byte[] IVLengthIndicator = new byte[4];
+                byte[] KeyLengthIndicator = new byte[AES_BYTES];
+                byte[] IVLengthIndicator = new byte[AES_BYTES];
 
                 using (FileStream inFS = new FileStream(cipherText, FileMode.Open))
                 {
                     inFS.Seek(0, SeekOrigin.Begin);
                     inFS.Seek(0, SeekOrigin.Begin);
-                    inFS.Read(KeyLengthIndicator, 0, 3);
+                    inFS.Read(KeyLengthIndicator, 0, AES_READ_COUNT);
 
                     inFS.Seek(4, SeekOrigin.Begin);
-                    inFS.Read(IVLengthIndicator, 0, 3);
+                    inFS.Read(IVLengthIndicator, 0, AES_READ_COUNT);
 
                     int keyLength = BitConverter.ToInt32(KeyLengthIndicator, 0);
                     int IVLength = BitConverter.ToInt32(IVLengthIndicator, 0);
 
-                    int cipherTextStart = keyLength + IVLength + 8;
+                    int cipherTextStart = keyLength + IVLength + AES_BYTES_DOUBLED;
                     int cipherTextLength = (int)inFS.Length - cipherTextStart;
 
                     byte[] keyEncrypted = new byte[keyLength];
                     byte[] IV = new byte[IVLength];
 
-                    inFS.Seek(8, SeekOrigin.Begin);
+                    inFS.Seek(AES_BYTES_DOUBLED, SeekOrigin.Begin);
                     inFS.Read(keyEncrypted, 0, keyLength);
 
-                    inFS.Seek(8 + keyLength, SeekOrigin.Begin);
+                    inFS.Seek(AES_BYTES_DOUBLED + keyLength, SeekOrigin.Begin);
                     inFS.Read(IV, 0, IVLength);
 
                     byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
@@ -487,7 +506,7 @@ namespace x509Crypto
                         {
                             int count = 0;
                             int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / 8;
+                            int blockSizeInBytes = aesManaged.BlockSize / AES_BYTES_DOUBLED;
 
                             byte[] data = new byte[blockSizeInBytes];
 
@@ -527,35 +546,35 @@ namespace x509Crypto
 
             using (AesManaged aesManaged = new AesManaged())
             {
-                aesManaged.KeySize = 256;
-                aesManaged.BlockSize = 128;
+                aesManaged.KeySize = AES_KEY_SIZE;
+                aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
-                byte[] KeyLengthIndicator = new byte[4];
-                byte[] IVLengthIndicator = new byte[4];
+                byte[] KeyLengthIndicator = new byte[AES_BYTES];
+                byte[] IVLengthIndicator = new byte[AES_BYTES];
 
                 using (FileStream inFS = new FileStream(cipherText, FileMode.Open))
                 {
                     inFS.Seek(0, SeekOrigin.Begin);
                     inFS.Seek(0, SeekOrigin.Begin);
-                    inFS.Read(KeyLengthIndicator, 0, 3);
+                    inFS.Read(KeyLengthIndicator, 0, AES_READ_COUNT);
 
-                    inFS.Seek(4, SeekOrigin.Begin);
-                    inFS.Read(IVLengthIndicator, 0, 3);
+                    inFS.Seek(AES_BYTES, SeekOrigin.Begin);
+                    inFS.Read(IVLengthIndicator, 0, AES_READ_COUNT);
 
                     int keyLength = BitConverter.ToInt32(KeyLengthIndicator, 0);
                     int IVLength = BitConverter.ToInt32(IVLengthIndicator, 0);
 
-                    int cipherTextStart = keyLength + IVLength + 8;
+                    int cipherTextStart = keyLength + IVLength + AES_BYTES_DOUBLED;
                     int cipherTextLength = (int)inFS.Length - cipherTextStart;
 
                     byte[] keyEncrypted = new byte[keyLength];
                     byte[] IV = new byte[IVLength];
 
-                    inFS.Seek(8, SeekOrigin.Begin);
+                    inFS.Seek(AES_BYTES_DOUBLED, SeekOrigin.Begin);
                     inFS.Read(keyEncrypted, 0, keyLength);
 
-                    inFS.Seek(8 + keyLength, SeekOrigin.Begin);
+                    inFS.Seek(AES_BYTES_DOUBLED + keyLength, SeekOrigin.Begin);
                     inFS.Read(IV, 0, IVLength);
 
                     byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
@@ -564,7 +583,7 @@ namespace x509Crypto
                     {
                             int count = 0;
                             int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / 8;
+                            int blockSizeInBytes = aesManaged.BlockSize / AES_BYTES_DOUBLED;
 
                             byte[] data = new byte[blockSizeInBytes];
 
@@ -628,11 +647,11 @@ namespace x509Crypto
         /// <param name="certThumbprint">The certificate thumbprint value to search for (case-insensitive)</param>
         /// <param name="storeLocation">The certificate store location in which to search (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
         /// <returns>True or False depending upon whether the certificate and corresponding private key was found in the certificate store</returns>
-        public static bool thumbprintFound(string certThumbprint, StoreLocation storeLocation)
+        public static bool thumbprintFound(string certThumbprint, CertStore certStore)
         {
-            certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
+            certThumbprint = x509Utils.FormatThumbprint(certThumbprint);
 
-            X509Store store = new X509Store(StoreName.My, storeLocation);
+            X509Store store = new X509Store(StoreName.My, certStore.Location);
             store.Open(OpenFlags.ReadOnly);
             foreach (X509Certificate2 cert in store.Certificates)
             {
@@ -642,7 +661,7 @@ namespace x509Crypto
                         return true;
                     else
                     {
-                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, x509Utils.GetEnumDescription(storeLocation)));
+                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, certStore.Name));
                         return false;
                     }
                 }
@@ -659,7 +678,7 @@ namespace x509Crypto
         /// <param name="exportPath">Fully-qualified path to where the PKCS#12 bundle file should be written (a ".pfx" file extension will be added if no file extension is detected)</param>
         /// <param name="password">Password to protect the private key once stored in the PKCS#12 bundle file</param>
         /// <returns>The fully-qualified path to where the PKCS#12 bundle file was ultimately written</returns>
-        public static string exportPFX(string certThumbprint, StoreLocation storeLocation, string exportPath, string password)
+        public static string exportPFX(string certThumbprint, CertStore certStore, string exportPath, string password)
         {
             if (!Path.HasExtension(exportPath))
                 exportPath += @".pfx";
@@ -670,7 +689,7 @@ namespace x509Crypto
             certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
             x509CryptoLog.Massive(string.Format("Sanitized certificate thumbprint: {0}", certThumbprint));
 
-            X509Store store = new X509Store(StoreName.My, storeLocation);
+            X509Store store = new X509Store(StoreName.My, certStore.Location);
             store.Open(OpenFlags.ReadOnly);
             foreach(X509Certificate2 cert in store.Certificates)
             {
@@ -683,7 +702,7 @@ namespace x509Crypto
                 }
             }
 
-            throw new CertificateNotFoundException(certThumbprint, storeLocation);
+            throw new CertificateNotFoundException(certThumbprint, certStore);
         }
 
         /// <summary>
@@ -693,7 +712,7 @@ namespace x509Crypto
         /// <param name="storeLocation">Certificate store location where the specified certificate is located (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
         /// <param name="exportPath">Fully-qualified path to where the Base64-encoded file should be written (a ".cer" file extension will be added if no file extension is detected)</param>
         /// <returns>The fully-qualified path to where the Base64-encoded certificate file was ultimately written</returns>
-        public static string exportCert(string certThumbprint, StoreLocation storeLocation, string exportPath)
+        public static string exportCert(string certThumbprint, CertStore certStore, string exportPath)
         {
             if (!Path.HasExtension(exportPath))
                 exportPath += @".cer";
@@ -702,7 +721,7 @@ namespace x509Crypto
                 File.Delete(exportPath);
 
             certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
-            X509Store store = new X509Store(StoreName.My, storeLocation);
+            X509Store store = new X509Store(StoreName.My, certStore.Location);
             store.Open(OpenFlags.ReadOnly);
 
             foreach(X509Certificate2 cert in store.Certificates)
@@ -737,7 +756,7 @@ namespace x509Crypto
                 }
             }
 
-            throw new CertificateNotFoundException(certThumbprint, storeLocation);
+            throw new CertificateNotFoundException(certThumbprint, certStore);
         }
 
         /// <summary>
@@ -746,12 +765,12 @@ namespace x509Crypto
         /// <param name="storeLocation">Store location from which to list certificate details (Either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
         /// <param name="allowExpired">If set to True, expired certificates will be included in the output (Note that .NET will not perform cryptographic operations using a certificate which is not within its validity period)</param>
         /// <returns></returns>
-        public static string listCerts(StoreLocation storeLocation, bool allowExpired)
+        public static string listCerts(CertStore certStore, bool allowExpired)
         {
             string output = "Key Encipherment Certificates found:\r\n\r\n";
             bool firstAdded = false;
 
-            X509Store store = new X509Store(storeLocation);
+            X509Store store = new X509Store(certStore.Location);
             store.Open(OpenFlags.ReadOnly);
             foreach(X509Certificate2 cert in store.Certificates)
             {
@@ -836,8 +855,8 @@ namespace x509Crypto
 
     internal class CertificateNotFoundException : Exception
     {
-        public CertificateNotFoundException(string certThumbprint, StoreLocation storeLocation)
-            :base(string.Format("A certificate with thumbprint {0} could not be found in the {1} store location", certThumbprint, x509Utils.GetEnumDescription(storeLocation)))
+        public CertificateNotFoundException(string certThumbprint, CertStore certStore)
+            :base(string.Format("A certificate with thumbprint {0} could not be found in the {1} store location", certThumbprint, certStore.Name))
         {
         }
     }
