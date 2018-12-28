@@ -43,71 +43,58 @@ namespace x509Crypto
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="certThumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
-        public x509CryptoAgent(string certThumbprint, CertStore store)
+        public x509CryptoAgent(string Thumbprint, CertStore Store)
         {
-            Thumbprint = x509Utils.FormatThumbprint(certThumbprint);
-            Store = store;
-            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), Store.Location);
+            this.Thumbprint = x509Utils.FormatThumbprint(Thumbprint);
+            this.Store = Store;
+            GetRSAKeys();
         }
 
         /// <summary>
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="certThumbprint">The thumbprint of the encryption certificate.</param>
-        /// <param name="sStoreLocation">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
-        public x509CryptoAgent(string certThumbprint, string sStoreLocation)
+        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
+        public x509CryptoAgent(string Thumbprint, string sStore)
         {
-            GetRSAKeys(certThumbprint.ToUpper().Replace(" ", ""), x509Utils.GetStoreLocation(sStoreLocation));
+            this.Thumbprint = x509Utils.FormatThumbprint(Thumbprint);
+            Store = CertStore.GetByName(sStore);
+            GetRSAKeys();
         }
 
         /// <summary>
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint. The certificate must be present in the CURRENTUSER store location</param>
-        public x509CryptoAgent(FileStream inStream)
+        public x509CryptoAgent(FileStream inStream, CertStore Store)
         {
-            string thumbprint;
             using (StreamReader reader = new StreamReader(inStream))
             {
-                thumbprint = reader.ReadToEnd();
+                Thumbprint = x509Utils.FormatThumbprint(reader.ReadToEnd());
                 reader.Close();
             }
 
-            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), StoreLocation.CurrentUser);
+            this.Store = Store;
+
+            GetRSAKeys();
         }
 
         /// <summary>
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
-        /// <param name="location">The System.Security.X509Certificates.StoreLocation where the encryption certificate resides (either CurrentUser or LocalMachine)</param>
-        public x509CryptoAgent(FileStream inStream, StoreLocation location)
+        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
+        public x509CryptoAgent(FileStream inStream, string sStore)
         {
-            string thumbprint;
             using (StreamReader reader = new StreamReader(inStream))
             {
-                thumbprint = reader.ReadToEnd();
+                Thumbprint = x509Utils.FormatThumbprint(reader.ReadToEnd());
                 reader.Close();
             }
 
-            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), location);
-        }
+            Store = CertStore.GetByName(sStore);
 
-        /// <summary>
-        /// x509CryptoAgent Constructor
-        /// </summary>
-        /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
-        /// <param name="sStoreLocation">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
-        public x509CryptoAgent(FileStream inStream, string sStoreLocation)
-        {
-            string thumbprint;
-            using (StreamReader reader = new StreamReader(inStream))
-            {
-                thumbprint = reader.ReadToEnd();
-                reader.Close();
-            }
-
-            GetRSAKeys(thumbprint.ToUpper().Replace(" ", ""), x509Utils.GetStoreLocation(sStoreLocation));
+            GetRSAKeys();
         }
 
         /// <summary>
@@ -117,22 +104,22 @@ namespace x509Crypto
         {
             publicKey = null;
             privateKey = null;
+            Thumbprint = string.Empty;
+            Store = null;
         }
 
         #endregion
 
         #region Member Methods
 
-        private void GetRSAKeys(string certThumbprint, StoreLocation storeLocation)
+        private void GetRSAKeys()
         {
-            certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
-            x509CryptoLog.Massive(string.Format("Sanitized thumbprint: {0}", certThumbprint));
             X509Certificate2Collection colletion = new X509Certificate2Collection();
-            X509Store keyStore = new X509Store(storeLocation);
+            X509Store keyStore = new X509Store(Store.Location);
             keyStore.Open(OpenFlags.ReadOnly);
             foreach(X509Certificate2 cert in keyStore.Certificates)
             {
-                if (string.Equals(cert.Thumbprint, certThumbprint, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(cert.Thumbprint, Thumbprint, StringComparison.OrdinalIgnoreCase))
                 {
                     if (cert.HasPrivateKey & isUsable(cert, false))
                         colletion.Add(cert);
@@ -140,14 +127,14 @@ namespace x509Crypto
             }
 
             if (colletion.Count != 1)
-                throw new CertificateNotFoundException(certThumbprint, storeLocation);
+                throw new CertificateNotFoundException(Thumbprint, Store.Location);
 
             foreach (X509Certificate2 cert in colletion)
             {
                 publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                 privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
             }
-            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", certThumbprint));
+            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", Thumbprint));
             valid = true;
         }
 
