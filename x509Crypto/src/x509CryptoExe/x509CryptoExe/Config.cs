@@ -40,6 +40,46 @@ namespace x509CryptoExe
         //Assembly Name
         internal static string ASSEMBLY_NAME = Assembly.GetExecutingAssembly().GetName().Name + @".exe";
 
+        //Usage Types
+        internal const bool IS_COMMANDS = true;
+        internal const bool IS_PARAMETERS = false;
+
+        //Universal Parameters
+        internal const string PARAM_THUMB = @"-thumb";
+        internal const string PARAM_CERTSTORE = @"-store";
+        internal const string PARAM_IN = @"-in";
+        internal const string PARAM_OUT = @"-out";
+
+        //Main Mode Names
+        internal const string MAIN_MODE_ENCRYPT   = @"encrypt";
+        internal const string MAIN_MODE_DECRYPT   = @"decrypt";
+        internal const string MAIN_MODE_REENCRYPT = @"reencrypt";
+        internal const string MAIN_MODE_IMPORT    = @"import";
+        internal const string MAIN_MODE_EXPORT    = @"export";
+        internal const string MAIN_MODE_MAKECERT  = @"cert";
+        internal const string MAIN_MODE_LIST      = @"list";
+        internal static readonly string[] MAIN_MODE_HELP = { @"help", @"-help", @"--help", @"?", @"-?", @"--?", @"h", @"-h", @"--h" };
+
+
+        //Crypto Modes
+        internal const string CRYPTO_MODE_TEXT = @"-text";
+        internal const string CRYPTO_MODE_FILE = @"-file";
+
+        //Crypto Parameters
+        internal const string PLACEHOLDER_CRYPTO_INPUT_TYPE_PARAM = @"[INPUT_TYPE]";
+        internal const string CRYPTO_PARAM_OLDTHUMB = @"-oldthumb";
+        internal const string CRYPTO_PARAM_NEWTHUMB = @"-newthumb";
+        internal const string CRYPTO_PARAM_OLDCERTSTORE = @"-oldstore";
+        internal const string CRYPTO_PARAM_NEWCERTSTORE = @"-newstore";
+        internal const string CRYPTO_CLIPBOARD = @"clipboard";
+        internal static readonly string[] CRYPTO_PARAM_WIPE = { @"-w", @"-wipe" };
+
+        //Cert Parameters
+        internal const string CERT_PARAM_EXPIRED = @"-expired";
+        internal static readonly string[] CERT_PARAM_VERBOSE = { @"-verbose", @"-debug" };
+        internal static readonly string[] CERT_PARAM_WORKING_DIR = { @"-workingdir", @"-dir", @"-working" };
+        internal static readonly string[] CERT_PARAM_PASSWORD = { @"-pass", @"-password", @"-pw" };
+
         //Usage Standards
         internal const string USAGE_HEADING = @"Usage: ";
         internal const string USAGE_INDENT = "\r\n             ";
