@@ -34,9 +34,11 @@ namespace x509CryptoExe
         File = 1,
         Unknown = -1
     }
-   
-    internal static class Constants
+
+    class Config
     {
+        #region Constants
+
         //Assembly Name
         internal static string ASSEMBLY_NAME = Assembly.GetExecutingAssembly().GetName().Name + @".exe";
 
@@ -51,13 +53,13 @@ namespace x509CryptoExe
         internal const string PARAM_OUT = @"-out";
 
         //Main Mode Names
-        internal const string MAIN_MODE_ENCRYPT   = @"encrypt";
-        internal const string MAIN_MODE_DECRYPT   = @"decrypt";
+        internal const string MAIN_MODE_ENCRYPT = @"encrypt";
+        internal const string MAIN_MODE_DECRYPT = @"decrypt";
         internal const string MAIN_MODE_REENCRYPT = @"reencrypt";
-        internal const string MAIN_MODE_IMPORT    = @"import";
-        internal const string MAIN_MODE_EXPORT    = @"export";
-        internal const string MAIN_MODE_MAKECERT  = @"cert";
-        internal const string MAIN_MODE_LIST      = @"list";
+        internal const string MAIN_MODE_IMPORT = @"import";
+        internal const string MAIN_MODE_EXPORT = @"export";
+        internal const string MAIN_MODE_MAKECERT = @"cert";
+        internal const string MAIN_MODE_LIST = @"list";
         internal static readonly string[] MAIN_MODE_HELP = { @"help", @"-help", @"--help", @"?", @"-?", @"--?", @"h", @"-h", @"--h" };
 
         //Crypto Actions
@@ -85,6 +87,7 @@ namespace x509CryptoExe
         internal const string PLACEHOLDER_CRYPTO_INPUT_TYPE_PARAM = @"[INPUT_TYPE]";
         internal const string CRYPTO_PARAM_OLDTHUMB = @"-oldthumb";
         internal const string CRYPTO_PARAM_NEWTHUMB = @"-newthumb";
+
         internal const string CRYPTO_PARAM_OLDCERTSTORE = @"-oldstore";
         internal const string CRYPTO_PARAM_NEWCERTSTORE = @"-newstore";
         internal const string CRYPTO_CLIPBOARD = @"clipboard";
@@ -111,43 +114,59 @@ namespace x509CryptoExe
                                                                string.Format("{0}* {1}", USAGE_INDENT, CertStore.CurrentUser.Name) +
                                                                string.Format("{0}* {1}", USAGE_INDENT, CertStore.LocalMachine.Name) +
                                                                string.Format("{0} Default is {1}0", USAGE_INDENT, CertStore.CurrentUser.Name);
-    }
-
-    class Config
-    {
-        #region Main Usage
-
-        private static string SYNTAX_MAIN = string.Format("{0}{1} [COMMAND]", Constants.USAGE_HEADING, Constants.ASSEMBLY_NAME);
-        private static Dictionary<string, string> MainModes = new Dictionary<string, string>
-        {
-            {Constants.MAIN_MODE_ENCRYPT, @"Encrypts the specified plaintext expression or file" },
-            {Constants.MAIN_MODE_DECRYPT, @"Decrypts the specified ciphertext expression or file" },
-            {Constants.MAIN_MODE_REENCRYPT, @"Encrypts the specified ciphertext expression or file using a different certificate" },
-            {Constants.MAIN_MODE_IMPORT, @"Imports a certificate and key pair from the specified PKCS#12 (.pfx) file" },
-            {Constants.MAIN_MODE_EXPORT, @"Exports a specified key pair and/or certificate from a specified certificate store" },
-            {Constants.MAIN_MODE_LIST, @"Lists the available encryption certificates in the specified certificate store" }
-        };
-        private static readonly string USAGE_MAIN = GetUsage(SYNTAX_MAIN, MainModes, Constants.IS_COMMANDS);
 
         #endregion
 
-        #region Crypto Usages
+        #region Main Usage
 
-        private static string crypto_description_template = Constants.PLACEHOLDER_CRYPTO_ACTION + " the specified " + Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT + " {0}";
-        private static readonly string SYNTAX_CRYPTO = string.Format("{0} [{1}|{2}]", Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.CRYPTO_MODE_TEXT, Constants.CRYPTO_MODE_FILE);
+        private static string SYNTAX_MAIN = string.Format("{0}{1} [COMMAND]", USAGE_HEADING, ASSEMBLY_NAME);
+        private static Dictionary<string, string> MainModes = new Dictionary<string, string>
+        {
+            {MAIN_MODE_ENCRYPT, @"Encrypts the specified plaintext expression or file" },
+            {MAIN_MODE_DECRYPT, @"Decrypts the specified ciphertext expression or file" },
+            {MAIN_MODE_REENCRYPT, @"Encrypts the specified ciphertext expression or file using a different certificate" },
+            {MAIN_MODE_IMPORT, @"Imports a certificate and key pair from the specified PKCS#12 (.pfx) file" },
+            {MAIN_MODE_EXPORT, @"Exports a specified key pair and/or certificate from a specified certificate store" },
+            {MAIN_MODE_LIST, @"Lists the available encryption certificates in the specified certificate store" }
+        };
+        private static readonly string USAGE_MAIN = GetUsage(SYNTAX_MAIN, MainModes, IS_COMMANDS);
+
+        #endregion
+
+        #region Crypto Main Usage
+        
+        private static string crypto_description_template = PLACEHOLDER_CRYPTO_ACTION + " the specified " + PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT + " {0}";
+        private static readonly string SYNTAX_CRYPTO = string.Format("{0} [{1}|{2}]", PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, CRYPTO_MODE_FILE);
         private static Dictionary<string, string> CryptoModesMain = new Dictionary<string, string>
         {
-            {Constants.CRYPTO_MODE_TEXT, string.Format(crypto_description_template, Constants.CRYPTO_EXPRESSION) },
-            {Constants.CRYPTO_MODE_FILE, string.Format(crypto_description_template, Constants.CRYPTO_FILE) }
+            {CRYPTO_MODE_TEXT, string.Format(crypto_description_template, CRYPTO_EXPRESSION) },
+            {CRYPTO_MODE_FILE, string.Format(crypto_description_template, CRYPTO_FILE) }
         };
-        private static readonly string USAGE_CRYPTO_ENCRYPT = GetUsage(SYNTAX_CRYPTO.Replace(Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.MAIN_MODE_ENCRYPT), CryptoModesMain, Constants.IS_COMMANDS).Replace(Constants.PLACEHOLDER_CRYPTO_ACTION, Constants.CRYPTO_ACTION_ENCRYPT)
-                                                                                                                                                                                                        .Replace(Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, Constants.CRYPTO_PLAINTEXT);
+        private static readonly string USAGE_CRYPTO_ENCRYPT = GetUsage(SYNTAX_CRYPTO.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), CryptoModesMain, IS_COMMANDS).Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_ENCRYPT)
+                                                                                                                                                                                                        .Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_PLAINTEXT);
 
-        private static readonly string USAGE_CRYPTO_DECRYPT = GetUsage(SYNTAX_CRYPTO.Replace(Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.MAIN_MODE_DECRYPT), CryptoModesMain, Constants.IS_COMMANDS).Replace(Constants.PLACEHOLDER_CRYPTO_ACTION, Constants.CRYPTO_ACTION_DECRYPT)
-                                                                                                                                                                                                .Replace(Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, Constants.CRYPTO_CIPHERTEXT);
+        private static readonly string USAGE_CRYPTO_DECRYPT = GetUsage(SYNTAX_CRYPTO.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_DECRYPT), CryptoModesMain, IS_COMMANDS).Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_DECRYPT)
+                                                                                                                                                                                                .Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_CIPHERTEXT);
 
-        private static readonly string USAGE_CRYPTO_REENCRYPT = GetUsage(SYNTAX_CRYPTO.Replace(Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.MAIN_MODE_REENCRYPT), CryptoModesMain, Constants.IS_COMMANDS).Replace(Constants.PLACEHOLDER_CRYPTO_ACTION, Constants.CRYPTO_ACTION_REENCRYPT)
-                                                                                                                                                                                                .Replace(Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, Constants.CRYPTO_CIPHERTEXT);
+        private static readonly string USAGE_CRYPTO_REENCRYPT = GetUsage(SYNTAX_CRYPTO.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_REENCRYPT), CryptoModesMain, IS_COMMANDS).Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_REENCRYPT)
+                                                                                                                                                                                                .Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_CIPHERTEXT);
+
+        #endregion
+
+        #region Crypto Text Usage Messages
+
+        private static readonly string SYNTAX_CRYPTO_TEXT = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] }}",
+                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, PARAM_THUMB,
+                                                                          PLACEHOLDER_CRYPTO_INPUT_TYPE_PARAM, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
+                                                                          PARAM_CERTSTORE, PARAM_OUT);
+        private static Dictionary<string, string> CryptoModesText = new Dictionary<string, string>
+        {
+            {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
+            {PARAM_IN, string.Format("the {0} {1} you wish to {2}", PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, PLACEHOLDER_CRYPTO_EXPRESSION_FILE, PLACEHOLDER_CRYPTO_ACTION) },
+            {PARAM_CERTSTORE, STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, CURRENT_CERT) },
+            {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the {{0}} written" +
+                        USAGE_INDENT + string.Format("Use \"{0}\" to write the output to the system clipboard", CRYPTO_CLIPBOARD)}
+        };
 
         #endregion
 
@@ -158,11 +177,11 @@ namespace x509CryptoExe
             int length = GetPadding(items);
 
             string usage = string.Format("{0}{1} {2}\r\n  {3}:",
-                                         Constants.USAGE_HEADING, Constants.ASSEMBLY_NAME, syntax,
+                                         USAGE_HEADING, ASSEMBLY_NAME, syntax,
                                          isCommands ? @"Available Commands" : @"Accepted Parameters");
 
             foreach (KeyValuePair<string, string> command in items)
-                usage += (command.Key == string.Empty) ? Constants.USAGE_INDENT + command.Value : string.Format("\r\n   {0}: {1}", command.Key.PadRight(length), command.Value);
+                usage += (command.Key == string.Empty) ? USAGE_INDENT + command.Value : string.Format("\r\n   {0}: {1}", command.Key.PadRight(length), command.Value);
 
             usage += "\r\n";
 
