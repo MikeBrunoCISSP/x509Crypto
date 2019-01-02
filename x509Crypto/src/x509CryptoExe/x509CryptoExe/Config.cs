@@ -35,7 +35,7 @@ namespace x509CryptoExe
         Unknown = -1
     }
    
-    static class Constants
+    internal static class Constants
     {
         //Assembly Name
         internal static string ASSEMBLY_NAME = Assembly.GetExecutingAssembly().GetName().Name + @".exe";
@@ -60,6 +60,22 @@ namespace x509CryptoExe
         internal const string MAIN_MODE_LIST      = @"list";
         internal static readonly string[] MAIN_MODE_HELP = { @"help", @"-help", @"--help", @"?", @"-?", @"--?", @"h", @"-h", @"--h" };
 
+        //Crypto Actions
+        internal const string CRYPTO_ACTION_ENCRYPT = @"encrypt";
+        internal const string CRYPTO_ACTION_DECRYPT = @"decrypt";
+        internal const string CRYPTO_ACTION_REENCRYPT = @"reencrypt";
+
+        //Crypto Placeholders
+        internal const string PLACEHOLDER_CRYPTO_COMMAND = @"[CRYPTO_COMMAND]";
+        internal const string PLACEHOLDER_CRYPTO_ACTION = @"[CRYPTO_ACTION]";
+
+        internal const string PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT = @"[ITEM]";
+        internal const string CRYPTO_PLAINTEXT = @"plaintext";
+        internal const string CRYPTO_CIPHERTEXT = @"ciphertext";
+
+        internal const string PLACEHOLDER_CRYPTO_EXPRESSION_FILE = @"[TYPE]";
+        internal const string CRYPTO_EXPRESSION = @"expression";
+        internal const string CRYPTO_FILE = @"file";
 
         //Crypto Modes
         internal const string CRYPTO_MODE_TEXT = @"-text";
@@ -99,6 +115,77 @@ namespace x509CryptoExe
 
     class Config
     {
+        #region Main Usage
+
+        private static string SYNTAX_MAIN = string.Format("{0}{1} [COMMAND]", Constants.USAGE_HEADING, Constants.ASSEMBLY_NAME);
+        private static Dictionary<string, string> MainModes = new Dictionary<string, string>
+        {
+            {Constants.MAIN_MODE_ENCRYPT, @"Encrypts the specified plaintext expression or file" },
+            {Constants.MAIN_MODE_DECRYPT, @"Decrypts the specified ciphertext expression or file" },
+            {Constants.MAIN_MODE_REENCRYPT, @"Encrypts the specified ciphertext expression or file using a different certificate" },
+            {Constants.MAIN_MODE_IMPORT, @"Imports a certificate and key pair from the specified PKCS#12 (.pfx) file" },
+            {Constants.MAIN_MODE_EXPORT, @"Exports a specified key pair and/or certificate from a specified certificate store" },
+            {Constants.MAIN_MODE_LIST, @"Lists the available encryption certificates in the specified certificate store" }
+        };
+        private static readonly string USAGE_MAIN = GetUsage(SYNTAX_MAIN, MainModes, Constants.IS_COMMANDS);
+
+        #endregion
+
+        #region Crypto Usages
+
+        private static string crypto_description_template = Constants.PLACEHOLDER_CRYPTO_ACTION + " the specified " + Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT + " {0}";
+        private static readonly string SYNTAX_CRYPTO = string.Format("{0} [{1}|{2}]", Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.CRYPTO_MODE_TEXT, Constants.CRYPTO_MODE_FILE);
+        private static Dictionary<string, string> CryptoModesMain = new Dictionary<string, string>
+        {
+            {Constants.CRYPTO_MODE_TEXT, string.Format(crypto_description_template, Constants.CRYPTO_EXPRESSION) },
+            {Constants.CRYPTO_MODE_FILE, string.Format(crypto_description_template, Constants.CRYPTO_FILE) }
+        };
+        private static readonly string USAGE_CRYPTO_ENCRYPT = GetUsage(SYNTAX_CRYPTO.Replace(Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.MAIN_MODE_ENCRYPT), CryptoModesMain, Constants.IS_COMMANDS).Replace(Constants.PLACEHOLDER_CRYPTO_ACTION, Constants.CRYPTO_ACTION_ENCRYPT)
+                                                                                                                                                                                                        .Replace(Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, Constants.CRYPTO_PLAINTEXT);
+
+        private static readonly string USAGE_CRYPTO_DECRYPT = GetUsage(SYNTAX_CRYPTO.Replace(Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.MAIN_MODE_DECRYPT), CryptoModesMain, Constants.IS_COMMANDS).Replace(Constants.PLACEHOLDER_CRYPTO_ACTION, Constants.CRYPTO_ACTION_DECRYPT)
+                                                                                                                                                                                                .Replace(Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, Constants.CRYPTO_CIPHERTEXT);
+
+        private static readonly string USAGE_CRYPTO_REENCRYPT = GetUsage(SYNTAX_CRYPTO.Replace(Constants.PLACEHOLDER_CRYPTO_COMMAND, Constants.MAIN_MODE_REENCRYPT), CryptoModesMain, Constants.IS_COMMANDS).Replace(Constants.PLACEHOLDER_CRYPTO_ACTION, Constants.CRYPTO_ACTION_REENCRYPT)
+                                                                                                                                                                                                .Replace(Constants.PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, Constants.CRYPTO_CIPHERTEXT);
+
+        #endregion
+
+        #region Static Methods
+
+        private static string GetUsage(string syntax, Dictionary<string,string> items, bool isCommands)
+        {
+            int length = GetPadding(items);
+
+            string usage = string.Format("{0}{1} {2}\r\n  {3}:",
+                                         Constants.USAGE_HEADING, Constants.ASSEMBLY_NAME, syntax,
+                                         isCommands ? @"Available Commands" : @"Accepted Parameters");
+
+            foreach (KeyValuePair<string, string> command in items)
+                usage += (command.Key == string.Empty) ? Constants.USAGE_INDENT + command.Value : string.Format("\r\n   {0}: {1}", command.Key.PadRight(length), command.Value);
+
+            usage += "\r\n";
+
+            return usage;
+        }
+
+        private static int GetPadding(Dictionary<string,string> items)
+        {
+            int padding = 0;
+
+            foreach(KeyValuePair<string, string> command in items)
+            {
+                if (command.Value != string.Empty)
+                {
+                    if (command.Key.Length > padding)
+                        padding = command.Key.Length;
+                }
+            }
+
+            return padding;
+        }
+
+        #endregion
     }
 
 }
