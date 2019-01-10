@@ -157,7 +157,7 @@ namespace x509CryptoExe
 
         private static readonly string SYNTAX_CRYPTO_TEXT = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] }}",
                                                                           PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, PARAM_THUMB,
-                                                                          PLACEHOLDER_CRYPTO_INPUT_TYPE_PARAM, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
+                                                                          PARAM_IN, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
                                                                           PARAM_CERTSTORE, PARAM_OUT);
         private static Dictionary<string, string> CryptoModesText = new Dictionary<string, string>
         {
@@ -167,6 +167,22 @@ namespace x509CryptoExe
             {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the {{0}} written" +
                         USAGE_INDENT + string.Format("Use \"{0}\" to write the output to the system clipboard", CRYPTO_CLIPBOARD)}
         };
+        private static readonly string USAGE_CRYPTO_ENCRYPT_TEXT = GetUsage(SYNTAX_CRYPTO_TEXT.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), CryptoModesText, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_PLAINTEXT)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_EXPRESSION_FILE, CRYPTO_EXPRESSION)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_ENCRYPT);
+
+        private static readonly string USAGE_CRYPTO_DECRYPT_TEXT = GetUsage(SYNTAX_CRYPTO_TEXT.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_DECRYPT), CryptoModesText, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_CIPHERTEXT)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_EXPRESSION_FILE, CRYPTO_EXPRESSION)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_DECRYPT);
+
+        #endregion
+
+        #region Crypto File Usage Messages
+
+        private static readonly string SYNTAX_CRYPTO_FILE = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] }}",
+                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_FILE, PARAM_THUMB,
+                                                                          PARAM_IN, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
+                                                                          PARAM_CERTSTORE, PARAM_OUT);
 
         #endregion
 
