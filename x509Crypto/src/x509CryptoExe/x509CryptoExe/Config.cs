@@ -79,6 +79,10 @@ namespace x509CryptoExe
         internal const string CRYPTO_EXPRESSION = @"expression";
         internal const string CRYPTO_FILE = @"file";
 
+        internal const string PLACEHOLDER_CRYPTO_PARAM_WIPE = @"[WIPE_PARAM]";
+        internal const string PLACEHOLDER_CRYPTO_USAGE_WIPE = @"[WIPE_USAGE]";
+        private static readonly string CRYPTO_WIPE_USAGE = string.Format(@"(Optional) remove residual {0} from disk", CRYPTO_PLAINTEXT);
+
         //Crypto Modes
         internal const string CRYPTO_MODE_TEXT = @"-text";
         internal const string CRYPTO_MODE_FILE = @"-file";
@@ -164,7 +168,7 @@ namespace x509CryptoExe
             {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
             {PARAM_IN, string.Format("the {0} {1} you wish to {2}", PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, PLACEHOLDER_CRYPTO_EXPRESSION_FILE, PLACEHOLDER_CRYPTO_ACTION) },
             {PARAM_CERTSTORE, STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, CURRENT_CERT) },
-            {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the {{0}} written" +
+            {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the output written" +
                         USAGE_INDENT + string.Format("Use \"{0}\" to write the output to the system clipboard", CRYPTO_CLIPBOARD)}
         };
         private static readonly string USAGE_CRYPTO_ENCRYPT_TEXT = GetUsage(SYNTAX_CRYPTO_TEXT.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), CryptoModesText, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_PLAINTEXT)
@@ -179,10 +183,35 @@ namespace x509CryptoExe
 
         #region Crypto File Usage Messages
 
-        private static readonly string SYNTAX_CRYPTO_FILE = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] }}",
+        private static readonly string SYNTAX_CRYPTO_FILE = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] {7}}}",
                                                                           PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_FILE, PARAM_THUMB,
                                                                           PARAM_IN, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
-                                                                          PARAM_CERTSTORE, PARAM_OUT);
+                                                                          PARAM_CERTSTORE, PARAM_OUT, CRYPTO_PARAM_WIPE[0]);
+        private static Dictionary<string, string> cryptoModesFile = new Dictionary<string, string>
+        {
+            {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
+            {PARAM_IN, string.Format("the {0} {1} you wish to {2}", PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, PLACEHOLDER_CRYPTO_EXPRESSION_FILE, PLACEHOLDER_CRYPTO_ACTION) },
+            {PARAM_CERTSTORE, STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, CURRENT_CERT) },
+            {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the output written" },
+            {PLACEHOLDER_CRYPTO_PARAM_WIPE, PLACEHOLDER_CRYPTO_USAGE_WIPE }
+        };
+        private static readonly string USAGE_CRYPTO_ENCRYPT_FILE = GetUsage(SYNTAX_CRYPTO_FILE.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), cryptoModesFile, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_PLAINTEXT)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_EXPRESSION_FILE, CRYPTO_FILE)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_ENCRYPT)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_PARAM_WIPE, CRYPTO_PARAM_WIPE[0])
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_USAGE_WIPE, CRYPTO_WIPE_USAGE);
+        private static readonly string USAGE_CRYPTO_DECRYPT_FILE = GetUsage(SYNTAX_CRYPTO_FILE.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), cryptoModesFile, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_CIPHERTEXT)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_EXPRESSION_FILE, CRYPTO_FILE)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_ACTION, CRYPTO_ACTION_DECRYPT)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_PARAM_WIPE, string.Empty)
+                                                                                                                                                                                      .Replace(PLACEHOLDER_CRYPTO_USAGE_WIPE, string.Empty);
+
+        #endregion
+
+        #region Re-Encrypt Usages
+
+        private static readonly string SYNTAX_RECRYPTO_TEXT = string.Format("{0} {1} {2} {3} {4} [old cert thumbprint] {5} [new cert thumbprint] {{{6} [old cert store] {7} [new cert store] {8} [[path|clipboard]}}",
+                                                                            MAIN_MODE_REENCRYPT, CRYPTO_MODE_TEXT, PARAM_IN, CRYPTO_CIPHERTEXT, CRYPTO_PARAM_OLDTHUMB, CRYPTO_PARAM_NEWTHUMB, CRYPTO_PARAM_OLDCERTSTORE, CRYPTO_PARAM_NEWCERTSTORE, PARAM_OUT);
 
         #endregion
 
@@ -197,7 +226,10 @@ namespace x509CryptoExe
                                          isCommands ? @"Available Commands" : @"Accepted Parameters");
 
             foreach (KeyValuePair<string, string> command in items)
-                usage += (command.Key == string.Empty) ? USAGE_INDENT + command.Value : string.Format("\r\n   {0}: {1}", command.Key.PadRight(length), command.Value);
+            {
+                if (!string.IsNullOrEmpty(command.Key) & !string.IsNullOrEmpty(command.Value))
+                    usage += (command.Key == string.Empty) ? USAGE_INDENT + command.Value : string.Format("\r\n   {0}: {1}", command.Key.PadRight(length), command.Value);
+            }
 
             usage += "\r\n";
 
