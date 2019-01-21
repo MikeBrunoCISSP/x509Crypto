@@ -55,8 +55,14 @@ namespace x509CryptoExe
         internal const string DESC_OUT_FILE = @"(Optional) THe fully-qualified file path where you would like the output written";
         internal const string PATH = @"path";
         internal const string PASSWORD = @"password";
+
         internal const string CERT_THUMBPRINT = @"cert thumbprint";
+        internal static readonly string OLD_CERT_THUMBPRINT = string.Format("@old {0}", CERT_THUMBPRINT);
+        internal static readonly string NEW_CERT_THUMBPRINT = string.Format(@"new {0}", CERT_THUMBPRINT);
+
         internal const string CERT_STORE = @"cert store";
+        internal static readonly string OLD_CERT_STORE = string.Format("@old {0}", CERT_STORE);
+        internal static readonly string NEW_CERT_STORE = string.Format(@"new {0}", CERT_STORE);
 
         //Main Mode Names
         internal const string MAIN_MODE_ENCRYPT = @"encrypt";
@@ -106,7 +112,15 @@ namespace x509CryptoExe
 
         internal static readonly string[] CRYPTO_PARAM_WIPE = { @"-w", @"-wipe" };
 
+        //Crypto File Extensions
+        internal const string CRYPTO_ENCRYPTED_FILE_EXT = @".ctx";
+        internal const string CRYPTO_DECRYPTED_FILE_EXT = @".ptx";
+
         //Cert Parameters
+        internal const string CERT_MODE_EXPORT_CERT = @"-nokey";
+        internal const string CERT_MODE_EXPORT_KEY = @"-key";
+        internal const string CERT_MODE_EXPORT_CERT_EXT = @".cer";
+        internal const string CERT_MODE_EXPORT_KEY_EXT = @".pfx";
         internal const string CERT_PARAM_EXPIRED = @"-expired";
         internal static readonly string[] CERT_PARAM_VERBOSE = { @"-verbose", @"-debug" };
         internal static readonly string[] CERT_PARAM_WORKING_DIR = { @"-workingdir", @"-dir", @"-working" };
@@ -128,6 +142,18 @@ namespace x509CryptoExe
                                                                string.Format("{0}* {1}", USAGE_INDENT, CertStore.LocalMachine.Name) +
                                                                string.Format("{0} Default is {1}0", USAGE_INDENT, CertStore.CurrentUser.Name);
         private static readonly string DESC_STORE_LOCATION = STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, string.Empty);
+
+        #endregion
+
+        #region Mode Settings
+
+        private static readonly string[] SETTING_GENERAL_STORE = { @"-store", @"-certstore", @"-certificatestore", @"-keystore" };
+        private static readonly string[] SETTING_GENERAL_TRUE = { @"true", @"yes", @"y" };
+        private static readonly string[] SETTING_GENERAL_FALSE = { @"false", @"no", @"n" };
+        private static readonly string[] SETTING_GENERAL_IN = { @"-in", @"-infile", @"-input", @"-inputfile" };
+        private static readonly string[] SETTING_GENERAL_OUT = { @"-out", @"-outfile", @"-output", @"outputfile" };
+        private static readonly string[] SETTING_GENERAL_PASSWORD = { @"-pass", @"-pfxpass", @"-password", @"-pfxpassword", @"pw" };
+        private static readonly string[] SETTING_GENERAL_DEBUG = { @"-debug", @"-debugmode", @"-d", @"-verbose", @"-verbosemode", @"-v" }; 
 
         #endregion
 
@@ -169,10 +195,10 @@ namespace x509CryptoExe
 
         #region Crypto Text Usage Messages
 
-        private static readonly string SYNTAX_CRYPTO_TEXT = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] }}",
-                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, PARAM_THUMB,
+        private static readonly string SYNTAX_CRYPTO_TEXT = string.Format("{0} {1} {2} [{3}] {4} [{5}] {{ {6} [{7}] {8} [{9}] }}",
+                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, PARAM_THUMB, CERT_THUMBPRINT,
                                                                           PARAM_IN, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
-                                                                          PARAM_CERTSTORE, PARAM_OUT);
+                                                                          PARAM_CERTSTORE, CERT_STORE, PARAM_OUT, PATH);
         private static Dictionary<string, string> CryptoModesText = new Dictionary<string, string>
         {
             {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
@@ -192,10 +218,10 @@ namespace x509CryptoExe
 
         #region Crypto File Usage Messages
 
-        private static readonly string SYNTAX_CRYPTO_FILE = string.Format("{0} {1} {2} [cert thumbprint] {3} [{4}] {{ {5} [cert store] {6} [path] {7}}}",
-                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_FILE, PARAM_THUMB,
+        private static readonly string SYNTAX_CRYPTO_FILE = string.Format("{0} {1} {2} [{3}] {4} [{5}] {{ {6} [{7}] {8} [{9}] {10}}}",
+                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_FILE, PARAM_THUMB, CERT_THUMBPRINT,
                                                                           PARAM_IN, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
-                                                                          PARAM_CERTSTORE, PARAM_OUT, CRYPTO_PARAM_WIPE[0]);
+                                                                          PARAM_CERTSTORE, CERT_STORE, PARAM_OUT, PATH, CRYPTO_PARAM_WIPE[0]);
         private static Dictionary<string, string> cryptoModesFile = new Dictionary<string, string>
         {
             {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
@@ -224,8 +250,8 @@ namespace x509CryptoExe
         private static readonly string DESC_OLD_CERTSTORE = STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, OLD_CERT);
         private static readonly string DESC_NEW_CERTSTORE = STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, NEW_CERT);
 
-        private static readonly string SYNTAX_RECRYPTO_MAIN = string.Format("{0} {1} {2} {3} {4} [old cert thumbprint] {5} [new cert thumbprint] {{{6} [old cert store] {7} [new cert store] {8} [path{{0}}]}}",
-                                                                    MAIN_MODE_REENCRYPT, CRYPTO_MODE_TEXT, PARAM_IN, CRYPTO_CIPHERTEXT, CRYPTO_PARAM_OLDTHUMB, CRYPTO_PARAM_NEWTHUMB, CRYPTO_PARAM_OLDCERTSTORE, CRYPTO_PARAM_NEWCERTSTORE, PARAM_OUT);
+        private static readonly string SYNTAX_RECRYPTO_MAIN = string.Format("{0} {1} {2} {3} {4} [{5}] {6} [{7}] {{{8} [{9}] {10} [{11}] {12} [{13}{{0}}]}}",
+                                                                    MAIN_MODE_REENCRYPT, CRYPTO_MODE_TEXT, PARAM_IN, CRYPTO_CIPHERTEXT, CRYPTO_PARAM_OLDTHUMB, OLD_CERT_THUMBPRINT, CRYPTO_PARAM_NEWTHUMB, OLD_CERT_THUMBPRINT, CRYPTO_PARAM_OLDCERTSTORE, OLD_CERT_STORE, CRYPTO_PARAM_NEWCERTSTORE, NEW_CERT_STORE, PARAM_OUT, PATH);
 
         //RE-CRYPTO TEXT USAGE
         private static readonly string SYNTAX_RECRYPTO_TEXT = string.Format(SYNTAX_RECRYPTO_MAIN, string.Format(@"|{0}", CRYPTO_CLIPBOARD));
@@ -257,7 +283,7 @@ namespace x509CryptoExe
         #region Cert Usages
 
         //LIST USAGE
-        private static readonly string SYNTAX_CERT_LIST = string.Format(@"{0} {{{1} [certificate store]", MAIN_MODE_LIST, PARAM_CERTSTORE);
+        private static readonly string SYNTAX_CERT_LIST = string.Format(@"{0} {{{1} [{2}]", MAIN_MODE_LIST, PARAM_CERTSTORE, CERT_STORE);
         private static Dictionary<string, string> certModeList = new Dictionary<string, string>
         {
             {PARAM_CERTSTORE, DESC_STORE_LOCATION },
@@ -266,7 +292,28 @@ namespace x509CryptoExe
         private static readonly string USAGE_CERT_LIST = GetUsage(SYNTAX_CERT_LIST, certModeList, IS_PARAMETERS);
 
         //IMPORT USAGE
-        private static readonly string SYNTAX_CERT_IMPORT = string.Format(@"{0} {1} [{2}] {3} [{4}] {{{5} [{6}]")
+        private static readonly string SYNTAX_CERT_IMPORT = string.Format(@"{0} {1} [{2}] {3} [{4}] {{{5} [{6}]", MAIN_MODE_IMPORT, PARAM_IN, PATH, CERT_PARAM_PASSWORD, PASSWORD, PARAM_CERTSTORE, CERT_STORE);
+        private static Dictionary<string, string> certModeImport = new Dictionary<string, string>
+        {
+            {PARAM_IN, @"The fully-qualified path to the PKCS #12 (.pfx or .p12) file to be imported" },
+            {CERT_PARAM_PASSWORD.First(), @"The password to unlock the PKCS #12 file" },
+            {PARAM_CERTSTORE, DESC_STORE_LOCATION }
+        };
+        private static readonly string USAGE_CERT_IMPORT = GetUsage(SYNTAX_CERT_IMPORT, certModeImport, IS_PARAMETERS);
+
+        //EXPORT USAGE
+        private static readonly string SYNTAX_CERT_EXPORT = string.Format(@"{0} [{1}|{2}] {3} [{4}] {5} [{6}] {7} [{8}", MAIN_MODE_EXPORT, CERT_MODE_EXPORT_KEY, CERT_MODE_EXPORT_CERT, CERT_PARAM_PASSWORD, PASSWORD, PARAM_CERTSTORE, CERT_STORE, PARAM_OUT, PATH);
+        private static Dictionary<string, string> certModeExport = new Dictionary<string, string>
+        {
+            {string.Format(@"{0}/{1}", CERT_MODE_EXPORT_KEY, CERT_MODE_EXPORT_CERT), string.Empty +
+                                       USAGE_INDENT + @"(Optional) Indicates whether the private key should be exported with the cert" +
+                                       USAGE_INDENT + "\r\nDefault selection is " + CERT_MODE_EXPORT_CERT},
+            {CERT_PARAM_PASSWORD.First(), "password to protect the PKCS#12 file" +
+                                   USAGE_INDENT + string.Format(@"(Only compatible with {0} option)", CERT_MODE_EXPORT_KEY)},
+            {PARAM_CERTSTORE, DESC_STORE_LOCATION },
+            {PARAM_OUT, @"The fully-qualified file path where the exported certificate/private key should be written" }
+        };
+        private static readonly string USAGE_CERT_EXPORT = GetUsage(SYNTAX_CERT_EXPORT, certModeExport, IS_PARAMETERS);
 
         #endregion
 
