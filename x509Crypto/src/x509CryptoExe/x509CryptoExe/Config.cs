@@ -136,6 +136,9 @@ namespace x509CryptoExe
         internal const string NEW_CERT = @"new ";
         internal const string CURRENT_CERT = "";
 
+        //Make Cert Constants
+        internal const string DEFAULT_WORKING_DIRECTORY = @"C:\temp";
+
         internal static readonly string STORE_LOCATION_USAGE = string.Format("(Optional) the certificate store name where the {0}encryption certificate is located.", PLACEHOLDER_CERT_OLD_NEW_CURRENT) +
                                                                string.Format("{0}The following values are valid for this setting:", USAGE_INDENT) +
                                                                string.Format("{0}* {1}", USAGE_INDENT, CertStore.CurrentUser.Name) +
@@ -153,7 +156,20 @@ namespace x509CryptoExe
         private static readonly string[] SETTING_GENERAL_IN = { @"-in", @"-infile", @"-input", @"-inputfile" };
         private static readonly string[] SETTING_GENERAL_OUT = { @"-out", @"-outfile", @"-output", @"outputfile" };
         private static readonly string[] SETTING_GENERAL_PASSWORD = { @"-pass", @"-pfxpass", @"-password", @"-pfxpassword", @"pw" };
-        private static readonly string[] SETTING_GENERAL_DEBUG = { @"-debug", @"-debugmode", @"-d", @"-verbose", @"-verbosemode", @"-v" }; 
+        private static readonly string[] SETTING_GENERAL_DEBUG = { @"-debug", @"-debugmode", @"-d", @"-verbose", @"-verbosemode", @"-v" };
+
+        private static readonly string[] SETTING_CRYPTO_THUMBPRINT = { @"-thumb", @"-thumbprint" };
+        private static readonly string[] SETTING_CRYPTO_PLAINTEXT = { @"-pt", @"-plaintext" };
+        private static readonly string[] SETTING_CRYPTO_CIPHERTEXT = { @"-ct", @"-ciphertext" };
+        private static readonly string[] SETTING_CRYPTO_WIPE = { @"-wipe", @"-w", @"-delete" };
+
+        private static readonly string[] SETTING_RECRYPTO_THUMBPRINT_OLD = { @"-oldthumb", @"-oldthumbprint" };
+        private static readonly string[] SETTING_RECRYPTO_THUMBPRINT_NEW = { @"-newthumb", @"-newthumbprint" };
+        private static readonly string[] SETTING_RECRYPTO_STORE_OLD = { @"-oldstore", @"-oldcertstore", @"-oldcertificatestore" };
+        private static readonly string[] SETTING_RECRYPTO_STORE_NEW = { @"-newstore", @"-newcertstore", @"-newcertificatestore" };
+
+        private static readonly string[] SETTING_MAKECERT_WORKING_DIR = { @"-workingdir", @"-path", @"-dir" };
+        private static readonly string[] SETTING_LIST_INCLUDE_EXPIRED = { @"-expired", @"-includeexpired" };
 
         #endregion
 
@@ -314,6 +330,26 @@ namespace x509CryptoExe
             {PARAM_OUT, @"The fully-qualified file path where the exported certificate/private key should be written" }
         };
         private static readonly string USAGE_CERT_EXPORT = GetUsage(SYNTAX_CERT_EXPORT, certModeExport, IS_PARAMETERS);
+
+        #endregion
+
+        #region Member Fields
+
+        //General Settings
+        public string thumbprint,
+                      input,
+                      output,
+                      pass,
+                      usage;
+
+        public CertStoreLocation storeLocation;
+        public Mode mode;
+        private int offset;
+
+        public bool GotThumbprint { get; set; } = false;
+        public bool GotInput { get; set; } = false;
+        public bool GotOutput { get; set; } = false;
+        public bool WriteToFile { get; set; } = false;
 
         #endregion
 
