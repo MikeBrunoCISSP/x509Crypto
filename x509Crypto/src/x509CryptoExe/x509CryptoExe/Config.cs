@@ -49,8 +49,14 @@ namespace x509CryptoExe
         //Universal Parameters
         internal const string PARAM_THUMB = @"-thumb";
         internal const string PARAM_CERTSTORE = @"-store";
+
         internal const string PARAM_IN = @"-in";
         internal const string PARAM_OUT = @"-out";
+        internal const string DESC_OUT_FILE = @"(Optional) THe fully-qualified file path where you would like the output written";
+        internal const string PATH = @"path";
+        internal const string PASSWORD = @"password";
+        internal const string CERT_THUMBPRINT = @"cert thumbprint";
+        internal const string CERT_STORE = @"cert store";
 
         //Main Mode Names
         internal const string MAIN_MODE_ENCRYPT = @"encrypt";
@@ -94,7 +100,10 @@ namespace x509CryptoExe
 
         internal const string CRYPTO_PARAM_OLDCERTSTORE = @"-oldstore";
         internal const string CRYPTO_PARAM_NEWCERTSTORE = @"-newstore";
+
         internal const string CRYPTO_CLIPBOARD = @"clipboard";
+        internal static readonly string CLIPBOARD_USAGE = string.Format("{0}Use \"{1}\" to write the output to the system clipboard", USAGE_INDENT, CRYPTO_CLIPBOARD);
+
         internal static readonly string[] CRYPTO_PARAM_WIPE = { @"-w", @"-wipe" };
 
         //Cert Parameters
@@ -109,15 +118,16 @@ namespace x509CryptoExe
 
         //Certificate Stores
         internal const string PLACEHOLDER_CERT_OLD_NEW_CURRENT = @"[OLD/NEW]";
-        internal const string OLD_CERT = @"old";
-        internal const string NEW_CERT = @"new";
+        internal const string OLD_CERT = @"old ";
+        internal const string NEW_CERT = @"new ";
         internal const string CURRENT_CERT = "";
 
-        internal static readonly string STORE_LOCATION_USAGE = string.Format("(Optional) the certificate store name where the {0} encryption certificate is located.", PLACEHOLDER_CERT_OLD_NEW_CURRENT) +
+        internal static readonly string STORE_LOCATION_USAGE = string.Format("(Optional) the certificate store name where the {0}encryption certificate is located.", PLACEHOLDER_CERT_OLD_NEW_CURRENT) +
                                                                string.Format("{0}The following values are valid for this setting:", USAGE_INDENT) +
                                                                string.Format("{0}* {1}", USAGE_INDENT, CertStore.CurrentUser.Name) +
                                                                string.Format("{0}* {1}", USAGE_INDENT, CertStore.LocalMachine.Name) +
                                                                string.Format("{0} Default is {1}0", USAGE_INDENT, CertStore.CurrentUser.Name);
+        private static readonly string DESC_STORE_LOCATION = STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, string.Empty);
 
         #endregion
 
@@ -138,7 +148,7 @@ namespace x509CryptoExe
         #endregion
 
         #region Crypto Main Usage
-        
+
         private static string crypto_description_template = PLACEHOLDER_CRYPTO_ACTION + " the specified " + PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT + " {0}";
         private static readonly string SYNTAX_CRYPTO = string.Format("{0} [{1}|{2}]", PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, CRYPTO_MODE_FILE);
         private static Dictionary<string, string> CryptoModesMain = new Dictionary<string, string>
@@ -168,8 +178,7 @@ namespace x509CryptoExe
             {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
             {PARAM_IN, string.Format("the {0} {1} you wish to {2}", PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, PLACEHOLDER_CRYPTO_EXPRESSION_FILE, PLACEHOLDER_CRYPTO_ACTION) },
             {PARAM_CERTSTORE, STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, CURRENT_CERT) },
-            {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the output written" +
-                        USAGE_INDENT + string.Format("Use \"{0}\" to write the output to the system clipboard", CRYPTO_CLIPBOARD)}
+            {PARAM_OUT, DESC_OUT_FILE + CLIPBOARD_USAGE}
         };
         private static readonly string USAGE_CRYPTO_ENCRYPT_TEXT = GetUsage(SYNTAX_CRYPTO_TEXT.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), CryptoModesText, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_PLAINTEXT)
                                                                                                                                                                                       .Replace(PLACEHOLDER_CRYPTO_EXPRESSION_FILE, CRYPTO_EXPRESSION)
@@ -192,7 +201,7 @@ namespace x509CryptoExe
             {PARAM_THUMB, @"The thumbprint of the encryption certificate" },
             {PARAM_IN, string.Format("the {0} {1} you wish to {2}", PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, PLACEHOLDER_CRYPTO_EXPRESSION_FILE, PLACEHOLDER_CRYPTO_ACTION) },
             {PARAM_CERTSTORE, STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, CURRENT_CERT) },
-            {PARAM_OUT, @"(Optional) The fully-qualified file path where you would like the output written" },
+            {PARAM_OUT, DESC_OUT_FILE },
             {PLACEHOLDER_CRYPTO_PARAM_WIPE, PLACEHOLDER_CRYPTO_USAGE_WIPE }
         };
         private static readonly string USAGE_CRYPTO_ENCRYPT_FILE = GetUsage(SYNTAX_CRYPTO_FILE.Replace(PLACEHOLDER_CRYPTO_COMMAND, MAIN_MODE_ENCRYPT), cryptoModesFile, IS_PARAMETERS).Replace(PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT, CRYPTO_PLAINTEXT)
@@ -210,8 +219,54 @@ namespace x509CryptoExe
 
         #region Re-Encrypt Usages
 
-        private static readonly string SYNTAX_RECRYPTO_TEXT = string.Format("{0} {1} {2} {3} {4} [old cert thumbprint] {5} [new cert thumbprint] {{{6} [old cert store] {7} [new cert store] {8} [[path|clipboard]}}",
-                                                                            MAIN_MODE_REENCRYPT, CRYPTO_MODE_TEXT, PARAM_IN, CRYPTO_CIPHERTEXT, CRYPTO_PARAM_OLDTHUMB, CRYPTO_PARAM_NEWTHUMB, CRYPTO_PARAM_OLDCERTSTORE, CRYPTO_PARAM_NEWCERTSTORE, PARAM_OUT);
+        const string DESC_OLD_THUMB = @"The thumbprint of the current certificate used for encryption";
+        const string DESC_NEW_THUMB = @"The thumbprint of the replacement certificate";
+        private static readonly string DESC_OLD_CERTSTORE = STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, OLD_CERT);
+        private static readonly string DESC_NEW_CERTSTORE = STORE_LOCATION_USAGE.Replace(PLACEHOLDER_CERT_OLD_NEW_CURRENT, NEW_CERT);
+
+        private static readonly string SYNTAX_RECRYPTO_MAIN = string.Format("{0} {1} {2} {3} {4} [old cert thumbprint] {5} [new cert thumbprint] {{{6} [old cert store] {7} [new cert store] {8} [path{{0}}]}}",
+                                                                    MAIN_MODE_REENCRYPT, CRYPTO_MODE_TEXT, PARAM_IN, CRYPTO_CIPHERTEXT, CRYPTO_PARAM_OLDTHUMB, CRYPTO_PARAM_NEWTHUMB, CRYPTO_PARAM_OLDCERTSTORE, CRYPTO_PARAM_NEWCERTSTORE, PARAM_OUT);
+
+        //RE-CRYPTO TEXT USAGE
+        private static readonly string SYNTAX_RECRYPTO_TEXT = string.Format(SYNTAX_RECRYPTO_MAIN, string.Format(@"|{0}", CRYPTO_CLIPBOARD));
+        private static Dictionary<string, string> reCryptoModeText = new Dictionary<string, string>
+        {
+            {CRYPTO_PARAM_OLDTHUMB, DESC_OLD_THUMB },
+            {CRYPTO_PARAM_NEWTHUMB, DESC_NEW_THUMB },
+            {PARAM_IN, @"the ciphertext expression you wish to re-encrypt" },
+            {CRYPTO_PARAM_OLDCERTSTORE, DESC_OLD_CERTSTORE },
+            {CRYPTO_PARAM_NEWCERTSTORE, DESC_NEW_CERTSTORE },
+            {PARAM_OUT, DESC_OUT_FILE + CLIPBOARD_USAGE}
+        };
+        private static readonly string USAGE_CRYPTO_REENCRYPT_TEXT = GetUsage(SYNTAX_RECRYPTO_TEXT, reCryptoModeText, IS_PARAMETERS);
+
+        //RE-CRYPTO FILE USAGE
+        private static readonly string SYNTAX_RECRYPTO_FILE = string.Format(SYNTAX_RECRYPTO_MAIN, string.Empty);
+        private static Dictionary<string, string> reCryptoModeFile = new Dictionary<string, string>
+        {
+            {CRYPTO_PARAM_OLDTHUMB, DESC_OLD_THUMB },
+            {CRYPTO_PARAM_NEWTHUMB, DESC_NEW_THUMB },
+            {PARAM_IN, @"the fully-qualified path to the ciphertext file you wish to re-encrypt" },
+            {CRYPTO_PARAM_OLDCERTSTORE, DESC_OLD_CERTSTORE },
+            {CRYPTO_PARAM_NEWCERTSTORE, DESC_NEW_CERTSTORE }
+        };
+        private static readonly string USAGE_CRYPTO_REENCRYPT_FILE = GetUsage(SYNTAX_RECRYPTO_FILE, reCryptoModeFile, IS_PARAMETERS);
+
+        #endregion
+
+        #region Cert Usages
+
+        //LIST USAGE
+        private static readonly string SYNTAX_CERT_LIST = string.Format(@"{0} {{{1} [certificate store]", MAIN_MODE_LIST, PARAM_CERTSTORE);
+        private static Dictionary<string, string> certModeList = new Dictionary<string, string>
+        {
+            {PARAM_CERTSTORE, DESC_STORE_LOCATION },
+            {CERT_PARAM_EXPIRED, @"(Optional) include expired certificates in output" }
+        };
+        private static readonly string USAGE_CERT_LIST = GetUsage(SYNTAX_CERT_LIST, certModeList, IS_PARAMETERS);
+
+        //IMPORT USAGE
+        private static readonly string SYNTAX_CERT_IMPORT = string.Format(@"{0} {1} [{2}] {3} [{4}] {{{5} [{6}]")
 
         #endregion
 
