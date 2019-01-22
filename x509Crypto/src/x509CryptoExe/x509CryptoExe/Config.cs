@@ -156,7 +156,7 @@ namespace x509CryptoExe
         private static readonly string[] SETTING_GENERAL_IN = { @"-in", @"-infile", @"-input", @"-inputfile" };
         private static readonly string[] SETTING_GENERAL_OUT = { @"-out", @"-outfile", @"-output", @"outputfile" };
         private static readonly string[] SETTING_GENERAL_PASSWORD = { @"-pass", @"-pfxpass", @"-password", @"-pfxpassword", @"pw" };
-        private static readonly string[] SETTING_GENERAL_DEBUG = { @"-debug", @"-debugmode", @"-d", @"-verbose", @"-verbosemode", @"-v" };
+        private static readonly string[] SETTING_GENERAL_VERBOSE = { @"-debug", @"-debugmode", @"-d", @"-verbose", @"-verbosemode", @"-v" };
 
         private static readonly string[] SETTING_CRYPTO_THUMBPRINT = { @"-thumb", @"-thumbprint" };
         private static readonly string[] SETTING_CRYPTO_PLAINTEXT = { @"-pt", @"-plaintext" };
@@ -335,21 +335,324 @@ namespace x509CryptoExe
 
         #region Member Fields
 
-        //General Settings
+        //Global Settings
         public string thumbprint,
                       input,
                       output,
                       pass,
                       usage;
 
-        public CertStoreLocation storeLocation;
-        public Mode mode;
-        private int offset;
+        public CertStoreLocation storeLocation = CertStoreLocation.CurrentUser;
+        public Mode mode = Mode.Unknown;
+        private int offset = 0;
 
         public bool GotThumbprint { get; set; } = false;
         public bool GotInput { get; set; } = false;
         public bool GotOutput { get; set; } = false;
+        public bool GotPass { get; set; } = false;
         public bool WriteToFile { get; set; } = false;
+        public bool VerboseMode { get; set; } = false;
+        public bool Valid { get; set; } = false;
+
+        //General Crypto Settings
+        public bool WipeResidualFile { get; set; } = false;
+        public bool UseClipboard { get; set; } = false;
+
+        //Encrypt Settings
+        public string plainText;
+        public bool GotPlainText { get; set; } = false;
+
+        //Decrypt Settings
+        public string cipherText;
+        public bool GotCipherText { get; set; } = false;
+
+        //ReEncrypt
+        public string oldThumbprint;
+        public CertStoreLocation oldStoreLocation = CertStoreLocation.CurrentUser;
+        public bool GotOldThumbprint { get; set; } = false;
+        public bool GotNewThumbprint { get; set; } = false;
+        public bool GotOldLocation { get; set; } = false;
+
+        //Make Cert
+        public string workingDir = DEFAULT_WORKING_DIRECTORY;
+
+        //List
+        public bool IncludeExpired { get; set; } = false;
+
+
+        #endregion
+
+        #region Constructors
+
+        public Config(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine(USAGE_MAIN);
+                return;
+            }
+
+            if (!GetMode(args))
+                return;
+
+            if (GetOptions(args))
+            {
+                if (!Valid)
+                    Console.WriteLine(string.Format(@"Not enough arguments\r\n\r\n{0}", usage));
+            }
+
+        }
+
+        #endregion
+
+        #region Member Methods
+
+        public bool GetMode(string[] args)
+        {
+            string currentArg;
+            usage = USAGE_MAIN;
+
+            try
+            {
+                currentArg = GetArgument(args, offset);
+
+                //Encrypt
+                if (Match(currentArg, MAIN_MODE_ENCRYPT))
+                {
+                    usage = USAGE_CRYPTO_ENCRYPT;
+                    switch (GetContentType(args[++offset]))
+                    {
+                        case ContentType.Text:
+                            mode = Mode.EncryptText;
+                            usage = USAGE_CRYPTO_ENCRYPT_TEXT;
+                            return true;
+                        case ContentType.File:
+                            mode = Mode.EncryptFile;
+                            usage = USAGE_CRYPTO_ENCRYPT_FILE;
+                            return true;
+                        default:
+                            throw new Exception(string.Format("Unrecognized argument: \"{0}\"", args[offset]));
+                    }
+                }
+
+                //Decrypt
+                if (Match(currentArg, MAIN_MODE_DECRYPT))
+                {
+                    usage = USAGE_CRYPTO_DECRYPT;
+                    switch (GetContentType(args[++offset]))
+                    {
+                        case ContentType.Text:
+                            mode = Mode.DecryptText;
+                            usage = USAGE_CRYPTO_DECRYPT_TEXT;
+                            return true;
+                        case ContentType.File:
+                            mode = Mode.DecryptFile;
+                            usage = USAGE_CRYPTO_DECRYPT_FILE;
+                            return true;
+                        default:
+                            throw new Exception(string.Format("Unrecognized argument: \"{0}\"", args[offset]));
+                    }
+                }
+
+                //ReEncrypt
+                if (Match(currentArg, MAIN_MODE_REENCRYPT))
+                {
+                    usage = USAGE_CRYPTO_REENCRYPT;
+                    switch (GetContentType(args[++offset]))
+                    {
+                        case ContentType.Text:
+                            mode = Mode.ReEncryptText;
+                            usage = USAGE_CRYPTO_REENCRYPT_TEXT;
+                            return true;
+                        case ContentType.File:
+                            mode = Mode.ReEncryptFile;
+                            usage = USAGE_CRYPTO_REENCRYPT_FILE;
+                            return true;
+                        default:
+                            throw new Exception(string.Format("Unrecognized argument: \"{0}\"", args[offset]));
+                    }
+                }
+
+                //List
+                if (Match(currentArg, MAIN_MODE_LIST))
+                {
+                    usage = USAGE_CERT_LIST;
+                    mode = Mode.List;
+                    return true;
+                }
+
+                //Import
+                if (Match(currentArg, MAIN_MODE_IMPORT))
+                {
+                    usage = USAGE_CERT_IMPORT;
+                    mode = Mode.ImportCert;
+                    return true;
+                }
+
+                //Export
+                if (Match(currentArg, MAIN_MODE_EXPORT))
+                {
+                    usage = USAGE_CERT_EXPORT;
+                    mode = Mode.ExportCert;
+                    return true;
+                }
+
+                //Help
+                if (Match(currentArg, MAIN_MODE_HELP))
+                {
+                    mode = Mode.Help;
+                    Console.WriteLine(usage);
+                    return false;
+                }
+
+                //Unrecognized Mode
+                throw new Exception(string.Format("Unrecognized argument: \"{0}\"", args[offset]));
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(string.Format("{0}\r\n\r\n{1}", ex.Message, usage));
+                return false;
+            }
+        }
+
+        public bool GetOptions(string[] args)
+        {
+            try
+            {
+                while (++offset < args.Length)
+                {
+                    //Help?
+                    if (Match(args[offset], MAIN_MODE_HELP))
+                    {
+                        mode = Mode.Help;
+                        Console.WriteLine(usage);
+                        return true;
+                    }
+
+                    //Thumbprints
+                    GotThumbprint = GotThumbprint || CheckThumbprint(args, SETTING_CRYPTO_THUMBPRINT, ref thumbprint);
+                    GotOldThumbprint = GotOldThumbprint || CheckThumbprint(args, SETTING_RECRYPTO_THUMBPRINT_OLD, ref oldThumbprint);
+                    GotNewThumbprint = GotNewThumbprint || CheckThumbprint(args, SETTING_RECRYPTO_THUMBPRINT_NEW, ref thumbprint);
+
+                    //Store Location
+                    CheckStore(args, SETTING_GENERAL_STORE, ref storeLocation);
+                    CheckStore(args, SETTING_RECRYPTO_STORE_OLD, ref oldStoreLocation);
+                    CheckStore(args, SETTING_RECRYPTO_STORE_NEW, ref storeLocation);
+
+                    //CipherText
+                    GotCipherText = GotCipherText || CheckCipherText(args);
+
+                    //PlainText
+                    GotPlainText = GotPlainText || CheckPlainText(args);
+
+                    //Outfile
+                    GotOutput = GotOutput || CheckOutFile(args); 
+                    switch(mode)
+                    {
+                        case Mode.ExportCert:
+                            AddExtension(CERT_MODE_EXPORT_CERT_EXT, ref output);
+                            break;
+                        case Mode.ExportPFX:
+                            AddExtension(CERT_MODE_EXPORT_KEY_EXT, ref output);
+                            break;
+                    }
+
+                    //InFile
+                    GotInput = GotInput || CheckInput(args);
+
+                    //Password
+                    GotPass = GotPass || CheckSetting(args, SETTING_GENERAL_PASSWORD, ref pass);
+
+                    //Export Key?
+                    if (mode == Mode.ExportCert)
+                    {
+                        if (Match(args[offset], CERT_MODE_EXPORT_KEY))
+                            mode = Mode.ExportPFX;
+                    }
+
+                    //List include Expired?
+                    IncludeExpired = IncludeExpired || Match(args[offset], SETTING_LIST_INCLUDE_EXPIRED);
+
+                    //Wipe residual file?
+                    if (mode == Mode.EncryptFile || mode == Mode.DecryptFile)
+                        WipeResidualFile = WipeResidualFile || Match(args[offset], SETTING_CRYPTO_WIPE);
+
+                    //Debug mode?
+                    VerboseMode = VerboseMode || Match(args[offset], SETTING_GENERAL_VERBOSE);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(string.Format("{0}\r\n\r\n{1}", ex.Message, usage));
+                return false;
+            }
+        }
+
+        public string GetArgument(string[] args, int currentOffset)
+        {
+
+        }
+
+        public bool Match(string currentArg, string pattern)
+        {
+
+        }
+
+        public bool Match(string currentArg, string[] possibilities)
+        {
+
+        }
+
+        private ContentType GetContentType(string currentArg)
+        {
+            if (Match(currentArg, CRYPTO_MODE_TEXT))
+                return ContentType.Text;
+            if (Match(currentArg, CRYPTO_MODE_FILE))
+                return ContentType.File;
+            else
+                return ContentType.Unknown;
+        }
+
+        private bool CheckThumbprint(string[] args, string[] setting_type, ref string thumbprint)
+        {
+
+        }
+
+        private bool CheckStore(string[] args, string[] setting_type, ref CertStoreLocation certStore)
+        {
+
+        }
+
+        private bool CheckCipherText(string[] args)
+        {
+
+        }
+
+        private bool CheckPlainText(string[] args)
+        {
+
+        }
+
+        private bool CheckOutFile(string[] args)
+        {
+
+        }
+
+        private bool CheckInput(string[] args)
+        {
+
+        }
+
+        private bool CheckSetting(string[] args, string[] setting_type, ref string setting)
+        {
+
+        }
+
+        private void AddExtension(string extension, ref string fileName)
+        {
+
+        }
 
         #endregion
 
