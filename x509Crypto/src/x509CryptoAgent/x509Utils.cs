@@ -24,6 +24,16 @@ namespace x509Crypto
     {
         #region Constants and Static Fields
 
+        /// <summary>
+        /// String representation of System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser
+        /// </summary>
+        public static readonly string sSTORELOCATION_CURRENTUSER = CertStoreLocation.CurrentUser.GetEnumDescription();
+
+        /// <summary>
+        /// String representation of System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine
+        /// </summary>
+        public static readonly string sSTORELOCATION_LOCALMACHINE = CertStoreLocation.LocalMachine.GetEnumDescription();
+
         private static string allowedThumbprintCharsPattern = "[^a-fA-F0-9]";
 
         #endregion
@@ -86,7 +96,7 @@ namespace x509Crypto
             return null;
         }
 
-        public static StoreLocation GetStoreLocation(string sStoreLocation)
+        public static CertStoreLocation GetStoreLocation(string sStoreLocation)
         {
             Array values = Enum.GetValues(typeof(CertStoreLocation));
 
@@ -99,18 +109,12 @@ namespace x509Crypto
 
                 if (string.Equals(sStoreLocation, descriptionAttribute.Description, StringComparison.OrdinalIgnoreCase))
                 {
-                    switch ((CertStoreLocation)val)
-                    {
-                        case CertStoreLocation.CurrentUser:
-                            return StoreLocation.CurrentUser;
-                        case CertStoreLocation.LocalMachine:
-                            return StoreLocation.LocalMachine;
-                    }
+                    return (CertStoreLocation)val;
                 }
 
             }
 
-            throw new Exception(string.Format(@"{0}: Not a valid certificate store location name"));
+            throw new Exception(string.Format("{0}: Not a valid certificate store location name. Acceptable values are:\r\n1. {1}\r\n2. {2}", sStoreLocation, CertStoreLocation.CurrentUser.Name(), CertStoreLocation.LocalMachine.Name()));
         }
 
         public static StoreLocation GetStoreLocation(CertStoreLocation certStoreLocation)

@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using x509Crypto;
+using System.Security.AccessControl;
 
 namespace x509CryptoExe
 {
@@ -107,8 +108,8 @@ namespace x509CryptoExe
         internal const string CRYPTO_PARAM_OLDCERTSTORE = @"-oldstore";
         internal const string CRYPTO_PARAM_NEWCERTSTORE = @"-newstore";
 
-        internal const string CRYPTO_CLIPBOARD = @"clipboard";
-        internal static readonly string CLIPBOARD_USAGE = string.Format("{0}Use \"{1}\" to write the output to the system clipboard", USAGE_INDENT, CRYPTO_CLIPBOARD);
+        internal const string SETTING_CRYPTO_CLIPBOARD = @"clipboard";
+        internal static readonly string CLIPBOARD_USAGE = string.Format("{0}Use \"{1}\" to write the output to the system clipboard", USAGE_INDENT, SETTING_CRYPTO_CLIPBOARD);
 
         internal static readonly string[] CRYPTO_PARAM_WIPE = { @"-w", @"-wipe" };
 
@@ -270,7 +271,7 @@ namespace x509CryptoExe
                                                                     MAIN_MODE_REENCRYPT, CRYPTO_MODE_TEXT, PARAM_IN, CRYPTO_CIPHERTEXT, CRYPTO_PARAM_OLDTHUMB, OLD_CERT_THUMBPRINT, CRYPTO_PARAM_NEWTHUMB, OLD_CERT_THUMBPRINT, CRYPTO_PARAM_OLDCERTSTORE, OLD_CERT_STORE, CRYPTO_PARAM_NEWCERTSTORE, NEW_CERT_STORE, PARAM_OUT, PATH);
 
         //RE-CRYPTO TEXT USAGE
-        private static readonly string SYNTAX_RECRYPTO_TEXT = string.Format(SYNTAX_RECRYPTO_MAIN, string.Format(@"|{0}", CRYPTO_CLIPBOARD));
+        private static readonly string SYNTAX_RECRYPTO_TEXT = string.Format(SYNTAX_RECRYPTO_MAIN, string.Format(@"|{0}", SETTING_CRYPTO_CLIPBOARD));
         private static Dictionary<string, string> reCryptoModeText = new Dictionary<string, string>
         {
             {CRYPTO_PARAM_OLDTHUMB, DESC_OLD_THUMB },
@@ -531,9 +532,9 @@ namespace x509CryptoExe
                     }
 
                     //Thumbprints
-                    GotThumbprint = GotThumbprint || CheckThumbprint(args, SETTING_CRYPTO_THUMBPRINT, ref thumbprint);
-                    GotOldThumbprint = GotOldThumbprint || CheckThumbprint(args, SETTING_RECRYPTO_THUMBPRINT_OLD, ref oldThumbprint);
-                    GotNewThumbprint = GotNewThumbprint || CheckThumbprint(args, SETTING_RECRYPTO_THUMBPRINT_NEW, ref thumbprint);
+                    GotThumbprint = GotThumbprint || CheckSetting(args, SETTING_CRYPTO_THUMBPRINT, ref thumbprint);
+                    GotOldThumbprint = GotOldThumbprint || CheckSetting(args, SETTING_RECRYPTO_THUMBPRINT_OLD, ref oldThumbprint);
+                    GotNewThumbprint = GotNewThumbprint || CheckSetting(args, SETTING_RECRYPTO_THUMBPRINT_NEW, ref thumbprint);
 
                     //Store Location
                     CheckStore(args, SETTING_GENERAL_STORE, ref storeLocation);
@@ -541,7 +542,7 @@ namespace x509CryptoExe
                     CheckStore(args, SETTING_RECRYPTO_STORE_NEW, ref storeLocation);
 
                     //CipherText
-                    GotCipherText = GotCipherText || CheckCipherText(args);
+                    GotCipherText = GotCipherText || CheckCiphertext(args);
 
                     //PlainText
                     GotPlainText = GotPlainText || CheckPlainText(args);
@@ -581,6 +582,54 @@ namespace x509CryptoExe
                     //Debug mode?
                     VerboseMode = VerboseMode || Match(args[offset], SETTING_GENERAL_VERBOSE);
                 }
+
+                //Verify certs
+                if (GotThumbprint || GotNewThumbprint)
+                    PeekCert(thumbprint, storeLocation);
+                if (GotOldThumbprint)
+                    PeekCert(oldThumbprint, oldStoreLocation);
+
+                switch (mode)
+                {
+                    case Mode.DecryptFile:
+                        Valid = GotThumbprint && GotInput;
+                        break;
+                    case Mode.DecryptText:
+                        Valid = GotThumbprint && GotInput;
+                        WriteToFile = GotOutput & !UseClipboard;
+                        break;
+                    case Mode.EncryptFile:
+                        Valid = GotThumbprint && GotInput;
+                        break;
+                    case Mode.EncryptText:
+                        Valid = GotThumbprint && GotInput;
+                        WriteToFile = GotOutput & !UseClipboard;
+                        break;
+                    case Mode.ReEncryptFile:
+                        Valid = GotOldThumbprint && GotNewThumbprint && GotInput;
+                        break;
+                    case Mode.ReEncryptText:
+                        Valid = GotOldThumbprint && GotNewThumbprint && GotInput;
+                        WriteToFile = GotOutput & !UseClipboard;
+                        break;
+                    case Mode.ImportCert:
+                        Valid = GotThumbprint && GotPass;
+                        break;
+                    case Mode.ExportCert:
+                        Valid = GotThumbprint && GotOutput;
+                        break;
+                    case Mode.ExportPFX:
+                        Valid = GotThumbprint && GotOutput && GotPass;
+                        break;
+                    case Mode.CreateCert:
+                        Valid = DirectoryWritable(workingDir);
+                        break;
+                    case Mode.List:
+                        Valid = true;
+                        break;
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -589,20 +638,6 @@ namespace x509CryptoExe
             }
         }
 
-        public string GetArgument(string[] args, int currentOffset)
-        {
-
-        }
-
-        public bool Match(string currentArg, string pattern)
-        {
-
-        }
-
-        public bool Match(string currentArg, string[] possibilities)
-        {
-
-        }
 
         private ContentType GetContentType(string currentArg)
         {
@@ -614,49 +649,160 @@ namespace x509CryptoExe
                 return ContentType.Unknown;
         }
 
-        private bool CheckThumbprint(string[] args, string[] setting_type, ref string thumbprint)
-        {
-
-        }
-
         private bool CheckStore(string[] args, string[] setting_type, ref CertStoreLocation certStore)
         {
-
+            try
+            {
+                if (Match(args[offset], setting_type))
+                {
+                    certStore = x509Utils.GetStoreLocation(NextArgument(args));
+                    return true;
+                }
+                return false;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new Exception(@"Wrong number of arguments");
+            }
         }
 
-        private bool CheckCipherText(string[] args)
+        private bool CheckCiphertext(string[] args)
         {
+            if (CheckCryptoInput(args, SETTING_CRYPTO_CIPHERTEXT, Mode.DecryptFile, ref cipherText))
+            {
+                if (mode == Mode.DecryptFile)
+                    output = GetPlaintextFileName(cipherText);
+                return true;
+            }
+            else
+                return false;
+        }
 
+        private bool CheckCryptoInput(string[] args, string[] setting_type, Mode fileMode, ref string field)
+        {
+            if (Match(args[offset], setting_type))
+            {
+                field = NextArgument(args);
+
+                if (mode == fileMode)
+                {
+                    if (!File.Exists(field))
+                        throw new FileNotFoundException(string.Format("\"{0}\": Path does not exist", field));
+                }
+                return true;
+            }
+            return false;
         }
 
         private bool CheckPlainText(string[] args)
         {
-
+            if (CheckCryptoInput(args, SETTING_CRYPTO_PLAINTEXT, Mode.EncryptFile, ref plainText))
+            {
+                if (mode == Mode.EncryptFile)
+                    output = GetCipherTextFileName(plainText);
+                return true;
+            }
+            else
+                return false;
         }
 
         private bool CheckOutFile(string[] args)
         {
+            if (Match(args[offset], SETTING_GENERAL_OUT))
+            {
+                output = NextArgument(args);
 
+                if (Match(output, SETTING_CRYPTO_CLIPBOARD))
+                    UseClipboard = true;
+                else
+                {
+                    if (!IsPathValid(output))
+                        throw new Exception(string.Format("\"{0}\": path contains 1 or more invalid characters.", output));
+                }
+                return true;
+            }
+
+            return false;
         }
 
         private bool CheckInput(string[] args)
         {
+            if (Match(args[offset], SETTING_GENERAL_IN))
+            {
+                input = NextArgument(args);
 
+                if (mode == Mode.DecryptFile || mode == Mode.EncryptFile || mode == Mode.ReEncryptFile || mode == Mode.ImportCert)
+                {
+                    if (!File.Exists(input))
+                        throw new Exception(string.Format("\"{0}\": file not found", input));
+                }
+
+                if (!GotOutput)
+                {
+                    switch (mode)
+                    {
+                        case Mode.EncryptFile:
+                            output = GetCipherTextFileName(input);
+                            GotOutput = true;
+                            break;
+                        case Mode.DecryptFile:
+                            output = GetPlaintextFileName(input);
+                            GotOutput = true;
+                            break;
+                    }
+                }
+                return true;
+            }
+            else
+                return false;
         }
 
         private bool CheckSetting(string[] args, string[] setting_type, ref string setting)
         {
-
+            if (Match(args[offset], setting_type))
+            {
+                setting = NextArgument(args);
+                return true;
+            }
+            return false;
         }
 
-        private void AddExtension(string extension, ref string fileName)
+        public void PeekCert(string thumbprint, CertStoreLocation storeLocation)
         {
+            if (!x509CryptoAgent.thumbprintFound(thumbprint, storeLocation))
+                throw new Exception(string.Format("Certificate with thumbprint \"{0}\" was not found in the {1} certificate store", thumbprint, storeLocation.Name()));
+        }
 
+        private string NextArgument(string[] args)
+        {
+            try
+            {
+                return args[++offset];
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new Exception(@"Wrong number of arguments");
+            }
         }
 
         #endregion
 
         #region Static Methods
+
+        private static bool Match(string expression, string[] patternSet)
+        {
+            foreach(string possibility in patternSet)
+            {
+                if (Match(expression, possibility))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool Match(string expression, string pattern)
+        {
+            return expression.SameAs(pattern);
+        }
 
         private static string GetUsage(string syntax, Dictionary<string,string> items, bool isCommands)
         {
@@ -691,6 +837,68 @@ namespace x509CryptoExe
             }
 
             return padding;
+        }
+
+        private static string GetArgument(string[] args, int offset)
+        {
+            try
+            {
+                return args[offset];
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new Exception(@"Wrong number of arguments");
+            }
+        }
+
+        private static bool IsPathValid(string path)
+        {
+            try
+            {
+                Path.GetFullPath(path);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static void AddExtension(string ext, ref string path)
+        {
+            if (Path.GetExtension(path).SameAs(ext))
+                return;
+            path = path + ext;
+        }
+
+        private static string GetCipherTextFileName(string path)
+        {
+            if (Path.GetExtension(path).SameAs(CRYPTO_ENCRYPTED_FILE_EXT))
+                return path;
+            else
+                return path + CRYPTO_ENCRYPTED_FILE_EXT;
+        }
+
+        private static string GetPlaintextFileName(string path)
+        {
+            string ext = Path.GetExtension(path);
+            if (ext.SameAs(CRYPTO_ENCRYPTED_FILE_EXT))
+                return path.Remove(path.LastIndexOf(ext), ext.Length);
+            else
+                return path + CRYPTO_DECRYPTED_FILE_EXT;
+        }
+
+        private static bool DirectoryWritable(string path)
+        {
+            try
+            {
+                DirectorySecurity ds = Directory.GetAccessControl(path);
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
         }
 
         #endregion

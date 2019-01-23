@@ -647,11 +647,11 @@ namespace x509Crypto
         /// <param name="certThumbprint">The certificate thumbprint value to search for (case-insensitive)</param>
         /// <param name="storeLocation">The certificate store location in which to search (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
         /// <returns>True or False depending upon whether the certificate and corresponding private key was found in the certificate store</returns>
-        public static bool thumbprintFound(string certThumbprint, CertStore certStore)
+        public static bool thumbprintFound(string certThumbprint, CertStoreLocation certStore)
         {
             certThumbprint = x509Utils.FormatThumbprint(certThumbprint);
 
-            X509Store store = new X509Store(StoreName.My, certStore.Location);
+            X509Store store = new X509Store(StoreName.My, x509Utils.GetStoreLocation(certStore));
             store.Open(OpenFlags.ReadOnly);
             foreach (X509Certificate2 cert in store.Certificates)
             {
@@ -661,7 +661,7 @@ namespace x509Crypto
                         return true;
                     else
                     {
-                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, certStore.Name));
+                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, certStore.GetEnumDescription()));
                         return false;
                     }
                 }
