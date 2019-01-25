@@ -13,23 +13,5 @@ namespace x509Crypto
         {
             return string.Equals(expression1.Trim(), expression2.Trim(), StringComparison.OrdinalIgnoreCase);
         }
-
-        public static StoreLocation Location(this CertStoreLocation certStore)
-        {
-            switch(certStore)
-            {
-                case CertStoreLocation.CurrentUser:
-                    return StoreLocation.CurrentUser;
-                case CertStoreLocation.LocalMachine:
-                    return StoreLocation.LocalMachine;
-                default:
-                    throw new Exception(@"Invalid CertStoreLocation");
-            }
-        }
-
-        public static string Name(this CertStoreLocation certStore)
-        {
-            return certStore.GetEnumDescription();
-        }
     }
 }

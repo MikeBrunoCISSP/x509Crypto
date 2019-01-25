@@ -343,7 +343,7 @@ namespace x509CryptoExe
                       pass,
                       usage;
 
-        public CertStoreLocation storeLocation = CertStoreLocation.CurrentUser;
+        public CertStore storeLocation = CertStore.CurrentUser;
         public Mode mode = Mode.Unknown;
         private int offset = 0;
 
@@ -369,7 +369,7 @@ namespace x509CryptoExe
 
         //ReEncrypt
         public string oldThumbprint;
-        public CertStoreLocation oldStoreLocation = CertStoreLocation.CurrentUser;
+        public CertStore oldStoreLocation = CertStore.CurrentUser;
         public bool GotOldThumbprint { get; set; } = false;
         public bool GotNewThumbprint { get; set; } = false;
         public bool GotOldLocation { get; set; } = false;
@@ -649,13 +649,13 @@ namespace x509CryptoExe
                 return ContentType.Unknown;
         }
 
-        private bool CheckStore(string[] args, string[] setting_type, ref CertStoreLocation certStore)
+        private bool CheckStore(string[] args, string[] setting_type, ref CertStore certStore)
         {
             try
             {
                 if (Match(args[offset], setting_type))
                 {
-                    certStore = x509Utils.GetStoreLocation(NextArgument(args));
+                    certStore = CertStore.GetByName(NextArgument(args));
                     return true;
                 }
                 return false;
@@ -767,10 +767,10 @@ namespace x509CryptoExe
             return false;
         }
 
-        public void PeekCert(string thumbprint, CertStoreLocation storeLocation)
+        public void PeekCert(string thumbprint, CertStore storeLocation)
         {
             if (!x509CryptoAgent.thumbprintFound(thumbprint, storeLocation))
-                throw new Exception(string.Format("Certificate with thumbprint \"{0}\" was not found in the {1} certificate store", thumbprint, storeLocation.Name()));
+                throw new Exception(string.Format("Certificate with thumbprint \"{0}\" was not found in the {1} certificate store", thumbprint, storeLocation.Name));
         }
 
         private string NextArgument(string[] args)

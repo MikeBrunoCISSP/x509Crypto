@@ -8,6 +8,43 @@ using System.Threading.Tasks;
 
 namespace x509Crypto
 {
+
+    /// <summary>
+    /// Supported logging levels
+    /// </summary>
+    public enum Criticality
+    {
+        /// <summary>
+        /// Only critical errors will be logged
+        /// </summary>
+        CRITICAL = 0,
+
+        /// <summary>
+        /// All errors will be logged
+        /// </summary>
+        ERROR = 1,
+
+        /// <summary>
+        /// All errors and warnings will be logged.
+        /// </summary>
+        WARNING = 2,
+
+        /// <summary>
+        /// Informational messages, errors and warnings will be logged
+        /// </summary>
+        INFO = 3,
+
+        /// <summary>
+        /// Verbose logging (for diagnostic purposes)
+        /// </summary>
+        VERBOSE = 4,
+
+        /// <summary>
+        /// Almost everything is logged (mostly for public debugging purposes)
+        /// </summary>
+        MASSIVE = 5
+    }
+
     /// <summary>
     /// A static class which provides access to an activity log maintained by the x509Crypto module.  Logging verbosity is configurable
     /// </summary>
@@ -34,48 +71,12 @@ namespace x509Crypto
         private static string eventSource = PREFERRED_EVENT_LOG_SOURCE;
         private static bool eventSourceEstablished = false;
 
-        private static Level level = Level.INFO;
-        private static Level messageLevel = Level.INFO;
+        private static Criticality level = Criticality.INFO;
+        private static Criticality messageLevel = Criticality.INFO;
 
         private static string contents = string.Empty;
 
         #region Public-facing
-
-        /// <summary>
-        /// Supported logging levels
-        /// </summary>
-        public enum Level
-        {
-            /// <summary>
-            /// Only critical errors will be logged
-            /// </summary>
-            CRITICAL = 0,
-
-            /// <summary>
-            /// All errors will be logged
-            /// </summary>
-            ERROR = 1,
-
-            /// <summary>
-            /// All errors and warnings will be logged.
-            /// </summary>
-            WARNING = 2,
-
-            /// <summary>
-            /// Informational messages, errors and warnings will be logged
-            /// </summary>
-            INFO = 3,
-
-            /// <summary>
-            /// Verbose logging (for diagnostic purposes)
-            /// </summary>
-            VERBOSE = 4,
-
-            /// <summary>
-            /// Almost everything is logged (mostly for internal debugging purposes)
-            /// </summary>
-            MASSIVE = 5
-        }
 
         /// <summary>
         /// Gets the current conents of the log
@@ -90,7 +91,7 @@ namespace x509Crypto
         /// Changes the current logging verbosity
         /// </summary>
         /// <param name="newLevel">The desired logging level as specified by a value in the "Level" enumeration</param>
-        public static void SetLevel(Level newLevel)
+        public static void SetLevel(Criticality newLevel)
         {
             level = newLevel;
         }
@@ -106,22 +107,22 @@ namespace x509Crypto
             switch (sanitizedLvl)
             {
                 case "CRITICAL":
-                    level = Level.CRITICAL;
+                    level = Criticality.CRITICAL;
                     break;
                 case "ERROR":
-                    level = Level.ERROR;
+                    level = Criticality.ERROR;
                     break;
                 case "WARNING":
-                    level = Level.WARNING;
+                    level = Criticality.WARNING;
                     break;
                 case "INFO":
-                    level = Level.INFO;
+                    level = Criticality.INFO;
                     break;
                 case "VERBOSE":
-                    level = Level.VERBOSE;
+                    level = Criticality.VERBOSE;
                     break;
                 case "MASSIVE":
-                    level = Level.MASSIVE;
+                    level = Criticality.MASSIVE;
                     break;
             }
         }
@@ -134,32 +135,193 @@ namespace x509Crypto
             contents = string.Empty;
         }
 
+        public static void Critical(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = Criticality.CRITICAL;
+            string message = TimeStamp() + LevelLabel(Criticality.CRITICAL) + TypeLabel(messageType) + text;
+            Write(Criticality.CRITICAL, message, writeToEventLog);
+
+            if (writeToScreen)
+                Console.WriteLine(text);
+        }
+
+        public static void Error(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = Criticality.ERROR;
+            string message;
+
+            if (level >= messageLevel)
+            {
+                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
+                Write(Criticality.ERROR, message, writeToEventLog);
+            }
+
+            if (writeToScreen)
+                Console.WriteLine(text);
+        }
+
+        public static void Warning(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = Criticality.WARNING;
+            string message;
+
+            if (level >= messageLevel)
+            {
+                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
+                Write(Criticality.WARNING, message, writeToEventLog);
+            }
+
+            if (writeToScreen)
+                Console.WriteLine(text);
+        }
+
+        public static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = Criticality.INFO;
+            string message;
+
+            if (level >= messageLevel)
+            {
+                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
+                Write(Criticality.INFO, message, writeToEventLog);
+            }
+
+            if (writeToScreen)
+                Console.WriteLine(text);
+        }
+
+        public static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = Criticality.VERBOSE;
+            string message;
+
+            if (level >= messageLevel)
+            {
+                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
+                Write(Criticality.VERBOSE, message, writeToEventLog);
+            }
+
+
+            if (writeToScreen)
+                Console.WriteLine(text);
+        }
+
+
+        public static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = Criticality.MASSIVE;
+            string message;
+
+            if (level >= messageLevel)
+            {
+                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
+                Write(Criticality.MASSIVE, message, writeToEventLog);
+            }
+
+            if (writeToScreen)
+                Console.WriteLine(text);
+        }
+
+        public static void Echo(string text, Criticality lvl = Criticality.INFO, bool indent = true)
+        {
+            messageLevel = lvl;
+
+            if (level >= messageLevel)
+            {
+                string message = (indent ? INDENT.PadRight(maxTypeLength + 2) + text : text);
+                AppendLog(message);
+            }
+        }
+
+        public static void Exception(Exception ex, Criticality lvl = Criticality.ERROR, string messageType = DEFAULT_MESSAGE_TYPE, string text = @"An exception occurred", bool writeToEventLog = false, bool writeToScreen = false)
+        {
+            messageLevel = lvl;
+
+            if (level >= messageLevel)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(TimeStamp() + LevelLabel(lvl) + TypeLabel(messageType) + text);
+                string[] lines = ex.ToString().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string line in lines)
+                    sb.AppendLine(INDENT.PadRight(maxTypeLength + 2) + line);
+                Write(Criticality.CRITICAL, sb.ToString(), writeToEventLog);
+
+                if (writeToScreen)
+                    Console.WriteLine(sb.ToString());
+
+                sb = null;
+            }
+        }
+
+        public static void Linefeed(Criticality lvl = Criticality.INFO)
+        {
+            messageLevel = lvl;
+            if (level >= messageLevel)
+                AppendLog(string.Empty);
+        }
+
+        public static void LogCommandResults(string command, string stdOut, string stdErr)
+        {
+            string fullMessage;
+
+            if (string.IsNullOrWhiteSpace(stdOut))
+                stdOut = @"NULL";
+            if (string.IsNullOrWhiteSpace(stdErr))
+                stdErr = @"NULL";
+
+            fullMessage = string.Format("Command: {0}\r\n\r\nStandardOutput:\r\n{1}\r\n\r\nStandard Error:\r\n{2}", command, stdOut, stdErr);
+            Verbose(string.Format("Command Execution Summary:\r\n{0}", fullMessage));
+            WriteToEventLog(fullMessage);
+        }
+
+        public static void WriteToEventLog(string message, EventLogEntryType entryType = EventLogEntryType.Information)
+        {
+            if (!eventSourceEstablished)
+            {
+                if (!EventLogSourceExists(PREFERRED_EVENT_LOG_SOURCE))
+                {
+                    try
+                    {
+                        EventLog.CreateEventSource(PREFERRED_EVENT_LOG_SOURCE, EVENT_LOG);
+                    }
+                    catch
+                    {
+                        eventSource = FALLBACK_EVENT_LOG_SOURCE;
+                    }
+                }
+
+                eventSourceEstablished = true;
+            }
+
+            EventLog.WriteEntry(eventSource, message, entryType, EVENT_ID);
+        }
+
         #endregion
 
         #region Private Methods
 
-        private static string LevelLabel(Level lvl)
+        private static string LevelLabel(Criticality lvl)
         {
             string label = string.Empty;
 
             switch (lvl)
             {
-                case Level.CRITICAL:
+                case Criticality.CRITICAL:
                     label = @"<CRIT>";
                     break;
-                case Level.ERROR:
+                case Criticality.ERROR:
                     label = @"<ERROR>";
                     break;
-                case Level.WARNING:
+                case Criticality.WARNING:
                     label = @"<WARN >";
                     break;
-                case Level.INFO:
+                case Criticality.INFO:
                     label = @"<INFO >";
                     break;
-                case Level.VERBOSE:
+                case Criticality.VERBOSE:
                     label = @"<VERB >";
                     break;
-                case Level.MASSIVE:
+                case Criticality.MASSIVE:
                     label = @"<MASS >";
                     break;
             }
@@ -184,18 +346,18 @@ namespace x509Crypto
             contents = @"\r\n" + message;
         }
 
-        private static void Write(Level level, string message, bool writeToEventLog)
+        private static void Write(Criticality level, string message, bool writeToEventLog)
         {
             AppendLog(message);
 
             if (writeToEventLog)
             {
                 EventLogEntryType entryType = EventLogEntryType.Information;
-                if (level <= Level.ERROR)
+                if (level <= Criticality.ERROR)
                     entryType = EventLogEntryType.Error;
                 else
                 {
-                    if (level == Level.WARNING)
+                    if (level == Criticality.WARNING)
                         entryType = EventLogEntryType.Warning;
                 }
 
@@ -212,143 +374,7 @@ namespace x509Crypto
 
         #endregion
 
-        #region Internal Methods
-
-        internal static void Critical(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
-        {
-            messageLevel = Level.CRITICAL;
-            string message = TimeStamp() + LevelLabel(Level.CRITICAL) + TypeLabel(messageType) + text;
-            Write(Level.CRITICAL, message, writeToEventLog);
-
-        }
-
-        internal static void Error(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
-        {
-            messageLevel = Level.ERROR;
-            string message;
-
-            if (level >= messageLevel)
-            {
-                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(Level.ERROR, message, writeToEventLog);
-            }
-        }
-
-        internal static void Warning(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
-        {
-            messageLevel = Level.WARNING;
-            string message;
-
-            if (level >= messageLevel)
-            {
-                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(Level.WARNING, message, writeToEventLog);
-            }
-        }
-
-        internal static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
-        {
-            messageLevel = Level.INFO;
-            string message;
-
-            if (level >= messageLevel)
-            {
-                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(Level.INFO, message, writeToEventLog);
-            }
-        }
-
-        internal static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
-        {
-            messageLevel = Level.VERBOSE;
-            string message;
-
-            if (level >= messageLevel)
-            {
-                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(Level.VERBOSE, message, writeToEventLog);
-            }
-        }
-
-
-        internal static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false)
-        {
-            messageLevel = Level.MASSIVE;
-            string message;
-
-            if (level >= messageLevel)
-            {
-                message = TimeStamp() + LevelLabel(messageLevel) + TypeLabel(messageType) + text;
-                Write(Level.MASSIVE, message, writeToEventLog);
-            }
-        }
-
-        internal static void Echo(string text, Level lvl = Level.INFO, bool indent = true)
-        {
-            messageLevel = lvl;
-
-            if (level >= messageLevel)
-            {
-                string message = (indent ? INDENT.PadRight(maxTypeLength + 2) + text : text);
-                AppendLog(message);
-            }
-        }
-
-        internal static void Exception(Exception ex, Level lvl = Level.ERROR, string messageType = DEFAULT_MESSAGE_TYPE, string text = @"An exception occurred")
-        {
-            messageLevel = lvl;
-
-            if (level >= messageLevel)
-            {
-                AppendLog(TimeStamp() + LevelLabel(lvl) + TypeLabel(messageType) + text);
-                string[] lines = ex.ToString().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string line in lines)
-                    Echo(line, lvl);
-            }
-        }
-
-        internal static void Linefeed(Level lvl = Level.INFO)
-        {
-            messageLevel = lvl;
-            if (level >= messageLevel)
-                AppendLog(string.Empty);
-        }
-
-        internal static void LogCommandResults(string command, string stdOut, string stdErr)
-        {
-            string fullMessage;
-
-            if (string.IsNullOrWhiteSpace(stdOut))
-                stdOut = @"NULL";
-            if (string.IsNullOrWhiteSpace(stdErr))
-                stdErr = @"NULL";
-
-            fullMessage = string.Format("Command: {0}\r\n\r\nStandardOutput:\r\n{1}\r\n\r\nStandard Error:\r\n{2}", command, stdOut, stdErr);
-            Verbose(string.Format("Command Execution Summary:\r\n{0}", fullMessage));
-            WriteToEventLog(fullMessage);
-        }
-
-        internal static void WriteToEventLog(string message, EventLogEntryType entryType = EventLogEntryType.Information)
-        {
-            if (!eventSourceEstablished)
-            {
-                if (!EventLogSourceExists(PREFERRED_EVENT_LOG_SOURCE))
-                {
-                    try
-                    {
-                        EventLog.CreateEventSource(PREFERRED_EVENT_LOG_SOURCE, EVENT_LOG);
-                    }
-                    catch
-                    {
-                        eventSource = FALLBACK_EVENT_LOG_SOURCE;
-                    }
-                }
-
-                eventSourceEstablished = true;
-            }
-
-            EventLog.WriteEntry(eventSource, message, entryType, EVENT_ID);
-        }
+        #region public Methods
 
         private static bool EventLogSourceExists(string sourceToCheck)
         {
