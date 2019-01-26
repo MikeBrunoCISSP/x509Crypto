@@ -216,7 +216,135 @@ namespace x509Crypto
                 throw ex;
             }
         }
-             
+
+        /// <summary>
+        /// Exports the certificate and public/private key pair corresponding to the specified certificate thumbprint to a PKCS#12 bundle written to the specified file path
+        /// </summary>
+        /// <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
+        /// <param name="storeLocation">Certificate store location where the specified certificate and private key are located (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
+        /// <param name="exportPath">Fully-qualified path to where the PKCS#12 bundle file should be written (a ".pfx" file extension will be added if no file extension is detected)</param>
+        /// <param name="password">Password to protect the private key once stored in the PKCS#12 bundle file</param>
+        /// <returns>The fully-qualified path to where the PKCS#12 bundle file was ultimately written</returns>
+        public static string ExportPFX(string certThumbprint, CertStore certStore, string exportPath, string password)
+        {
+            if (!Path.HasExtension(exportPath))
+                exportPath += @".pfx";
+
+            if (File.Exists(exportPath))
+                File.Delete(exportPath);
+
+            certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
+            x509CryptoLog.Massive(string.Format("Sanitized certificate thumbprint: {0}", certThumbprint));
+
+            X509Store store = new X509Store(StoreName.My, certStore.Location);
+            store.Open(OpenFlags.ReadOnly);
+            foreach (X509Certificate2 cert in store.Certificates)
+            {
+                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] certBytes = cert.Export(X509ContentType.Pkcs12, password);
+                    File.WriteAllBytes(exportPath, certBytes);
+                    x509Utils.VerifyFile(exportPath);
+                    return exportPath;
+                }
+            }
+
+            throw new CertificateNotFoundException(certThumbprint, certStore);
+        }
+
+        /// <summary>
+        /// Exports the certificate corresponding to the specified certificate thumbprint to a Base64-encoded text file
+        /// </summary>
+        /// <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
+        /// <param name="storeLocation">Certificate store location where the specified certificate is located (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
+        /// <param name="exportPath">Fully-qualified path to where the Base64-encoded file should be written (a ".cer" file extension will be added if no file extension is detected)</param>
+        /// <returns>The fully-qualified path to where the Base64-encoded certificate file was ultimately written</returns>
+        public static string ExportCert(string certThumbprint, CertStore certStore, string exportPath)
+        {
+            if (!Path.HasExtension(exportPath))
+                exportPath += @".cer";
+
+            if (!File.Exists(exportPath))
+                File.Delete(exportPath);
+
+            certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
+            X509Store store = new X509Store(StoreName.My, certStore.Location);
+            store.Open(OpenFlags.ReadOnly);
+
+            foreach (X509Certificate2 cert in store.Certificates)
+            {
+                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase))
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine(@"-----BEGIN CERTIFICATE-----");
+                    sb.AppendLine(Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
+                    sb.AppendLine(@"-----END CERTIFICATE-----");
+                    File.WriteAllText(exportPath, sb.ToString());
+                    sb = null;
+
+                    VerifyFile(exportPath);
+
+                    try
+                    {
+                        X509Certificate2 test = new X509Certificate2(exportPath);
+                    }
+                    catch (CryptographicException ex)
+                    {
+                        x509CryptoLog.Exception(ex, Criticality.ERROR, string.Format("Certificate with thumbprint {0} was exported to path \"{1}\" but the file seems to be corrupt and unusable", certThumbprint, exportPath));
+                        throw ex;
+                    }
+
+                    return exportPath;
+                }
+            }
+
+            throw new CertificateNotFoundException(certThumbprint, certStore);
+        }
+
+        /// <summary>
+        /// Overwrites a file (as stored on disk) with random bits in order to prevent forensic recovery of the data
+        /// </summary>
+        /// <param name="filePath">The fully-qualified path of the file to wipe from disk</param>
+        /// <param name="timesToWrite">The number of times to overwrite the disk sectors where the file is/was stored</param>
+        public static void WipeFile(string filePath, int timesToWrite)
+        {
+            if (File.Exists(filePath))
+            {
+                File.SetAttributes(filePath, FileAttributes.Normal);
+                double sectors = Math.Ceiling(new FileInfo(filePath).Length / 512.0);
+                byte[] dummyBuffer = new byte[512];
+                RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+
+                FileStream inputStream = new FileStream(filePath, FileMode.Open);
+                for (int currentPass = 0; currentPass < timesToWrite; currentPass++)
+                {
+                    inputStream.Position = 0;
+                    for (int sectorsWritten = 0; sectorsWritten < sectors; sectorsWritten++)
+                    {
+                        rng.GetBytes(dummyBuffer);
+                        inputStream.Write(dummyBuffer, 0, dummyBuffer.Length);
+                    }
+                }
+
+                inputStream.SetLength(0);
+                inputStream.Close();
+
+                DateTime dt = new DateTime(2037, 1, 1, 0, 0, 0);
+                File.SetCreationTime(filePath, dt);
+                File.SetLastAccessTime(filePath, dt);
+                File.SetLastWriteTime(filePath, dt);
+
+                File.SetCreationTimeUtc(filePath, dt);
+                File.SetLastAccessTimeUtc(filePath, dt);
+                File.SetLastWriteTimeUtc(filePath, dt);
+
+                File.Delete(filePath);
+            }
+
+            else
+                throw new FileNotFoundException("The file could not be wiped because the specified path could not be found", filePath);
+        }
+
         #endregion
 
         #region Internal Methods
