@@ -9,6 +9,18 @@ using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
 using System.Globalization;
 using System.Security.Cryptography;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.Sec;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
+using System.Security.Principal;
 
 namespace x509Crypto
 {
@@ -18,6 +30,13 @@ namespace x509Crypto
         #region Constants and Static Fields
 
         private static string allowedThumbprintCharsPattern = "[^a-fA-F0-9]";
+        private static SecureRandom secureRandom = new SecureRandom();
+
+        /// <summary>
+        /// Indicates whether the invoking user is a local administrator on the system
+        /// </summary>
+        public static readonly bool INVOKER_IS_ADMINISTRATOR = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+
 
         #endregion
 
@@ -256,7 +275,7 @@ namespace x509Crypto
         /// Exports the certificate corresponding to the specified certificate thumbprint to a Base64-encoded text file
         /// </summary>
         /// <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
-        /// <param name="storeLocation">Certificate store location where the specified certificate is located (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
+        /// <param name="storeLocation">Certificate store location where the specified certificate is located (either CurrentUser or LocalMachine)</param>
         /// <param name="exportPath">Fully-qualified path to where the Base64-encoded file should be written (a ".cer" file extension will be added if no file extension is detected)</param>
         /// <returns>The fully-qualified path to where the Base64-encoded certificate file was ultimately written</returns>
         public static string ExportCert(string certThumbprint, CertStore certStore, string exportPath)
@@ -299,6 +318,34 @@ namespace x509Crypto
             }
 
             throw new CertificateNotFoundException(certThumbprint, certStore);
+        }
+
+        /// <summary>
+        /// Creates a self-signed X509 Certificate and adds it to the indicated certificate store
+        /// </summary>
+        /// <param name="name">The common name of the certificate subject (e.g. "CN=Mike")</param>
+        /// <param name="keyLength">The desired size of the private key (1024, 2048, 496, ...)</param>
+        /// <param name="yearsValid">The number of years that the certificate should be valid for</param>
+        /// <param name="certStore">The certificate store where the new certificate should be placed (either CurrentUser or LocalMachine)</param>
+        /// <param name="thumbprint">Stores the thumbprint of the generated certificate after the method terminates</param>
+        /// <returns></returns>
+        public static void MakeCert(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
+        {
+            X509Certificate2 cert = GenerateCertificate(name, keyLength, yearsValid);
+            thumbprint = cert.Thumbprint;
+            X509Store store = new X509Store(StoreName.My, certStore.Location);
+            store.Open(OpenFlags.ReadWrite);
+            store.Add(cert);
+
+            bool added = false;
+            foreach (X509Certificate2 certInStore in store.Certificates)
+            {
+                if (certInStore.Thumbprint == cert.Thumbprint)
+                    added = true;
+            }
+
+            if (!added)
+                throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
         }
 
         /// <summary>
@@ -345,6 +392,36 @@ namespace x509Crypto
                 throw new FileNotFoundException("The file could not be wiped because the specified path could not be found", filePath);
         }
 
+        /// <summary>
+        /// Lists the thumbprint value for each certificate in the specified store location which include "Key Encipherment" in its Key Usage extension
+        /// </summary>
+        /// <param name="storeLocation">Store location from which to list certificate details (Either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
+        /// <param name="allowExpired">If set to True, expired certificates will be included in the output (Note that .NET will not perform cryptographic operations using a certificate which is not within its validity period)</param>
+        /// <returns></returns>
+        public static string listCerts(CertStore certStore, bool allowExpired)
+        {
+            string output = "Key Encipherment Certificates found:\r\n\r\n";
+            bool firstAdded = false;
+
+            X509Store store = new X509Store(certStore.Location);
+            store.Open(OpenFlags.ReadOnly);
+            foreach (X509Certificate2 cert in store.Certificates)
+            {
+                if (x509CryptoAgent.IsUsable(cert, allowExpired))
+                {
+                    firstAdded = true;
+                    output += cert.Subject + "\t" +
+                              string.Format("Expires {0}", cert.NotAfter.ToShortDateString()) + "\t" +
+                              cert.Thumbprint + "\r\n";
+                }
+            }
+
+            if (!firstAdded)
+                output += "None.\r\n";
+
+            return output;
+        }
+
         #endregion
 
         #region Internal Methods
@@ -388,6 +465,50 @@ namespace x509Crypto
                 }
             }
         }
+
+        #region MakeCert Methods
+
+        private static AsymmetricCipherKeyPair GenerateRsaKeyPair(int length)
+        {
+            var keygenParam = new KeyGenerationParameters(secureRandom, length);
+
+            var keyGenerator = new RsaKeyPairGenerator();
+            keyGenerator.Init(keygenParam);
+            return keyGenerator.GenerateKeyPair();
+        }
+
+        private static X509Certificate2 GenerateCertificate(string name, int keyLength, int yearsValid)
+        {
+            AsymmetricCipherKeyPair keyPair = GenerateRsaKeyPair(keyLength);
+            X509Name issuer = new X509Name(name);
+            X509Name subject = new X509Name(name);
+
+            ISignatureFactory signatureFactory;
+            if (keyPair.Private is ECPrivateKeyParameters)
+            {
+                signatureFactory = new Asn1SignatureFactory(
+                    X9ObjectIdentifiers.ECDsaWithSha256.ToString(),
+                    keyPair.Private);
+            }
+            else
+            {
+                signatureFactory = new Asn1SignatureFactory(
+                    PkcsObjectIdentifiers.Sha256WithRsaEncryption.ToString(),
+                    keyPair.Private);
+            }
+
+            var certGenerator = new X509V3CertificateGenerator();
+            certGenerator.SetIssuerDN(issuer);
+            certGenerator.SetSubjectDN(subject);
+            certGenerator.SetSerialNumber(BigInteger.ValueOf(1));
+            certGenerator.SetNotAfter(DateTime.UtcNow.AddHours(1));
+            certGenerator.SetNotBefore(DateTime.UtcNow);
+            certGenerator.SetPublicKey(keyPair.Public);
+            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyEncipherment));
+            return new X509Certificate2(certGenerator.Generate(signatureFactory).GetEncoded());
+        }
+
+        #endregion
 
         #endregion
     }

@@ -24,8 +24,6 @@ namespace x509Crypto
 
         const bool LEAVE_MEMSTREAM_OPEN = true;
 
-        internal static bool INVOKER_IS_ADMINISTRATOR = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-
         #endregion
 
         #region Member Fields
@@ -140,7 +138,7 @@ namespace x509Crypto
             {
                 if (string.Equals(cert.Thumbprint, Thumbprint, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (cert.HasPrivateKey & isUsable(cert, false))
+                    if (cert.HasPrivateKey & IsUsable(cert, false))
                         colletion.Add(cert);
                 }
             }
@@ -670,37 +668,7 @@ namespace x509Crypto
             return false;
         }
 
-        /// <summary>
-        /// Lists the thumbprint value for each certificate in the specified store location which include "Key Encipherment" in its Key Usage extension
-        /// </summary>
-        /// <param name="storeLocation">Store location from which to list certificate details (Either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
-        /// <param name="allowExpired">If set to True, expired certificates will be included in the output (Note that .NET will not perform cryptographic operations using a certificate which is not within its validity period)</param>
-        /// <returns></returns>
-        public static string listCerts(CertStore certStore, bool allowExpired)
-        {
-            string output = "Key Encipherment Certificates found:\r\n\r\n";
-            bool firstAdded = false;
-
-            X509Store store = new X509Store(certStore.Location);
-            store.Open(OpenFlags.ReadOnly);
-            foreach(X509Certificate2 cert in store.Certificates)
-            {
-                if (isUsable(cert, allowExpired))
-                {
-                    firstAdded = true;
-                    output += cert.Subject + "\t" +
-                              string.Format("Expires {0}", cert.NotAfter.ToShortDateString()) + "\t" +
-                              cert.Thumbprint + "\r\n";
-                }
-            }
-
-            if (!firstAdded)
-                output += "None.\r\n";
-
-            return output;
-        }
-
-        private static bool isUsable(X509Certificate2 cert, bool allowExpired)
+        internal static bool IsUsable(X509Certificate2 cert, bool allowExpired)
         {
             foreach (X509Extension extension in cert.Extensions)
             {

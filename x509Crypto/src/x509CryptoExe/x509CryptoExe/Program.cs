@@ -29,8 +29,50 @@ namespace x509CryptoExe
 
         #region Entry Point
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            try
+            {
+                config = new Config(args);
+            }
+            catch (Exception ex)
+            {
+                x509CryptoLog.Exception(ex, Criticality.CRITICAL, @"Config");
+                return RESULT_EXCEPTION;
+            }
+
+            if (!config.Valid)
+                return -1;
+
+            switch(config.mode)
+            {
+                case Mode.EncryptText:
+                    return EncryptText();
+                case Mode.ReEncryptText:
+                    return ReEncryptText();
+                case Mode.EncryptFile:
+                    return EncryptFile();
+                case Mode.ReEncryptFile:
+                    return ReEncryptFile();
+                case Mode.DecryptText:
+                    return DecryptText();
+                case Mode.DecryptFile:
+                    return DecryptFile();
+                case Mode.ImportCert:
+                    return ImportPFX();
+                case Mode.ExportCert:
+                    return ExportCert();
+                case Mode.ExportPFX:
+                    return ExportPFX();
+                case Mode.List:
+                    return ListCerts();
+                case Mode.MakeCert:
+                    return MakeCert();
+                case Mode.Help:
+                    return RESULT_SUCCESS;
+                default:
+                    return RESULT_BAD_INPUT;
+            }
         }
 
         #endregion
@@ -209,6 +251,39 @@ namespace x509CryptoExe
                 x509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} was successfully exported to:\r\n{1}", config.thumbprint, config.output),
                                    messageType: MethodName(), writeToEventLog: true, writeToScreen: true);
                 return RESULT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                x509CryptoLog.Exception(ex, Criticality.CRITICAL, MethodName());
+                return RESULT_EXCEPTION;
+            }
+        }
+
+        static int ListCerts()
+        {
+            try
+            {
+                string certList = x509Utils.listCerts(config.storeLocation, config.IncludeExpired);
+                x509CryptoLog.Info(text: certList, messageType: MethodName(), writeToEventLog: true, writeToScreen: true);
+                return RESULT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                x509CryptoLog.Exception(ex, Criticality.CRITICAL, MethodName());
+                return RESULT_EXCEPTION;
+            }
+        }
+
+        static int MakeCert()
+        {
+            try
+            {
+                string newCertThumbprint = string.Empty;
+                x509Utils.MakeCert(config.MakeCert_Subject, config.MakeCert_KeyLength, config.MakeCert_YearsValid, config.storeLocation, out newCertThumbprint);
+                x509CryptoLog.Info(text: string.Format(@"\r\n\r\nCertificate with thumbprint {0} was added to the {1} store", newCertThumbprint, config.storeLocation.Name), 
+                                   messageType: MethodName(), writeToEventLog: true, writeToScreen: true);
+                return RESULT_SUCCESS;
+
             }
             catch (Exception ex)
             {

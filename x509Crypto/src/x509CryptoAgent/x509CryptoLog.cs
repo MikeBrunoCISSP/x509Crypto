@@ -135,7 +135,7 @@ namespace x509Crypto
             contents = string.Empty;
         }
 
-        public static void Critical(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Critical(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.CRITICAL;
             string message = TimeStamp() + LevelLabel(Criticality.CRITICAL) + TypeLabel(messageType) + text;
@@ -145,7 +145,7 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-        public static void Error(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Error(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.ERROR;
             string message;
@@ -160,7 +160,7 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-        public static void Warning(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Warning(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.WARNING;
             string message;
@@ -175,7 +175,7 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-        public static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.INFO;
             string message;
@@ -190,7 +190,7 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-        public static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.VERBOSE;
             string message;
@@ -207,7 +207,7 @@ namespace x509Crypto
         }
 
 
-        public static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.MASSIVE;
             string message;
@@ -233,7 +233,7 @@ namespace x509Crypto
             }
         }
 
-        public static void Exception(Exception ex, Criticality lvl = Criticality.ERROR, string messageType = DEFAULT_MESSAGE_TYPE, string text = @"An exception occurred", bool writeToEventLog = false, bool writeToScreen = false)
+        public static void Exception(Exception ex, Criticality lvl = Criticality.ERROR, string messageType = DEFAULT_MESSAGE_TYPE, string text = @"An exception occurred", bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = lvl;
 
