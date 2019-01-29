@@ -171,7 +171,7 @@ namespace x509Crypto
                 aesManaged.BlockSize = AES_BLOCK_SIZE;
                 aesManaged.Mode = CipherMode.CBC;
 
-                using (ICryptoTransform transform = aesManaged.CreateDecryptor())
+                using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
                     RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
                     byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());

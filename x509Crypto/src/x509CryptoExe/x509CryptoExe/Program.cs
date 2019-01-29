@@ -29,6 +29,7 @@ namespace x509CryptoExe
 
         #region Entry Point
 
+        [STAThread]
         static int Main(string[] args)
         {
             try
@@ -280,7 +281,7 @@ namespace x509CryptoExe
             {
                 string newCertThumbprint = string.Empty;
                 x509Utils.MakeCert(config.MakeCert_Subject, config.MakeCert_KeyLength, config.MakeCert_YearsValid, config.storeLocation, out newCertThumbprint);
-                x509CryptoLog.Info(text: string.Format(@"\r\n\r\nCertificate with thumbprint {0} was added to the {1} store", newCertThumbprint, config.storeLocation.Name), 
+                x509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} was added to the {1} store", newCertThumbprint, config.storeLocation.Name), 
                                    messageType: MethodName(), writeToEventLog: true, writeToScreen: true);
                 return RESULT_SUCCESS;
 

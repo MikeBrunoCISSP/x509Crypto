@@ -21,6 +21,7 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using System.Security.Principal;
+using Org.BouncyCastle.Pkcs;
 
 namespace x509Crypto
 {
@@ -331,22 +332,83 @@ namespace x509Crypto
         /// <returns></returns>
         public static void MakeCert(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
         {
-            X509Certificate2 cert = GenerateCertificate(name, keyLength, yearsValid);
-            thumbprint = cert.Thumbprint;
-            X509Store store = new X509Store(StoreName.My, certStore.Location);
-            store.Open(OpenFlags.ReadWrite);
-            store.Add(cert);
+            X509Certificate2 dotNetCert = null;
+            AsymmetricCipherKeyPair keyPair = GenerateRsaKeyPair(keyLength);
+            string formattedName = FormatX500(name);
+            X509Name issuer = new X509Name(formattedName);
+            X509Name subject = new X509Name(formattedName);
+
+            ISignatureFactory signatureFactory;
+            if (keyPair.Private is ECPrivateKeyParameters)
+            {
+                signatureFactory = new Asn1SignatureFactory(
+                    X9ObjectIdentifiers.ECDsaWithSha256.ToString(),
+                    keyPair.Private);
+            }
+            else
+            {
+                signatureFactory = new Asn1SignatureFactory(
+                    PkcsObjectIdentifiers.Sha256WithRsaEncryption.ToString(),
+                    keyPair.Private);
+            }
+
+            var certGenerator = new X509V3CertificateGenerator();
+            certGenerator.SetIssuerDN(issuer);
+            certGenerator.SetSubjectDN(subject);
+            certGenerator.SetSerialNumber(BigInteger.ValueOf(1));
+            certGenerator.SetNotAfter(DateTime.UtcNow.AddYears(yearsValid));
+            certGenerator.SetNotBefore(DateTime.UtcNow);
+            certGenerator.SetPublicKey(keyPair.Public);
+            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyEncipherment));
+            Org.BouncyCastle.X509.X509Certificate cert = certGenerator.Generate(signatureFactory);
+
+            var bouncyStore = new Pkcs12Store();
+            var certEntry = new X509CertificateEntry(cert);
+            string friendlyName = cert.SubjectDN.ToString();
+            bouncyStore.SetCertificateEntry(friendlyName, certEntry);
+            bouncyStore.SetKeyEntry(friendlyName, new AsymmetricKeyEntry(keyPair.Private), new[] { certEntry });
+            char[] pass = RandomPass();
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                bouncyStore.Save(stream, pass, secureRandom);
+                dotNetCert = new X509Certificate2(stream.ToArray(), new string(pass), X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                thumbprint = dotNetCert.Thumbprint;
+                stream.Close();
+            }
+
+            X509Store dotNetStore = new X509Store(certStore.Location);
+            dotNetStore.Open(OpenFlags.ReadWrite);
+            dotNetStore.Add(dotNetCert);
 
             bool added = false;
-            foreach (X509Certificate2 certInStore in store.Certificates)
+            foreach (X509Certificate2 certInStore in dotNetStore.Certificates)
             {
-                if (certInStore.Thumbprint == cert.Thumbprint)
+                if (certInStore.Thumbprint == thumbprint)
                     added = true;
             }
 
             if (!added)
                 throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
         }
+        //public static void MakeCert(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
+        //{
+        //    X509Certificate2 cert = GenerateCertificate(name, keyLength, yearsValid, certStore, out thumbprint);
+        //    thumbprint = cert.Thumbprint;
+        //    X509Store store = new X509Store(StoreName.My, certStore.Location);
+        //    store.Open(OpenFlags.ReadWrite);
+        //    store.Add(cert);
+
+        //    bool added = false;
+        //    foreach (X509Certificate2 certInStore in store.Certificates)
+        //    {
+        //        if (certInStore.Thumbprint == cert.Thumbprint)
+        //            added = true;
+        //    }
+
+        //    if (!added)
+        //        throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
+        //}
 
         /// <summary>
         /// Overwrites a file (as stored on disk) with random bits in order to prevent forensic recovery of the data
@@ -477,35 +539,19 @@ namespace x509Crypto
             return keyGenerator.GenerateKeyPair();
         }
 
-        private static X509Certificate2 GenerateCertificate(string name, int keyLength, int yearsValid)
+        private static string FormatX500(string name)
         {
-            AsymmetricCipherKeyPair keyPair = GenerateRsaKeyPair(keyLength);
-            X509Name issuer = new X509Name(name);
-            X509Name subject = new X509Name(name);
+            if (!string.Equals(@"cn=", name.Substring(0, 3), StringComparison.OrdinalIgnoreCase))
+                name = string.Format(@"cn={0}", name);
+            name = name.Replace(",", "\\,");
+            return name;
+        }
 
-            ISignatureFactory signatureFactory;
-            if (keyPair.Private is ECPrivateKeyParameters)
-            {
-                signatureFactory = new Asn1SignatureFactory(
-                    X9ObjectIdentifiers.ECDsaWithSha256.ToString(),
-                    keyPair.Private);
-            }
-            else
-            {
-                signatureFactory = new Asn1SignatureFactory(
-                    PkcsObjectIdentifiers.Sha256WithRsaEncryption.ToString(),
-                    keyPair.Private);
-            }
-
-            var certGenerator = new X509V3CertificateGenerator();
-            certGenerator.SetIssuerDN(issuer);
-            certGenerator.SetSubjectDN(subject);
-            certGenerator.SetSerialNumber(BigInteger.ValueOf(1));
-            certGenerator.SetNotAfter(DateTime.UtcNow.AddHours(1));
-            certGenerator.SetNotBefore(DateTime.UtcNow);
-            certGenerator.SetPublicKey(keyPair.Public);
-            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyEncipherment));
-            return new X509Certificate2(certGenerator.Generate(signatureFactory).GetEncoded());
+        private static char[] RandomPass()
+        {
+            const string chars = @"ABCDEFGHIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()-=+";
+            int length = secureRandom.Next(10, 20);
+            return Enumerable.Repeat(chars, length).Select(s => s[secureRandom.Next(s.Length)]).ToArray();
         }
 
         #endregion
