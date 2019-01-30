@@ -1,0 +1,569 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>X509CryptoLib</name>
+    </assembly>
+    <members>
+        <member name="T:X509Crypto.CertStore">
+            <summary>
+            A convenience class to enable the unambiguous binding between the System.Security.Cryptography.X509Certificates.StoreLocation enumerable and their accompanying string representation.
+            This class is not meant to be instantiated, but 2 static instances are available when the x509Crypto namespace is referenced.
+            </summary>
+        </member>
+        <member name="P:X509Crypto.CertStore.Location">
+            <summary>
+            System.Security.Cryptography.X509Certificates.StoreLocation enumerable value for a cert store
+            </summary>
+        </member>
+        <member name="P:X509Crypto.CertStore.Name">
+            <summary>
+            The string representation of a cert store.
+            </summary>
+        </member>
+        <member name="F:X509Crypto.CertStore.CurrentUser">
+            <summary>
+            Represents the System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser cert store
+            String representation: <see cref="F:X509Crypto.CertStore.sSTORELOCATION_CURRENTUSER"/>
+            </summary>
+        </member>
+        <member name="F:X509Crypto.CertStore.LocalMachine">
+            <summary>
+            Represents the System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine cert store
+            String representation: <see cref="F:X509Crypto.CertStore.sSTORELOCATION_LOCALMACHINE"/>
+            </summary>
+        </member>
+        <member name="M:X509Crypto.CertStore.GetByName(System.String)">
+            <summary>
+            Returns the respective x509Crypto.CertStore object based on its indicated string representation
+            </summary>
+            <param name="name">Either "<see cref="F:X509Crypto.CertStore.sSTORELOCATION_CURRENTUSER"/>" or "<see cref="F:X509Crypto.CertStore.sSTORELOCATION_LOCALMACHINE"/>"</param>
+            <returns>x509Crypto.CertStore object if the parameter is recognized.  Otherwise, an exception is thrown</returns>
+        </member>
+        <member name="T:X509Crypto.Extensions">
+            <summary>
+            X509Cryto Extension class
+            </summary>
+        </member>
+        <member name="M:X509Crypto.Extensions.SameAs(System.String,System.String)">
+            <summary>
+            Determines if two text expressions match (case-insensitive)
+            </summary>
+            <param name="expression1">text expression #1</param>
+            <param name="expression2">text expression #2</param>
+            <returns>true or false depending on whether the text expressions match</returns>
+        </member>
+        <member name="T:X509Crypto.X509CryptoAgent">
+            <summary>
+            Instantiatable class which can be used to perform cryptographic operations on string expressions and files
+            </summary>
+        </member>
+        <member name="P:X509Crypto.X509CryptoAgent.Thumbprint">
+            <summary>
+            The thumbprint of the encryption certificate
+            </summary>
+        </member>
+        <member name="P:X509Crypto.X509CryptoAgent.Store">
+            <summary>
+            The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine
+            </summary>
+        </member>
+        <member name="F:X509Crypto.X509CryptoAgent.valid">
+            <summary>
+            Indicates whether the instantiated x509CrytoAgent object is bound to a valid certificate and corresponding private key that can be used for encryption and decryption respectively
+            </summary>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.#ctor(System.String,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            x509CryptoAgent Constructor
+            </summary>
+            <param name="Thumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
+            <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
+            <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.#ctor(System.String,System.String,System.Boolean)">
+            <summary>
+            x509CryptoAgent Constructor
+            </summary>
+            <param name="Thumbprint">The thumbprint of the encryption certificate.</param>
+            <param name="sStore">String representation of the certificate store where the encryption certificate resides; "CURRENTUSER" (default) or "LOCALMACHINE"</param>
+            <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.#ctor(System.IO.FileStream,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            x509CryptoAgent Constructor
+            </summary>
+            <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint. The certificate must be present in the CURRENTUSER store location</param>
+            <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
+            <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.#ctor(System.IO.FileStream,System.String,System.Boolean)">
+            <summary>
+            x509CryptoAgent Constructor
+            </summary>
+            <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
+            <param name="sStore">String representation of the certificate store where the encryption certificate resides; "CURRENTUSER" (default) or "LOCALMACHINE"</param>
+            <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.Dispose">
+            <summary>
+            x509CryptoAgent Destructor
+            </summary>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.EncryptText(System.String)">
+            <summary>
+            Encrypts the specified string expression
+            </summary>
+            <param name="plainText">Text expression to encrypt</param>
+            <returns>Base64-encoded ciphertext expression</returns>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.EncryptFile(System.String,System.String)">
+            <summary>
+            Encrypts the specified plaintext file.  Text and binary file types are supported.
+            </summary>
+            <param name="plainText">Fully-qualified path of the file to be encrypted</param>
+            <param name="cipherText">Fully-qualified path in which to write the encrypted file</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.EncryptFileFromByteArray(System.Byte[],System.String)">
+            <summary>
+            Encrypts an array of bytes and stores the encrypted playload in the specified file path
+            </summary>
+            <param name="memBytes">The byte array to encrypt</param>
+            <param name="cipherText">The file path in which to store the encrypted payload</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.DecryptText(System.String)">
+            <summary>
+            Decrypts the specified ciphertext expression
+            </summary>
+            <param name="cipherText">Base64-encoded ciphertext expression</param>
+            <returns>decrypted string expression</returns>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.DecryptFile(System.String,System.String)">
+            <summary>
+            Decrypts the specified ciphertext file
+            </summary>
+            <param name="cipherText">Fully-qualified path to the encrypted file</param>
+            <param name="plainText">Fully-qualified path in which to write the decrypted file</param>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.DecryptFileToByteArray(System.String)">
+            <summary>
+            Decrypts a file and stores the payload in a byte array
+            </summary>
+            <param name="cipherText">The fully-qualified path to the encrypted file</param>
+            <returns>Byte array containing the decrypted contents of the ciphertext file</returns>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.DecryptTextFromFile(System.String)">
+            <summary>
+            Decrypts a ciphertext expression that is stored in a text file
+            </summary>
+            <param name="path">The fully-qualified path to the file containing the ciphertext expression</param>
+            <returns>decrypted text expression</returns>
+        </member>
+        <member name="M:X509Crypto.X509CryptoAgent.CertificateExists(System.String,X509Crypto.CertStore)">
+            <summary>
+            Indicates whether the certificate with the specified thumbprint was found in the specified certificate store
+            </summary>
+            <param name="certThumbprint">The certificate thumbprint value to search for (case-insensitive)</param>
+            <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
+            <returns>True or False depending upon whether the certificate and corresponding private key was found in the certificate store</returns>
+        </member>
+        <member name="T:X509Crypto.Criticality">
+            <summary>
+            Supported logging levels.  Default logging level is INFO
+            </summary>
+        </member>
+        <member name="F:X509Crypto.Criticality.CRITICAL">
+            <summary>
+            Critical errors
+            </summary>
+        </member>
+        <member name="F:X509Crypto.Criticality.ERROR">
+            <summary>
+            Standard errors
+            </summary>
+        </member>
+        <member name="F:X509Crypto.Criticality.WARNING">
+            <summary>
+            Warnings
+            </summary>
+        </member>
+        <member name="F:X509Crypto.Criticality.INFO">
+            <summary>
+            Informational messages
+            </summary>
+        </member>
+        <member name="F:X509Crypto.Criticality.VERBOSE">
+            <summary>
+            Verbose messages
+            </summary>
+        </member>
+        <member name="F:X509Crypto.Criticality.MASSIVE">
+            <summary>
+            Extremely verbose messages
+            </summary>
+        </member>
+        <member name="T:X509Crypto.x509CryptoLog">
+            <summary>
+            A static class which provides access to an activity log maintained by the x509Crypto module.  Log contents are maintained in a string expression.  Logging verbosity is configurable
+            </summary>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Get">
+            <summary>
+            Gets the current conents of the log in a string expression
+            </summary>
+            <returns>string containing the </returns>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.SetLevel(X509Crypto.Criticality)">
+            <summary>
+            Changes the current logging verbosity
+            </summary>
+            <param name="newLevel">The desired logging level as specified by a value in the "Level" enumeration</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.SetLevel(System.String)">
+            <summary>
+            Changes the current logging verbosity
+            </summary>
+            <param name="sNewLevel">The desired logging level as specified by a string expression</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Clear">
+            <summary>
+            Clears all contents from the log
+            </summary>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Critical(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Write a critical log message
+            </summary>
+            <param name="text">log message text</param>
+            <param name="messageType">Message type label (default: "<see cref="F:X509Crypto.x509CryptoLog.DEFAULT_MESSAGE_TYPE"/>")</param>
+            <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is true)</param>
+            <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is true)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Error(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Write an error log message
+            </summary>
+            <param name="text">log message text</param>
+            <param name="messageType">Message type label (default: "<see cref="F:X509Crypto.x509CryptoLog.DEFAULT_MESSAGE_TYPE"/>")</param>
+            <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is true)</param>
+            <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is true)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Warning(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Write a warning log message
+            </summary>
+            <param name="text">log message text</param>
+            <param name="messageType">Message type label (default: "<see cref="F:X509Crypto.x509CryptoLog.DEFAULT_MESSAGE_TYPE"/>")</param>
+            <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is true)</param>
+            <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is true)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Info(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Write an informational log message
+            </summary>
+            <param name="text">log message text</param>
+            <param name="messageType">Message type label (default: "<see cref="F:X509Crypto.x509CryptoLog.DEFAULT_MESSAGE_TYPE"/>")</param>
+            <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is false)</param>
+            <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is false)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Verbose(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Write a verbose log message
+            </summary>
+            <param name="text">log message text</param>
+            <param name="messageType">log message type label</param>
+            <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is false)</param>
+            <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is false)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Massive(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Write an extremely verbose log message
+            </summary>
+            <param name="text">log message text</param>
+            <param name="messageType">log message type label</param>
+            <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is false)</param>
+            <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is false)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Echo(System.String,X509Crypto.Criticality,System.Boolean)">
+            <summary>
+            Write a string literal to the log (without a timestamp, label, etc)
+            </summary>
+            <param name="text">message text</param>
+            <param name="lvl">Level of criticality the log is currently set to include.  If this message does not meet that criteria, it will not be recorded in the log</param>
+            <param name="indent">Indicates whether the message text will be precluded by an indentation for readability (default is true)</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Exception(System.Exception,X509Crypto.Criticality,System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Converts a .NET exception into a log message
+            </summary>
+            <param name="ex">A .NET exception object</param>
+            <param name="lvl">Level of criticality the log is currently set to include.  If this message does not meet that criteria, it will not be recorded in the log</param>
+            <param name="messageType">Message type label (default: "<see cref="F:X509Crypto.x509CryptoLog.DEFAULT_MESSAGE_TYPE"/>")</param>
+            <param name="text"></param>
+            <param name="writeToEventLog"></param>
+            <param name="writeToScreen"></param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.Linefeed(X509Crypto.Criticality)">
+            <summary>
+            Appends a blank line in the log
+            </summary>
+            <param name="lvl">Level of criticality the log is currently set to include.  If this message does not meet that criteria, it will not be recorded in the log</param>
+        </member>
+        <member name="M:X509Crypto.x509CryptoLog.WriteToFile(System.String,System.Boolean)">
+            <summary>
+            Writes the current contents of the log to the indicated text file
+            </summary>
+            <param name="path">The fully-qualified path to the text file in which to write the log contents</param>
+            <param name="overwriteExisting">Indicates whether to overwrite the file if it already exists (default is true).  If false and the file exists, the log contents will be appended to the file</param>
+        </member>
+        <member name="T:X509Crypto.X509Utils">
+            <summary>
+            A static class which provides access to X509Crypto namespace functionality without instantiating a X509Crypto object.
+            </summary>
+        </member>
+        <member name="F:X509Crypto.X509Utils.INVOKER_IS_ADMINISTRATOR">
+            <summary>
+            Indicates whether the invoking user is a local administrator on the system
+            </summary>
+        </member>
+        <member name="F:X509Crypto.X509Utils.CRYPTO_ENCRYPTED_FILE_EXT">
+            <summary>
+            Default file extension for files encrypted with the X509Crypto library
+            </summary>
+        </member>
+        <member name="F:X509Crypto.X509Utils.CRYPTO_DECRYPTED_FILE_EXT">
+            <summary>
+            Default file extension for files decrypted using the X509Crypto library (only used if the appropriate file extension cannot be inferred from the ciphertext file path
+            </summary>
+        </member>
+        <member name="M:X509Crypto.X509Utils.LoadTextFromFile(System.String)">
+            <summary>
+            Loads the contents of a text file into a string expression
+            </summary>
+            <param name="path">The fully-qualified path to the file from which contents are being loaded</param>
+            <returns>The contents of the specified text file as a string expression</returns>
+        </member>
+        <member name="M:X509Crypto.X509Utils.FormatThumbprint(System.String,System.Boolean)">
+            <summary>
+            Removes all but hexidecimal characters (0-9, a-f) from the indicated text expression
+            </summary>
+            <param name="thumbprint">string containing a thumbprint value</param>
+            <param name="verbose">True enables verbose logging</param>
+            <returns>Text expression with all non hexidecimal characters removed</returns>
+            <example>
+            <code>
+            string thumb = @"cc dc 67 3c 40 eb b2 a4 33 30 0c 0c 8a 2b a6 f4 43 da 56 88";
+            string formattedThumb = X509Utils.FormatThumbprint(thumb);
+            //formattedThumb = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688"
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.DecryptText(System.String,System.String,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Decrypts the specified ciphertext expression
+            </summary>
+            <param name="thumbprint">The thumbprint of the certificate corresponding to the public key used to encrypt the file</param>
+            <param name="ciphertext">The ciphertext expression to decrypt</param>
+            <param name="certStore">The certificate store location where the specified private key resides</param>
+            <param name="verbose">True enables verbose logging</param>
+            <returns>Plaintext string expression resulting from decryption of the specified ciphertext expression</returns>
+            <example>
+            <code>
+            string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
+            string ciphertext = File.ReadAllText(@"C:\data\connectionString.txt");
+            string plaintext = <see cref="T:X509Crypto.X509Utils"/>.DecryptText(thumbprint, ciphertext, certStore);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.DecryptFile(System.String,System.String,System.String,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Decrypts the specified encrypted file
+            </summary>
+            <param name="thumbprint">The thumbprint of the certificate corresponding to the public key used to encrypt the file</param>
+            <param name="ciphertextFilePath">The fully-qualified path of the encrypted file</param>
+            <param name="plaintextFilePath">The fully-qualified path in which to write the decrypted file</param>
+            <param name="certStore">The certificate store where the encryption certificate resides</param>
+            <param name="verbose">True enables verbose logging</param>
+            <returns>True or false depending upon whether the file decryption succeeded</returns>
+            <example>
+            <code>
+            string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
+            string encryptedFilePath = @"C:\Data\accounts.csv.ctx";
+            bool success = <see cref="T:X509Crypto.X509Utils"/>.DecryptFile(thumbprint, encryptedFilePath, certStore);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.EncryptText(System.String,System.String,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Encrypts the specified plaintext expression
+            </summary>
+            <param name="thumbprint">The thumbprint of the certificate to use for encryption</param>
+            <param name="plaintext">The plaintext expression to encrypt</param>
+            <param name="certStore">The certificate store where the encryption certificate resides</param>
+            <param name="verbose">True enables verbose logging</param>
+            <returns></returns>
+            <example>
+            <code>
+            string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
+            string plaintext = @"Please encrypt this";
+            string ciphertext = <see cref="T:X509Crypto.X509Utils"/>.EncryptText(thumbprint, plaintext, certStore);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.EncryptFile(System.String,System.String,X509Crypto.CertStore,System.String,System.Boolean)">
+            <summary>
+            Encrypts the specified file
+            </summary>
+            <param name="thumbprint">The thumbprint of the certificate to use for encryption</param>
+            <param name="plaintextFilePath">The fully-qualified path of the plaintext file (can be text or binary)</param>
+            <param name="certStore">(Optional) The certificate store where the encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="ciphertextFilePath">(Optional) The fully-qualified path in which to write the encrypted file (If not specified, the plaintext file path is appended with a ".ctx" extension)</param>
+            <param name="verbose">(Optional) True enables verbose logging</param>
+            <returns></returns>
+            <example>
+            <code>
+            string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>
+            string plaintextFilePath = @"C:\Data\accounts.csv";
+            string ciphertextFilePath = 
+            bool success = <see cref="T:X509Crypto.X509Utils"/>.EncryptFile(thumbprint, plaintextFilePath, certStore);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.ReEncryptText(System.String,System.String,System.String,X509Crypto.CertStore,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Re-encrypts a ciphertext expression using a different certificate
+            </summary>
+            <param name="oldThumbprint">The thumbprint of the old certificate used for prior encryption</param>
+            <param name="newThumbprint">The thumbprint of the new certificate to be used for re-encryption</param>
+            <param name="ciphertext">The ciphertext expression to be re-encrypted</param>
+            <param name="oldStore">(Optional) The certificate store where the old encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="newStore">(Optional) The certificate store where the new encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="verbose">(Optional) True enables verbose logging (Default: false)</param>
+            <returns>The text expression re-encrypted using the new certificate</returns>
+            <example>
+            <code>
+            string oldThumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            string newThumbprint = @"0e7e327aab74e47a702c02d90c659da1115b29f7";
+            string ciphertext = File.ReadAllText(@"C:\data\connectionString.txt");
+            string updatedCiphertext = <see cref="T:X509Crypto.X509Utils"/>.ReEncryptText(oldThumbprint, newThumbprint, ciphertext);
+            File.WriteAllText(@"C:\data\connectionString.txt", updatedCiphertext);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.ReEncryptFile(System.String,System.String,System.String,X509Crypto.CertStore,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Re-encrypts an encrypted file using a different encryption certificate
+            </summary>
+            <param name="oldThumbprint">The thumbprint of the old certificate used for prior encryption</param>
+            <param name="newThumbprint">The thumbprint of the new certificate to be used for re-encryption</param>
+            <param name="ciphertextFilePath">The fully-qualified path to the ciphertext file to be re-encrypted</param>
+            <param name="oldStore">(Optional) The certificate store where the old encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="newStore">(Optional) The certificate store where the new encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="verbose">(Optional) True enables verbose logging (Default: false)</param>
+            <example>
+            <code>
+            string oldThumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            string newThumbprint = @"0e7e327aab74e47a702c02d90c659da1115b29f7";
+            string encryptedFilePath = @"C:\data\accounts.csv.ctx";
+            <see cref="T:X509Crypto.X509Utils"/>.ReEncryptFile"(oldThumbprint, newThumbprint, encryptedFilePath);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.ExportPFX(System.String,System.String,System.String,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Exports the certificate and public/private key pair corresponding to the specified certificate thumbprint to a PKCS#12 bundle written to the specified file path
+            </summary>
+            <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
+            <param name="exportPath">Fully-qualified path to where the PKCS#12 bundle file should be written (a ".pfx" file extension will be added if no file extension is detected)</param>
+            <param name="password">Password to protect the private key once stored in the PKCS#12 bundle file</param>
+            <param name="certStore">(Optional) The certificate store where the encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="verbose">(Optional) True enables verbose logging (Default: false)</param>
+            <returns>The fully-qualified path to where the PKCS#12 bundle file was ultimately written</returns>
+            <example>
+            <code>
+            string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            string exportPath = @"C:\data\bundle";
+            string password = @"0n3T!m3U$e";
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
+            string finalExportPath = <see cref="T:X509Crypto.X509Utils"/>.ExportPFX(thumbprint, exportPath, password, certStore);
+            //finalExportPath is @"C:\data\bundle.pfx"
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.ExportCert(System.String,System.String,X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Exports the certificate corresponding to the specified certificate thumbprint to a Base64-encoded text file
+            </summary>
+            <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
+            <param name="exportPath">Fully-qualified path to where the Base64-encoded file should be written (a ".cer" file extension will be added if no file extension is detected)</param>
+            <param name="certStore">(Optional) The certificate store where the encryption certificate resides (Default: <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>)</param>
+            <param name="verbose">True enables verbose logging</param>
+            <returns>The fully-qualified path to where the Base64-encoded certificate file was ultimately written</returns>
+            <example>
+            <code>
+            string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+            string exportPath = @"C:\data\cert";
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
+            string finalExportPath = <see cref="T:X509Crypto.X509Utils"/>.ExportCert(thumbprint, exportPath, certStore);
+            //finalExportPath is @"C:\data\cert.cer"
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.MakeCert(System.String,System.Int32,System.Int32,X509Crypto.CertStore,System.String@)">
+            <summary>
+            Creates a self-signed X509 Certificate and adds it to the indicated certificate store
+            </summary>
+            <param name="name">The common name of the certificate subject (e.g. "CN=Mike")</param>
+            <param name="keyLength">The desired size of the private key (1024, 2048, 496, ...)</param>
+            <param name="yearsValid">The number of years that the certificate should be valid for</param>
+            <param name="certStore">The certificate store where the new certificate should be placed (either <see cref="F:X509Crypto.CertStore.CurrentUser"/> or <see cref="F:X509Crypto.CertStore.LocalMachine"/>)</param>
+            <param name="thumbprint">Stores the thumbprint of the generated certificate after the method terminates</param>
+            <returns></returns>
+            <example>
+            <code>
+            string name = @"Mike Bruno";
+            int keyLength = 2048;
+            int yearsValid = 2;
+            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
+            string thumbprint = <see cref="T:X509Crypto.X509Utils"/>.MakeCert(name, keyLength, yearsValid, certStore);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.WipeFile(System.String,System.Int32)">
+            <summary>
+            Overwrites a file (as stored on disk) with random bits in order to prevent forensic recovery of the data
+            </summary>
+            <param name="filePath">The fully-qualified path of the file to wipe from disk</param>
+            <param name="timesToWrite">The number of times to overwrite the disk sectors where the file is/was stored</param>
+            <example>
+            <code>
+            string path = @"C:\temp\SSNs.txt";
+            int timesToWrite = 10;
+            <see cref="T:X509Crypto.X509Utils"/>.<see cref="M:X509Crypto.X509Utils.WipeFile(System.String,System.Int32)"/>(path, timesToWrite);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.ListCerts(X509Crypto.CertStore,System.Boolean)">
+            <summary>
+            Lists the thumbprint value for each certificate in the specified store location which include "Key Encipherment" in its Key Usage extension
+            </summary>
+            <param name="certStore">Store location from which to list certificate details (Either <see cref="F:X509Crypto.CertStore.CurrentUser"/> or <see cref="F:X509Crypto.CertStore.LocalMachine"/>)</param>
+            <param name="allowExpired">If set to True, expired certificates will be included in the output (Note that .NET will not perform cryptographic operations using a certificate which is not within its validity period)</param>
+            <returns>A string expression listing all available certificate thumbprints and their expiration dates</returns>
+            <example>
+            <code>
+            string availableCerts = <see cref="T:X509Crypto.X509Utils"/>.<see cref="M:X509Crypto.X509Utils.ListCerts(X509Crypto.CertStore,System.Boolean)"/>(<see cref="F:X509Crypto.CertStore.CurrentUser"/>);
+            </code>
+            </example>
+        </member>
+        <member name="M:X509Crypto.X509Utils.MethodName">
+            <summary>
+            Gets the name of the calling method
+            </summary>
+            <returns>The name of the calling method</returns>
+        </member>
+    </members>
+</doc>

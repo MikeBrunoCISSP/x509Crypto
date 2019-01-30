@@ -1,52 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace x509Crypto
+namespace X509Crypto
 {
 
     /// <summary>
-    /// Supported logging levels
+    /// Supported logging levels.  Default logging level is INFO
     /// </summary>
     public enum Criticality
     {
         /// <summary>
-        /// Only critical errors will be logged
+        /// Critical errors
         /// </summary>
         CRITICAL = 0,
 
         /// <summary>
-        /// All errors will be logged
+        /// Standard errors
         /// </summary>
         ERROR = 1,
 
         /// <summary>
-        /// All errors and warnings will be logged.
+        /// Warnings
         /// </summary>
         WARNING = 2,
 
         /// <summary>
-        /// Informational messages, errors and warnings will be logged
+        /// Informational messages
         /// </summary>
         INFO = 3,
 
         /// <summary>
-        /// Verbose logging (for diagnostic purposes)
+        /// Verbose messages
         /// </summary>
         VERBOSE = 4,
 
         /// <summary>
-        /// Almost everything is logged (mostly for public debugging purposes)
+        /// Extremely verbose messages
         /// </summary>
         MASSIVE = 5
     }
 
     /// <summary>
-    /// A static class which provides access to an activity log maintained by the x509Crypto module.  Logging verbosity is configurable
+    /// A static class which provides access to an activity log maintained by the x509Crypto module.  Log contents are maintained in a string expression.  Logging verbosity is configurable
     /// </summary>
     public static class x509CryptoLog
     {
@@ -79,7 +80,7 @@ namespace x509Crypto
         #region Public-facing
 
         /// <summary>
-        /// Gets the current conents of the log
+        /// Gets the current conents of the log in a string expression
         /// </summary>
         /// <returns>string containing the </returns>
         public static string Get()
@@ -135,6 +136,13 @@ namespace x509Crypto
             contents = string.Empty;
         }
 
+        /// <summary>
+        /// Write a critical log message
+        /// </summary>
+        /// <param name="text">log message text</param>
+        /// <param name="messageType">Message type label (default: "<see cref="DEFAULT_MESSAGE_TYPE"/>")</param>
+        /// <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is true)</param>
+        /// <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is true)</param>
         public static void Critical(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.CRITICAL;
@@ -145,6 +153,13 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
+        /// <summary>
+        /// Write an error log message
+        /// </summary>
+        /// <param name="text">log message text</param>
+        /// <param name="messageType">Message type label (default: "<see cref="DEFAULT_MESSAGE_TYPE"/>")</param>
+        /// <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is true)</param>
+        /// <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is true)</param>
         public static void Error(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.ERROR;
@@ -160,6 +175,13 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
+        /// <summary>
+        /// Write a warning log message
+        /// </summary>
+        /// <param name="text">log message text</param>
+        /// <param name="messageType">Message type label (default: "<see cref="DEFAULT_MESSAGE_TYPE"/>")</param>
+        /// <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is true)</param>
+        /// <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is true)</param>
         public static void Warning(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = Criticality.WARNING;
@@ -175,7 +197,14 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-        public static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
+        /// <summary>
+        /// Write an informational log message
+        /// </summary>
+        /// <param name="text">log message text</param>
+        /// <param name="messageType">Message type label (default: "<see cref="DEFAULT_MESSAGE_TYPE"/>")</param>
+        /// <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is false)</param>
+        /// <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is false)</param>
+        public static void Info(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
         {
             messageLevel = Criticality.INFO;
             string message;
@@ -190,7 +219,14 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-        public static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
+        /// <summary>
+        /// Write a verbose log message
+        /// </summary>
+        /// <param name="text">log message text</param>
+        /// <param name="messageType">log message type label</param>
+        /// <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is false)</param>
+        /// <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is false)</param>
+        public static void Verbose(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
         {
             messageLevel = Criticality.VERBOSE;
             string message;
@@ -206,8 +242,14 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
-
-        public static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = true, bool writeToScreen = true)
+        /// <summary>
+        /// Write an extremely verbose log message
+        /// </summary>
+        /// <param name="text">log message text</param>
+        /// <param name="messageType">log message type label</param>
+        /// <param name="writeToEventLog">Indicates whether the message will be written to the local application event log (default is false)</param>
+        /// <param name="writeToScreen">Indicates whether the message will be displayed on in the console (default is false)</param>
+        public static void Massive(string text, string messageType = DEFAULT_MESSAGE_TYPE, bool writeToEventLog = false, bool writeToScreen = false)
         {
             messageLevel = Criticality.MASSIVE;
             string message;
@@ -222,6 +264,12 @@ namespace x509Crypto
                 Console.WriteLine(text);
         }
 
+        /// <summary>
+        /// Write a string literal to the log (without a timestamp, label, etc)
+        /// </summary>
+        /// <param name="text">message text</param>
+        /// <param name="lvl">Level of criticality the log is currently set to include.  If this message does not meet that criteria, it will not be recorded in the log</param>
+        /// <param name="indent">Indicates whether the message text will be precluded by an indentation for readability (default is true)</param>
         public static void Echo(string text, Criticality lvl = Criticality.INFO, bool indent = true)
         {
             messageLevel = lvl;
@@ -233,6 +281,15 @@ namespace x509Crypto
             }
         }
 
+        /// <summary>
+        /// Converts a .NET exception into a log message
+        /// </summary>
+        /// <param name="ex">A .NET exception object</param>
+        /// <param name="lvl">Level of criticality the log is currently set to include.  If this message does not meet that criteria, it will not be recorded in the log</param>
+        /// <param name="messageType">Message type label (default: "<see cref="DEFAULT_MESSAGE_TYPE"/>")</param>
+        /// <param name="text"></param>
+        /// <param name="writeToEventLog"></param>
+        /// <param name="writeToScreen"></param>
         public static void Exception(Exception ex, Criticality lvl = Criticality.ERROR, string messageType = DEFAULT_MESSAGE_TYPE, string text = @"An exception occurred", bool writeToEventLog = true, bool writeToScreen = true)
         {
             messageLevel = lvl;
@@ -253,6 +310,10 @@ namespace x509Crypto
             }
         }
 
+        /// <summary>
+        /// Appends a blank line in the log
+        /// </summary>
+        /// <param name="lvl">Level of criticality the log is currently set to include.  If this message does not meet that criteria, it will not be recorded in the log</param>
         public static void Linefeed(Criticality lvl = Criticality.INFO)
         {
             messageLevel = lvl;
@@ -260,21 +321,36 @@ namespace x509Crypto
                 AppendLog(string.Empty);
         }
 
-        public static void LogCommandResults(string command, string stdOut, string stdErr)
+        /// <summary>
+        /// Writes the current contents of the log to the indicated text file
+        /// </summary>
+        /// <param name="path">The fully-qualified path to the text file in which to write the log contents</param>
+        /// <param name="overwriteExisting">Indicates whether to overwrite the file if it already exists (default is true).  If false and the file exists, the log contents will be appended to the file</param>
+        public static void WriteToFile(string path, bool overwriteExisting = true)
         {
-            string fullMessage;
+            if (overwriteExisting)
+            {
+                File.Delete(path);
+                File.WriteAllText(path, contents);
+            }
+            else
+            {
+                if (File.Exists(path))
+                {
+                    File.AppendText("\r\n");
+                    File.AppendAllText(path, contents);
+                }
+                else
+                    File.WriteAllText(path, contents);
+            }
 
-            if (string.IsNullOrWhiteSpace(stdOut))
-                stdOut = @"NULL";
-            if (string.IsNullOrWhiteSpace(stdErr))
-                stdErr = @"NULL";
-
-            fullMessage = string.Format("Command: {0}\r\n\r\nStandardOutput:\r\n{1}\r\n\r\nStandard Error:\r\n{2}", command, stdOut, stdErr);
-            Verbose(string.Format("Command Execution Summary:\r\n{0}", fullMessage));
-            WriteToEventLog(fullMessage);
         }
 
-        public static void WriteToEventLog(string message, EventLogEntryType entryType = EventLogEntryType.Information)
+        #endregion
+
+        #region Private Methods
+
+        private static void WriteToEventLog(string message, EventLogEntryType entryType = EventLogEntryType.Information)
         {
             if (!eventSourceEstablished)
             {
@@ -296,9 +372,6 @@ namespace x509Crypto
             EventLog.WriteEntry(eventSource, message, entryType, EVENT_ID);
         }
 
-        #endregion
-
-        #region Private Methods
 
         private static string LevelLabel(Criticality lvl)
         {
@@ -371,10 +444,6 @@ namespace x509Crypto
             string methodName = trace.GetFrame(1).GetMethod().Name;
             return string.Format("{0}.{1}", className, methodName);
         }
-
-        #endregion
-
-        #region public Methods
 
         private static bool EventLogSourceExists(string sourceToCheck)
         {

@@ -7,10 +7,10 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using x509Crypto;
+using X509Crypto;
 using System.Security.AccessControl;
 
-namespace x509CryptoExe
+namespace X509CryptoExe
 {
     public enum Mode
     {
@@ -112,10 +112,6 @@ namespace x509CryptoExe
         internal static readonly string CLIPBOARD_USAGE = string.Format("{0}Use \"{1}\" to write the output to the system clipboard", USAGE_INDENT, SETTING_CRYPTO_CLIPBOARD);
 
         internal static readonly string[] CRYPTO_PARAM_WIPE = { @"-w", @"-wipe" };
-
-        //Crypto File Extensions
-        internal const string CRYPTO_ENCRYPTED_FILE_EXT = @".ctx";
-        internal const string CRYPTO_DECRYPTED_FILE_EXT = @".ptx";
 
         //Cert Parameters
         internal const string CERT_EXPORT_PARAM_NOKEY = @"-nokey";
@@ -587,7 +583,14 @@ namespace x509CryptoExe
 
             catch (Exception ex)
             {
-                Console.WriteLine(string.Format("{0}\r\n\r\n{1}", ex.Message, usage));
+                if (ex is IndexOutOfRangeException)
+                {
+                    Console.WriteLine(string.Format("{0}\r\n\r\n{1}", @"Not enough arguments", usage));
+                }
+                else
+                {
+                    Console.WriteLine(string.Format("{0}\r\n\r\n{1}", ex.Message, usage));
+                }
                 return false;
             }
         }
@@ -765,7 +768,7 @@ namespace x509CryptoExe
                     certStore = CertStore.GetByName(NextArgument(args));
                     if (certStore == CertStore.LocalMachine)
                     {
-                        if (!x509Utils.INVOKER_IS_ADMINISTRATOR)
+                        if (!X509Utils.INVOKER_IS_ADMINISTRATOR)
                         {
                             throw new Exception(string.Format(@"{0}: Invoking user must be a local administrator to access the {1} store", setting_type.First(), CertStore.LocalMachine.Name));
                         }
@@ -902,7 +905,7 @@ namespace x509CryptoExe
 
         public void PeekCert(string thumbprint, CertStore storeLocation)
         {
-            if (!x509CryptoAgent.thumbprintFound(thumbprint, storeLocation))
+            if (!X509CryptoAgent.CertificateExists(thumbprint, storeLocation))
                 throw new Exception(string.Format("Certificate with thumbprint \"{0}\" was not found in the {1} certificate store", thumbprint, storeLocation.Name));
         }
 
@@ -1006,19 +1009,19 @@ namespace x509CryptoExe
 
         private static string GetCipherTextFileName(string path)
         {
-            if (Path.GetExtension(path).SameAs(CRYPTO_ENCRYPTED_FILE_EXT))
+            if (Path.GetExtension(path).SameAs(X509Utils.CRYPTO_ENCRYPTED_FILE_EXT))
                 return path;
             else
-                return path + CRYPTO_ENCRYPTED_FILE_EXT;
+                return path + X509Utils.CRYPTO_ENCRYPTED_FILE_EXT;
         }
 
         private static string GetPlaintextFileName(string path)
         {
             string ext = Path.GetExtension(path);
-            if (ext.SameAs(CRYPTO_ENCRYPTED_FILE_EXT))
+            if (ext.SameAs(X509Utils.CRYPTO_ENCRYPTED_FILE_EXT))
                 return path.Remove(path.LastIndexOf(ext), ext.Length);
             else
-                return path + CRYPTO_DECRYPTED_FILE_EXT;
+                return path + X509Utils.CRYPTO_DECRYPTED_FILE_EXT;
         }
 
         private static bool DirectoryWritable(string path)

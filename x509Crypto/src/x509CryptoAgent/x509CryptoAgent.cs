@@ -6,12 +6,12 @@ using System.Security.Principal;
 using System.IO;
 using System.Runtime.Serialization;
 
-namespace x509Crypto
+namespace X509Crypto
 {
     /// <summary>
     /// Instantiatable class which can be used to perform cryptographic operations on string expressions and files
     /// </summary>
-    public class x509CryptoAgent : IDisposable
+    public class X509CryptoAgent : IDisposable
     {
         #region Constants and Static Fields
 
@@ -31,8 +31,13 @@ namespace x509Crypto
         private RSACryptoServiceProvider publicKey,
                                          privateKey;
 
+        private bool VerboseLogging;
+
         private string thumbprint;
 
+        /// <summary>
+        /// The thumbprint of the encryption certificate
+        /// </summary>
         public string Thumbprint
         {
             get
@@ -41,9 +46,13 @@ namespace x509Crypto
             }
             private set
             {
-                thumbprint = x509Utils.FormatThumbprint(value);
+                thumbprint = X509Utils.FormatThumbprint(value);
             }
         }
+
+        /// <summary>
+        /// The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine
+        /// </summary>
         public CertStore Store { get; private set; }
 
 
@@ -59,23 +68,38 @@ namespace x509Crypto
         /// <summary>
         /// x509CryptoAgent Constructor
         /// </summary>
-        /// <param name="certThumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
-        public x509CryptoAgent(string Thumbprint, CertStore Store)
+        /// <param name="Thumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
+        /// <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
+        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        public X509CryptoAgent(string Thumbprint, CertStore Store = null, bool VerboseLogging = false)
         {
             this.Thumbprint = Thumbprint;
-            this.Store = Store;
+
+            if (Store == null)
+                this.Store = CertStore.CurrentUser;
+            else
+                this.Store = Store;
+
+            this.VerboseLogging = VerboseLogging;
             GetRSAKeys();
         }
 
         /// <summary>
         /// x509CryptoAgent Constructor
         /// </summary>
-        /// <param name="certThumbprint">The thumbprint of the encryption certificate.</param>
-        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
-        public x509CryptoAgent(string Thumbprint, string sStore)
+        /// <param name="Thumbprint">The thumbprint of the encryption certificate.</param>
+        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides; "CURRENTUSER" (default) or "LOCALMACHINE"</param>
+        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        public X509CryptoAgent(string Thumbprint, string sStore = "", bool VerboseLogging = false)
         {
             this.Thumbprint = Thumbprint;
-            Store = CertStore.GetByName(sStore);
+
+            if (string.IsNullOrEmpty(sStore))
+                Store = CertStore.CurrentUser;
+            else
+                Store = CertStore.GetByName(sStore);
+
+            this.VerboseLogging = VerboseLogging;
             GetRSAKeys();
         }
 
@@ -83,7 +107,9 @@ namespace x509Crypto
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint. The certificate must be present in the CURRENTUSER store location</param>
-        public x509CryptoAgent(FileStream inStream, CertStore Store)
+        /// <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
+        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        public X509CryptoAgent(FileStream inStream, CertStore Store = null, bool VerboseLogging = false)
         {
             using (StreamReader reader = new StreamReader(inStream))
             {
@@ -91,8 +117,12 @@ namespace x509Crypto
                 reader.Close();
             }
 
-            this.Store = Store;
+            if (Store == null)
+                this.Store = CertStore.CurrentUser;
+            else
+                this.Store = Store;
 
+            this.VerboseLogging = VerboseLogging;
             GetRSAKeys();
         }
 
@@ -100,8 +130,9 @@ namespace x509Crypto
         /// x509CryptoAgent Constructor
         /// </summary>
         /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
-        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides ("CURRENTUSER" or "LOCALMACHINE")</param>
-        public x509CryptoAgent(FileStream inStream, string sStore)
+        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides; "CURRENTUSER" (default) or "LOCALMACHINE"</param>
+        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        public X509CryptoAgent(FileStream inStream, string sStore = "", bool VerboseLogging = false)
         {
             using (StreamReader reader = new StreamReader(inStream))
             {
@@ -109,8 +140,12 @@ namespace x509Crypto
                 reader.Close();
             }
 
-            Store = CertStore.GetByName(sStore);
+            if (string.IsNullOrEmpty(sStore))
+                Store = CertStore.CurrentUser;
+            else
+                Store = CertStore.GetByName(sStore);
 
+            this.VerboseLogging = VerboseLogging;
             GetRSAKeys();
         }
 
@@ -151,15 +186,15 @@ namespace x509Crypto
                 publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                 privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
             }
-            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0}", Thumbprint));
+            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0} from the {1} certificate store", Thumbprint, Store.Name), X509Utils.MethodName(), VerboseLogging, VerboseLogging);
             valid = true;
         }
 
         /// <summary>
         /// Encrypts the specified string expression
         /// </summary>
-        /// <param name="plainText">string expression to encrypt</param>
-        /// <returns>Base64-encoded ciphertext string expression</returns>
+        /// <param name="plainText">Text expression to encrypt</param>
+        /// <returns>Base64-encoded ciphertext expression</returns>
         public string EncryptText(string plainText)
         {
             byte[] cipherTextBytes;
@@ -370,9 +405,9 @@ namespace x509Crypto
         }
 
         /// <summary>
-        /// Decrypts the specified ciphertext string expression
+        /// Decrypts the specified ciphertext expression
         /// </summary>
-        /// <param name="cipherText">Base64-encoded ciphertext string expression</param>
+        /// <param name="cipherText">Base64-encoded ciphertext expression</param>
         /// <returns>decrypted string expression</returns>
         public string DecryptText(string cipherText)
         {
@@ -640,28 +675,28 @@ namespace x509Crypto
         #region Static Methods
 
         /// <summary>
-        /// Indicates whether the specified certificate thumbprint was found in the specified certificate store
+        /// Indicates whether the certificate with the specified thumbprint was found in the specified certificate store
         /// </summary>
         /// <param name="certThumbprint">The certificate thumbprint value to search for (case-insensitive)</param>
-        /// <param name="storeLocation">The certificate store location in which to search (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
+        /// <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
         /// <returns>True or False depending upon whether the certificate and corresponding private key was found in the certificate store</returns>
-        public static bool thumbprintFound(string certThumbprint, CertStore certStore)
+        public static bool CertificateExists(string certThumbprint, CertStore Store)
         {
-            certThumbprint = x509Utils.FormatThumbprint(certThumbprint);
+            certThumbprint = X509Utils.FormatThumbprint(certThumbprint);
 
-            X509Store store = new X509Store(StoreName.My, certStore.Location);
+            X509Store store = new X509Store(StoreName.My, Store.Location);
             store.Open(OpenFlags.ReadOnly);
             foreach (X509Certificate2 cert in store.Certificates)
             {
-                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase) && IsUsable(cert, true))
                 {
-                    if (cert.HasPrivateKey)
-                        return true;
-                    else
-                    {
-                        x509CryptoLog.Warning(string.Format("A certificate with thumbprint {0} was found, but the corresponding private key is not present in the {1} certificate store", certThumbprint, certStore.Name));
-                        return false;
-                    }
+                    return true;
+                }
+                else
+                {
+                    x509CryptoLog.Warning(text: string.Format("A certificate with thumbprint {0} was found in the {1} certificate store, but is not usable for encryption", certThumbprint, Store.Name),
+                                          messageType: X509Utils.MethodName(), writeToEventLog: true, writeToScreen: true);
+                    return false;
                 }
             }
 
@@ -670,6 +705,9 @@ namespace x509Crypto
 
         internal static bool IsUsable(X509Certificate2 cert, bool allowExpired)
         {
+            if (!cert.HasPrivateKey)
+                return false;
+
             foreach (X509Extension extension in cert.Extensions)
             {
                 if (extension.Oid.FriendlyName == "Key Usage")

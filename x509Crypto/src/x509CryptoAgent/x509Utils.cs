@@ -22,11 +22,14 @@ using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using System.Security.Principal;
 using Org.BouncyCastle.Pkcs;
+using System.Diagnostics;
 
-namespace x509Crypto
+namespace X509Crypto
 {
-
-    public static class x509Utils
+    /// <summary>
+    /// A static class which provides access to X509Crypto namespace functionality without instantiating a X509Crypto object.
+    /// </summary>
+    public static class X509Utils
     {
         #region Constants and Static Fields
 
@@ -38,6 +41,17 @@ namespace x509Crypto
         /// </summary>
         public static readonly bool INVOKER_IS_ADMINISTRATOR = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 
+        //Crypto File Extensions
+
+        /// <summary>
+        /// Default file extension for files encrypted with the X509Crypto library
+        /// </summary>
+        public static readonly string CRYPTO_ENCRYPTED_FILE_EXT = @".ctx";
+
+        /// <summary>
+        /// Default file extension for files decrypted using the X509Crypto library (only used if the appropriate file extension cannot be inferred from the ciphertext file path
+        /// </summary>
+        public static readonly string CRYPTO_DECRYPTED_FILE_EXT = @".ptx";
 
         #endregion
 
@@ -55,7 +69,7 @@ namespace x509Crypto
             if (!File.Exists(path))
             {
                 string message = string.Format(@"Path does not exist: {0}", path);
-                x509CryptoLog.Error(message, @"LoadTextFromFile");
+                x509CryptoLog.Error(message, MethodName(), true, true);
                 throw new FileNotFoundException(message);
             }
 
@@ -73,13 +87,24 @@ namespace x509Crypto
         }
 
         /// <summary>
-        /// Removes all illegal characters from a string, leaving only the hexidecimal characters (0-9, a-f)
+        /// Removes all but hexidecimal characters (0-9, a-f) from the indicated text expression
         /// </summary>
         /// <param name="thumbprint">string containing a thumbprint value</param>
-        /// <returns></returns>
-        public static string FormatThumbprint(string thumbprint)
+        /// <param name="verbose">True enables verbose logging</param>
+        /// <returns>Text expression with all non hexidecimal characters removed</returns>
+        /// <example>
+        /// <code>
+        /// string thumb = @"cc dc 67 3c 40 eb b2 a4 33 30 0c 0c 8a 2b a6 f4 43 da 56 88";
+        /// string formattedThumb = X509Utils.FormatThumbprint(thumb);
+        /// //formattedThumb = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688"
+        /// </code>
+        /// </example>
+        public static string FormatThumbprint(string thumbprint, bool verbose = false)
         {
-            return Regex.Replace(thumbprint, allowedThumbprintCharsPattern, "").ToUpper();
+            x509CryptoLog.Massive(string.Format(@" Original Thumbprint: {0}", thumbprint), MethodName(), verbose, verbose);
+            string formattedThumbprint = Regex.Replace(thumbprint, allowedThumbprintCharsPattern, "").ToUpper();
+            x509CryptoLog.Massive(string.Format(@"Formatted Thumbprint: {0}", formattedThumbprint), MethodName(), verbose, verbose);
+            return formattedThumbprint;
         }
 
         /// <summary>
@@ -88,10 +113,19 @@ namespace x509Crypto
         /// <param name="thumbprint">The thumbprint of the certificate corresponding to the public key used to encrypt the file</param>
         /// <param name="ciphertext">The ciphertext expression to decrypt</param>
         /// <param name="certStore">The certificate store location where the specified private key resides</param>
+        /// <param name="verbose">True enables verbose logging</param>
         /// <returns>Plaintext string expression resulting from decryption of the specified ciphertext expression</returns>
-        public static string DecryptText(string thumbprint, string ciphertext, CertStore certStore)
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string ciphertext = File.ReadAllText(@"C:\data\connectionString.txt");
+        /// string plaintext = <see cref="X509Utils"/>.DecryptText(thumbprint, ciphertext, certStore);
+        /// </code>
+        /// </example>
+        public static string DecryptText(string thumbprint, string ciphertext, CertStore certStore, bool verbose = false)
         {
-            using (x509CryptoAgent cryptoAgent = new x509CryptoAgent(FormatThumbprint(thumbprint), certStore))
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), certStore))
             {
                 return cryptoAgent.DecryptText(ciphertext);
             }
@@ -104,14 +138,23 @@ namespace x509Crypto
         /// <param name="ciphertextFilePath">The fully-qualified path of the encrypted file</param>
         /// <param name="plaintextFilePath">The fully-qualified path in which to write the decrypted file</param>
         /// <param name="certStore">The certificate store where the encryption certificate resides</param>
-        /// <returns></returns>
-        public static bool DecryptFile(string thumbprint, string ciphertextFilePath, string plaintextFilePath, CertStore certStore)
+        /// <param name="verbose">True enables verbose logging</param>
+        /// <returns>True or false depending upon whether the file decryption succeeded</returns>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string encryptedFilePath = @"C:\Data\accounts.csv.ctx";
+        /// bool success = <see cref="X509Utils"/>.DecryptFile(thumbprint, encryptedFilePath, certStore);
+        /// </code>
+        /// </example>
+        public static bool DecryptFile(string thumbprint, string ciphertextFilePath, string plaintextFilePath, CertStore certStore, bool verbose = false)
         {
             CheckForFile(ciphertextFilePath);
 
             File.Delete(plaintextFilePath);
 
-            using (x509CryptoAgent cryptoAgent = new x509CryptoAgent(FormatThumbprint(thumbprint), certStore))
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), certStore))
             {
                 cryptoAgent.DecryptFile(ciphertextFilePath, plaintextFilePath);
             }
@@ -125,10 +168,19 @@ namespace x509Crypto
         /// <param name="thumbprint">The thumbprint of the certificate to use for encryption</param>
         /// <param name="plaintext">The plaintext expression to encrypt</param>
         /// <param name="certStore">The certificate store where the encryption certificate resides</param>
+        /// <param name="verbose">True enables verbose logging</param>
         /// <returns></returns>
-        public static string EncryptText(string thumbprint, string plaintext, CertStore certStore)
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string plaintext = @"Please encrypt this";
+        /// string ciphertext = <see cref="X509Utils"/>.EncryptText(thumbprint, plaintext, certStore);
+        /// </code>
+        /// </example>
+        public static string EncryptText(string thumbprint, string plaintext, CertStore certStore, bool verbose = false)
         {
-            using (x509CryptoAgent cryptoAgent = new x509CryptoAgent(FormatThumbprint(thumbprint), certStore))
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), certStore))
             {
                 return cryptoAgent.EncryptText(plaintext);
             }
@@ -139,15 +191,31 @@ namespace x509Crypto
         /// </summary>
         /// <param name="thumbprint">The thumbprint of the certificate to use for encryption</param>
         /// <param name="plaintextFilePath">The fully-qualified path of the plaintext file (can be text or binary)</param>
-        /// <param name="ciphertextFilePath">The fully-qualified path in which to write the encrypted file</param>
-        /// <param name="certStore">The certificate store where the encryption certificate resides</param>
+        /// <param name="certStore">(Optional) The certificate store where the encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="ciphertextFilePath">(Optional) The fully-qualified path in which to write the encrypted file (If not specified, the plaintext file path is appended with a ".ctx" extension)</param>
+        /// <param name="verbose">(Optional) True enables verbose logging</param>
         /// <returns></returns>
-        public static bool EncryptFile(string thumbprint, string plaintextFilePath, string ciphertextFilePath, CertStore certStore)
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>
+        /// string plaintextFilePath = @"C:\Data\accounts.csv";
+        /// string ciphertextFilePath = 
+        /// bool success = <see cref="X509Utils"/>.EncryptFile(thumbprint, plaintextFilePath, certStore);
+        /// </code>
+        /// </example>
+        public static bool EncryptFile(string thumbprint, string plaintextFilePath, CertStore certStore = null, string ciphertextFilePath = "", bool verbose = false)
         {
             CheckForFile(plaintextFilePath);
+
+            if (certStore == null)
+                certStore = CertStore.CurrentUser;
+
+            if (string.IsNullOrEmpty(ciphertextFilePath))
+                ciphertextFilePath = plaintextFilePath + CRYPTO_ENCRYPTED_FILE_EXT;
             File.Delete(ciphertextFilePath);
 
-            using (x509CryptoAgent cryptoAgent = new x509CryptoAgent(FormatThumbprint(thumbprint), certStore))
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), certStore))
             {
                 cryptoAgent.EncryptFile(plaintextFilePath, ciphertextFilePath);
             }
@@ -159,16 +227,31 @@ namespace x509Crypto
         /// Re-encrypts a ciphertext expression using a different certificate
         /// </summary>
         /// <param name="oldThumbprint">The thumbprint of the old certificate used for prior encryption</param>
-        /// <param name="oldStore">The certificate store where the old encryption certificate resides</param>
         /// <param name="newThumbprint">The thumbprint of the new certificate to be used for re-encryption</param>
-        /// <param name="newStore">The certificate store where the new encryption certificate resides</param>
         /// <param name="ciphertext">The ciphertext expression to be re-encrypted</param>
-        /// <returns></returns>
-        public static string ReEncryptText(string oldThumbprint, CertStore oldStore, string newThumbprint, CertStore newStore, string ciphertext)
+        /// <param name="oldStore">(Optional) The certificate store where the old encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="newStore">(Optional) The certificate store where the new encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="verbose">(Optional) True enables verbose logging (Default: false)</param>
+        /// <returns>The text expression re-encrypted using the new certificate</returns>
+        /// <example>
+        /// <code>
+        /// string oldThumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// string newThumbprint = @"0e7e327aab74e47a702c02d90c659da1115b29f7";
+        /// string ciphertext = File.ReadAllText(@"C:\data\connectionString.txt");
+        /// string updatedCiphertext = <see cref="X509Utils"/>.ReEncryptText(oldThumbprint, newThumbprint, ciphertext);
+        /// File.WriteAllText(@"C:\data\connectionString.txt", updatedCiphertext);
+        /// </code>
+        /// </example>
+        public static string ReEncryptText(string oldThumbprint, string newThumbprint, string ciphertext, CertStore oldStore = null, CertStore newStore = null, bool verbose = false)
         {
-            using (x509CryptoAgent oldAgent = new x509CryptoAgent(FormatThumbprint(oldThumbprint), oldStore))
+            if (oldStore == null)
+                oldStore = CertStore.CurrentUser;
+            if (newStore == null)
+                newStore = CertStore.CurrentUser;
+
+            using (X509CryptoAgent oldAgent = new X509CryptoAgent(FormatThumbprint(oldThumbprint), oldStore))
             {
-                using (x509CryptoAgent newAgent = new x509CryptoAgent(FormatThumbprint(newThumbprint), newStore))
+                using (X509CryptoAgent newAgent = new X509CryptoAgent(FormatThumbprint(newThumbprint), newStore))
                 {
                     return newAgent.EncryptText(oldAgent.DecryptText(ciphertext));
                 }
@@ -179,13 +262,27 @@ namespace x509Crypto
         /// Re-encrypts an encrypted file using a different encryption certificate
         /// </summary>
         /// <param name="oldThumbprint">The thumbprint of the old certificate used for prior encryption</param>
-        /// <param name="oldStore">The certificate store where the old encryption certificate resides</param>
         /// <param name="newThumbprint">The thumbprint of the new certificate to be used for re-encryption</param>
-        /// <param name="newStore">The certificate store where the new encryption certificate resides</param>
         /// <param name="ciphertextFilePath">The fully-qualified path to the ciphertext file to be re-encrypted</param>
-        public static void ReEncryptFile(string oldThumbprint, CertStore oldStore, string newThumbprint, CertStore newStore, string ciphertextFilePath)
+        /// <param name="oldStore">(Optional) The certificate store where the old encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="newStore">(Optional) The certificate store where the new encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="verbose">(Optional) True enables verbose logging (Default: false)</param>
+        /// <example>
+        /// <code>
+        /// string oldThumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// string newThumbprint = @"0e7e327aab74e47a702c02d90c659da1115b29f7";
+        /// string encryptedFilePath = @"C:\data\accounts.csv.ctx";
+        /// <see cref="X509Utils"/>.ReEncryptFile"(oldThumbprint, newThumbprint, encryptedFilePath);
+        /// </code>
+        /// </example>
+        public static void ReEncryptFile(string oldThumbprint, string newThumbprint, string ciphertextFilePath, CertStore oldStore = null, CertStore newStore = null, bool verbose = false)
         {
             CheckForFile(ciphertextFilePath);
+
+            if (oldStore == null)
+                oldStore = CertStore.CurrentUser;
+            if (newStore == null)
+                newStore = CertStore.CurrentUser;
 
             byte[] hashOrig,
                    hashCopy;
@@ -207,11 +304,11 @@ namespace x509Crypto
 
             try
             {
-                using (x509CryptoAgent oldAgent = new x509CryptoAgent(FormatThumbprint(oldThumbprint), oldStore))
+                using (X509CryptoAgent oldAgent = new X509CryptoAgent(FormatThumbprint(oldThumbprint), oldStore))
                 {
                     byte[] data = oldAgent.DecryptFileToByteArray(tmpCopy);
 
-                    using (x509CryptoAgent newAgent = new x509CryptoAgent(FormatThumbprint(newThumbprint), newStore))
+                    using (X509CryptoAgent newAgent = new X509CryptoAgent(FormatThumbprint(newThumbprint), newStore))
                     {
                         newAgent.EncryptFileFromByteArray(data, ciphertextFilePath);
                     }
@@ -241,20 +338,33 @@ namespace x509Crypto
         /// Exports the certificate and public/private key pair corresponding to the specified certificate thumbprint to a PKCS#12 bundle written to the specified file path
         /// </summary>
         /// <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
-        /// <param name="storeLocation">Certificate store location where the specified certificate and private key are located (either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
         /// <param name="exportPath">Fully-qualified path to where the PKCS#12 bundle file should be written (a ".pfx" file extension will be added if no file extension is detected)</param>
         /// <param name="password">Password to protect the private key once stored in the PKCS#12 bundle file</param>
+        /// <param name="certStore">(Optional) The certificate store where the encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="verbose">(Optional) True enables verbose logging (Default: false)</param>
         /// <returns>The fully-qualified path to where the PKCS#12 bundle file was ultimately written</returns>
-        public static string ExportPFX(string certThumbprint, CertStore certStore, string exportPath, string password)
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// string exportPath = @"C:\data\bundle";
+        /// string password = @"0n3T!m3U$e";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string finalExportPath = <see cref="X509Utils"/>.ExportPFX(thumbprint, exportPath, password, certStore);
+        /// //finalExportPath is @"C:\data\bundle.pfx"
+        /// </code>
+        /// </example>
+        public static string ExportPFX(string certThumbprint, string exportPath, string password, CertStore certStore = null, bool verbose = false)
         {
+            if (certStore == null)
+                certStore = CertStore.CurrentUser;
+
             if (!Path.HasExtension(exportPath))
                 exportPath += @".pfx";
 
             if (File.Exists(exportPath))
                 File.Delete(exportPath);
 
-            certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
-            x509CryptoLog.Massive(string.Format("Sanitized certificate thumbprint: {0}", certThumbprint));
+            certThumbprint = FormatThumbprint(certThumbprint, verbose);
 
             X509Store store = new X509Store(StoreName.My, certStore.Location);
             store.Open(OpenFlags.ReadOnly);
@@ -264,7 +374,7 @@ namespace x509Crypto
                 {
                     byte[] certBytes = cert.Export(X509ContentType.Pkcs12, password);
                     File.WriteAllBytes(exportPath, certBytes);
-                    x509Utils.VerifyFile(exportPath);
+                    X509Utils.VerifyFile(exportPath);
                     return exportPath;
                 }
             }
@@ -276,18 +386,31 @@ namespace x509Crypto
         /// Exports the certificate corresponding to the specified certificate thumbprint to a Base64-encoded text file
         /// </summary>
         /// <param name="certThumbprint">Certificate thumbprint (case-insensitive)</param>
-        /// <param name="storeLocation">Certificate store location where the specified certificate is located (either CurrentUser or LocalMachine)</param>
         /// <param name="exportPath">Fully-qualified path to where the Base64-encoded file should be written (a ".cer" file extension will be added if no file extension is detected)</param>
+        /// <param name="certStore">(Optional) The certificate store where the encryption certificate resides (Default: <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>)</param>
+        /// <param name="verbose">True enables verbose logging</param>
         /// <returns>The fully-qualified path to where the Base64-encoded certificate file was ultimately written</returns>
-        public static string ExportCert(string certThumbprint, CertStore certStore, string exportPath)
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// string exportPath = @"C:\data\cert";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string finalExportPath = <see cref="X509Utils"/>.ExportCert(thumbprint, exportPath, certStore);
+        /// //finalExportPath is @"C:\data\cert.cer"
+        /// </code>
+        /// </example>
+        public static string ExportCert(string certThumbprint, string exportPath, CertStore certStore = null, bool verbose = false)
         {
+            if (certStore == null)
+                certStore = CertStore.CurrentUser;
+
             if (!Path.HasExtension(exportPath))
                 exportPath += @".cer";
 
             if (!File.Exists(exportPath))
                 File.Delete(exportPath);
 
-            certThumbprint = x509Utils.cleanThumbprint(certThumbprint);
+            certThumbprint = FormatThumbprint(certThumbprint, verbose);
             X509Store store = new X509Store(StoreName.My, certStore.Location);
             store.Open(OpenFlags.ReadOnly);
 
@@ -327,9 +450,18 @@ namespace x509Crypto
         /// <param name="name">The common name of the certificate subject (e.g. "CN=Mike")</param>
         /// <param name="keyLength">The desired size of the private key (1024, 2048, 496, ...)</param>
         /// <param name="yearsValid">The number of years that the certificate should be valid for</param>
-        /// <param name="certStore">The certificate store where the new certificate should be placed (either CurrentUser or LocalMachine)</param>
+        /// <param name="certStore">The certificate store where the new certificate should be placed (either <see cref="CertStore.CurrentUser"/> or <see cref="CertStore.LocalMachine"/>)</param>
         /// <param name="thumbprint">Stores the thumbprint of the generated certificate after the method terminates</param>
         /// <returns></returns>
+        /// <example>
+        /// <code>
+        /// string name = @"Mike Bruno";
+        /// int keyLength = 2048;
+        /// int yearsValid = 2;
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string thumbprint = <see cref="X509Utils"/>.MakeCert(name, keyLength, yearsValid, certStore);
+        /// </code>
+        /// </example>
         public static void MakeCert(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
         {
             X509Certificate2 dotNetCert = null;
@@ -391,30 +523,19 @@ namespace x509Crypto
             if (!added)
                 throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
         }
-        //public static void MakeCert(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
-        //{
-        //    X509Certificate2 cert = GenerateCertificate(name, keyLength, yearsValid, certStore, out thumbprint);
-        //    thumbprint = cert.Thumbprint;
-        //    X509Store store = new X509Store(StoreName.My, certStore.Location);
-        //    store.Open(OpenFlags.ReadWrite);
-        //    store.Add(cert);
-
-        //    bool added = false;
-        //    foreach (X509Certificate2 certInStore in store.Certificates)
-        //    {
-        //        if (certInStore.Thumbprint == cert.Thumbprint)
-        //            added = true;
-        //    }
-
-        //    if (!added)
-        //        throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
-        //}
 
         /// <summary>
         /// Overwrites a file (as stored on disk) with random bits in order to prevent forensic recovery of the data
         /// </summary>
         /// <param name="filePath">The fully-qualified path of the file to wipe from disk</param>
         /// <param name="timesToWrite">The number of times to overwrite the disk sectors where the file is/was stored</param>
+        /// <example>
+        /// <code>
+        /// string path = @"C:\temp\SSNs.txt";
+        /// int timesToWrite = 10;
+        /// <see cref="X509Utils"/>.<see cref="WipeFile"/>(path, timesToWrite);
+        /// </code>
+        /// </example>
         public static void WipeFile(string filePath, int timesToWrite)
         {
             if (File.Exists(filePath))
@@ -457,11 +578,19 @@ namespace x509Crypto
         /// <summary>
         /// Lists the thumbprint value for each certificate in the specified store location which include "Key Encipherment" in its Key Usage extension
         /// </summary>
-        /// <param name="storeLocation">Store location from which to list certificate details (Either StoreLocation.CurrentUser or StoreLocation.LocalMachine)</param>
+        /// <param name="certStore">Store location from which to list certificate details (Either <see cref="CertStore.CurrentUser"/> or <see cref="CertStore.LocalMachine"/>)</param>
         /// <param name="allowExpired">If set to True, expired certificates will be included in the output (Note that .NET will not perform cryptographic operations using a certificate which is not within its validity period)</param>
-        /// <returns></returns>
-        public static string listCerts(CertStore certStore, bool allowExpired)
+        /// <returns>A string expression listing all available certificate thumbprints and their expiration dates</returns>
+        /// <example>
+        /// <code>
+        /// string availableCerts = <see cref="X509Utils"/>.<see cref="ListCerts"/>(<see cref="CertStore.CurrentUser"/>);
+        /// </code>
+        /// </example>
+        public static string ListCerts(CertStore certStore = null, bool allowExpired = false)
         {
+            if (certStore == null)
+                certStore = CertStore.CurrentUser;
+
             string output = "Key Encipherment Certificates found:\r\n\r\n";
             bool firstAdded = false;
 
@@ -469,7 +598,7 @@ namespace x509Crypto
             store.Open(OpenFlags.ReadOnly);
             foreach (X509Certificate2 cert in store.Certificates)
             {
-                if (x509CryptoAgent.IsUsable(cert, allowExpired))
+                if (X509CryptoAgent.IsUsable(cert, allowExpired))
                 {
                     firstAdded = true;
                     output += cert.Subject + "\t" +
@@ -482,6 +611,15 @@ namespace x509Crypto
                 output += "None.\r\n";
 
             return output;
+        }
+
+        /// <summary>
+        /// Gets the name of the calling method
+        /// </summary>
+        /// <returns>The name of the calling method</returns>
+        public static string MethodName()
+        {
+            return new StackTrace(1).GetFrame(0).GetMethod().Name;
         }
 
         #endregion
