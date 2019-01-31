@@ -49,7 +49,7 @@ namespace X509Crypto
     /// <summary>
     /// A static class which provides access to an activity log maintained by the x509Crypto module.  Log contents are maintained in a string expression.  Logging verbosity is configurable
     /// </summary>
-    public static class x509CryptoLog
+    public static class X509CryptoLog
     {
         const string EVENT_LOG = @"Application";
         const int EVENT_ID = 509;

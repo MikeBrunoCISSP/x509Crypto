@@ -14,8 +14,8 @@ namespace X509Crypto
     /// </summary>
     public class CertStore
     {
-        const string sSTORELOCATION_CURRENTUSER = @"CURRENTUSER";
-        const string sSTORELOCATION_LOCALMACHINE = @"LOCALMACHINE";
+        internal const string sSTORELOCATION_CURRENTUSER = @"CURRENTUSER";
+        internal const string sSTORELOCATION_LOCALMACHINE = @"LOCALMACHINE";
 
         /// <summary>
         /// System.Security.Cryptography.X509Certificates.StoreLocation enumerable value for a cert store
@@ -34,14 +34,16 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// Represents the System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser cert store
-        /// String representation: <see cref="sSTORELOCATION_CURRENTUSER"/>
+        /// <para>Represents the CurrentUser certificate store</para>
+        /// <para>Enumerable Representation <see cref="Location"/>: <see cref="System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser"/></para>
+        /// <para>String representation <see cref="Name"/>: "CURRENTUSER"</para>
         /// </summary>
         public static readonly CertStore CurrentUser = new CertStore(StoreLocation.CurrentUser, sSTORELOCATION_CURRENTUSER);
 
         /// <summary>
-        /// Represents the System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine cert store
-        /// String representation: <see cref="sSTORELOCATION_LOCALMACHINE"/>
+        /// <para>Represents the LocalMachine certificate store</para>
+        /// <para>Enumerable Representation <see cref="Location"/>: <see cref="System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine"/></para>
+        /// <para>String representation <see cref="Name"/>: "LOCALMACHINE"</para>
         /// </summary>
         public static readonly CertStore LocalMachine = new CertStore(StoreLocation.LocalMachine, sSTORELOCATION_LOCALMACHINE);
 

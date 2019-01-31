@@ -9,8 +9,11 @@ using System.Runtime.Serialization;
 namespace X509Crypto
 {
     /// <summary>
-    /// Instantiatable class which can be used to perform cryptographic operations on string expressions and files
+    /// Instantiatable class which can be used to perform cryptographic operations on string expressions and files. 
     /// </summary>
+    /// <remarks>
+    /// It is advisable to leverage an instance of this class in your method/module if you need to perform several cryptographic operations within the stack frame.
+    /// </remarks>
     public class X509CryptoAgent : IDisposable
     {
         #region Constants and Static Fields
@@ -36,7 +39,7 @@ namespace X509Crypto
         private string thumbprint;
 
         /// <summary>
-        /// The thumbprint of the encryption certificate
+        /// The thumbprint of the certificate used for cryptographic operations
         /// </summary>
         public string Thumbprint
         {
@@ -51,13 +54,17 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine
+        /// The certificate store from which to load the encryption certificate and private key.
         /// </summary>
+        /// <remarks>
+        /// Possible values are <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/> or <see cref="CertStore"/>.<see cref="CertStore.LocalMachine"/><br/>
+        /// If not specified, default value is <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>
+        /// </remarks>
         public CertStore Store { get; private set; }
 
 
         /// <summary>
-        /// Indicates whether the instantiated x509CrytoAgent object is bound to a valid certificate and corresponding private key that can be used for encryption and decryption respectively
+        /// Indicates whether the instantiated <see cref="X509CryptoAgent"/> object is bound to an available valid certificate and corresponding private key that is appropriate for encryption
         /// </summary>
         public bool valid = false;
 
@@ -66,11 +73,14 @@ namespace X509Crypto
         #region Constructors and Destructors
 
         /// <summary>
-        /// x509CryptoAgent Constructor
+        /// X509CryptoAgent Constructor
         /// </summary>
         /// <param name="Thumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
-        /// <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
-        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        /// <param name="Store">
+        /// <para>(Optional) The certificate store from which to load the encryption certificate.</para>  
+        /// <para>Possible values are <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/> or <see cref="CertStore"/>.<see cref="CertStore.LocalMachine"/></para>
+        /// <para>If not specified, default value is <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/></para></param>
+        /// <param name="VerboseLogging">(Optional) Set to true to enable verbose activity logging</param>
         public X509CryptoAgent(string Thumbprint, CertStore Store = null, bool VerboseLogging = false)
         {
             this.Thumbprint = Thumbprint;
@@ -85,11 +95,14 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// x509CryptoAgent Constructor
+        /// X509CryptoAgent Constructor
         /// </summary>
         /// <param name="Thumbprint">The thumbprint of the encryption certificate.</param>
-        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides; "CURRENTUSER" (default) or "LOCALMACHINE"</param>
-        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        /// <param name="sStore">
+        /// <para>(Optional) String representation of the certificate store where the encryption certificate resides</para>
+        /// <para>Possible values are "CURRENTUSER" or "LOCALMACHINE"</para>
+        /// <para>If not specified, default value is "CURRENTUSER"</para></param>
+        /// <param name="VerboseLogging">(Optional) Set to true to enable verbose activity logging</param>
         public X509CryptoAgent(string Thumbprint, string sStore = "", bool VerboseLogging = false)
         {
             this.Thumbprint = Thumbprint;
@@ -104,11 +117,14 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// x509CryptoAgent Constructor
+        /// X509CryptoAgent Constructor
         /// </summary>
-        /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint. The certificate must be present in the CURRENTUSER store location</param>
-        /// <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
-        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
+        /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
+        /// <param name="Store">
+        /// <para>(Optional) The certificate store from which to load the encryption certificate.</para>
+        /// <para>Possible values are <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/> or <see cref="CertStore"/>.<see cref="CertStore.LocalMachine"/></para>
+        /// <para>If not specified, default value is <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/></para></param>
+        /// <param name="VerboseLogging">(Optional) Set to true to enable verbose activity logging</param>
         public X509CryptoAgent(FileStream inStream, CertStore Store = null, bool VerboseLogging = false)
         {
             using (StreamReader reader = new StreamReader(inStream))
@@ -127,10 +143,13 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// x509CryptoAgent Constructor
+        /// X509CryptoAgent Constructor
         /// </summary>
         /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
-        /// <param name="sStore">String representation of the certificate store where the encryption certificate resides; "CURRENTUSER" (default) or "LOCALMACHINE"</param>
+        /// <param name="sStore">
+        /// <para>(Optional) String representation of the certificate store where the encryption certificate resides</para>
+        /// <para>Possible values are "CURRENTUSER" or "LOCALMACHINE"</para>
+        /// <para>If not specified, default value is "CURRENTUSER"</para></param>
         /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
         public X509CryptoAgent(FileStream inStream, string sStore = "", bool VerboseLogging = false)
         {
@@ -150,7 +169,7 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// x509CryptoAgent Destructor
+        /// X509CryptoAgent Destructor
         /// </summary>
         public void Dispose()
         {
@@ -186,7 +205,7 @@ namespace X509Crypto
                 publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                 privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
             }
-            x509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0} from the {1} certificate store", Thumbprint, Store.Name), X509Utils.MethodName(), VerboseLogging, VerboseLogging);
+            X509CryptoLog.Info(string.Format("Successfully loaded keypair of certificate with thumbprint {0} from the {1} certificate store", Thumbprint, Store.Name), X509Utils.MethodName(), VerboseLogging, VerboseLogging);
             valid = true;
         }
 
@@ -195,6 +214,19 @@ namespace X509Crypto
         /// </summary>
         /// <param name="plainText">Text expression to encrypt</param>
         /// <returns>Base64-encoded ciphertext expression</returns>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// 
+        /// string plaintext = @"Hello world!";
+        /// string ciphertext;
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     ciphertext = agent.EncryptText(plaintext);
+        /// }
+        /// </code>
+        /// </example>
         public string EncryptText(string plainText)
         {
             byte[] cipherTextBytes;
@@ -270,6 +302,19 @@ namespace X509Crypto
         /// </summary>
         /// <param name="plainText">Fully-qualified path of the file to be encrypted</param>
         /// <param name="cipherText">Fully-qualified path in which to write the encrypted file</param>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// string plaintextFilePath = @"C:\data\SSNs.txt";
+        /// string ciphertextFilePath = Path.GetFileNameWithoutExtension(plaintextFilePath)" + <see cref="X509Utils.CRYPTO_ENCRYPTED_FILE_EXT"/>;
+        /// 
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     agent.EncryptFile(plaintextFilePath, ciphertextFilePath);
+        /// }
+        /// </code>
+        /// </example>
         public void EncryptFile(string plainText, string cipherText)
         {
             using (AesManaged aesManaged = new AesManaged())
@@ -337,8 +382,24 @@ namespace X509Crypto
         /// <summary>
         /// Encrypts an array of bytes and stores the encrypted playload in the specified file path
         /// </summary>
+        /// <remarks>
+        /// This method is implemented primarily to fascilitate re-encryption of a file when changing certificates
+        /// </remarks>
         /// <param name="memBytes">The byte array to encrypt</param>
         /// <param name="cipherText">The file path in which to store the encrypted payload</param>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// byte[] fileBytes = File.ReadAllBytes(@"C:\data\example.txt");
+        /// string ciphertextFilePath = @"C:\data\example_encrypted.ctx";
+        /// 
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     agent.EncryptFileFromByteArray(fileBytes, ciphertextFilePath);
+        /// }
+        /// </code>
+        /// </example>
         public void EncryptFileFromByteArray(byte[] memBytes, string cipherText)
         {
             using (AesManaged aesManaged = new AesManaged())
@@ -356,7 +417,7 @@ namespace X509Crypto
                     byte[] KeyLengthIndicator = new byte[AES_BYTES];
                     byte[] IVLengthIndicator = new byte[AES_BYTES];
 
-                    //
+                    
                     int keyLength = keyEncrypted.Length;
                     KeyLengthIndicator = BitConverter.GetBytes(keyLength);
 
@@ -409,6 +470,19 @@ namespace X509Crypto
         /// </summary>
         /// <param name="cipherText">Base64-encoded ciphertext expression</param>
         /// <returns>decrypted string expression</returns>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// 
+        /// string ciphertext = File.ReadAllText(@"C:\data\connectionString.txt");
+        /// string plaintext;
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     plaintext = agent.DecryptText(ciphertext);
+        /// }
+        /// </code>
+        /// </example>
         public string DecryptText(string cipherText)
         {
             string plainText;
@@ -496,6 +570,19 @@ namespace X509Crypto
         /// </summary>
         /// <param name="cipherText">Fully-qualified path to the encrypted file</param>
         /// <param name="plainText">Fully-qualified path in which to write the decrypted file</param>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// 
+        /// string ciphertextFilePath = @"C:\data\SSNs.txt.ctx";
+        /// string plaintextFilePath = @"C:\data\SSNs.txt";
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     plaintext = agent.DecryptFile(ciphertextFilePath, plaintextFilePath);
+        /// }
+        /// </code>
+        /// </example>
         public void DecryptFile(string cipherText, string plainText)
         {
             using (AesManaged aesManaged = new AesManaged())
@@ -569,8 +656,25 @@ namespace X509Crypto
         /// <summary>
         /// Decrypts a file and stores the payload in a byte array
         /// </summary>
+        /// <remarks>
+        /// This method is implemented primarily to fascilitate re-encryption of a file when changing certificates
+        /// </remarks>
         /// <param name="cipherText">The fully-qualified path to the encrypted file</param>
         /// <returns>Byte array containing the decrypted contents of the ciphertext file</returns>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// 
+        /// string ciphertextFilePath = @"C:\data\SSNs.txt.ctx";
+        /// byte[] plaintextBytes;
+        /// 
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     plaintextBytes = agent.DecryptFileToByteArray(ciphertextFilePath);
+        /// }
+        /// </code>
+        /// </example>
         public byte[] DecryptFileToByteArray(string cipherText)
         {
             MemoryStream outMs = new MemoryStream();
@@ -650,6 +754,19 @@ namespace X509Crypto
         /// </summary>
         /// <param name="path">The fully-qualified path to the file containing the ciphertext expression</param>
         /// <returns>decrypted text expression</returns>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// 
+        /// string ciphertextFilePath = @"C:\data\connectionString.txt";
+        /// string plaintext;
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     plaintext = agent.DecryptTextFromFile(ciphertextFilePath);
+        /// }
+        /// </code>
+        /// </example>
         public string DecryptTextFromFile(string path)
         {
             if (!File.Exists(path))
@@ -680,6 +797,19 @@ namespace X509Crypto
         /// <param name="certThumbprint">The certificate thumbprint value to search for (case-insensitive)</param>
         /// <param name="Store">The certificate store from which to load the encryption certificate.  Either CertStore.CurrentUser (default) or CertStore.LocalMachine</param>
         /// <returns>True or False depending upon whether the certificate and corresponding private key was found in the certificate store</returns>
+        /// <example>
+        /// <code>
+        /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
+        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// 
+        /// bool found;
+        /// 
+        /// using (<see cref="X509CryptoAgent"/> agent = new <see cref="X509CryptoAgent"/>(thumbprint, certStore))
+        /// {
+        ///     found = agent.CertificateExists(thumbprint, certStore);
+        /// }
+        /// </code>
+        /// </example>
         public static bool CertificateExists(string certThumbprint, CertStore Store)
         {
             certThumbprint = X509Utils.FormatThumbprint(certThumbprint);
@@ -694,7 +824,7 @@ namespace X509Crypto
                 }
                 else
                 {
-                    x509CryptoLog.Warning(text: string.Format("A certificate with thumbprint {0} was found in the {1} certificate store, but is not usable for encryption", certThumbprint, Store.Name),
+                    X509CryptoLog.Warning(text: string.Format("A certificate with thumbprint {0} was found in the {1} certificate store, but is not usable for encryption", certThumbprint, Store.Name),
                                           messageType: X509Utils.MethodName(), writeToEventLog: true, writeToScreen: true);
                     return false;
                 }

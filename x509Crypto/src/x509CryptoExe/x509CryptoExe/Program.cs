@@ -38,7 +38,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, @"Config");
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, @"Config");
                 return RESULT_EXCEPTION;
             }
 
@@ -93,7 +93,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -111,7 +111,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -123,7 +123,7 @@ namespace X509CryptoExe
                 X509Utils.EncryptFile(config.thumbprint, config.input, config.storeLocation, config.output);
                 if (config.WipeResidualFile)
                     X509Utils.WipeFile(config.input, 10);
-                x509CryptoLog.Info(text: string.Format("The file {0} was successfully encrypted using the public key associated with certificate thumbprint {1}\r\n\r\nCiphertext file is: {2}{3}",
+                X509CryptoLog.Info(text: string.Format("The file {0} was successfully encrypted using the public key associated with certificate thumbprint {1}\r\n\r\nCiphertext file is: {2}{3}",
                                                        config.input,
                                                        config.thumbprint,
                                                        config.output,
@@ -134,7 +134,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -144,7 +144,7 @@ namespace X509CryptoExe
             try
             {
                 X509Utils.ReEncryptFile(config.oldThumbprint, config.thumbprint, config.input, config.oldStoreLocation, config.storeLocation);
-                x509CryptoLog.Info(text: string.Format("The file {0} was successfully encrypted using the public key associated with certificate thumbprint {1}", 
+                X509CryptoLog.Info(text: string.Format("The file {0} was successfully encrypted using the public key associated with certificate thumbprint {1}", 
                                                        config.input, 
                                                        config.thumbprint),
                                    messageType: X509Utils.MethodName(), writeToEventLog: config.VerboseMode, writeToScreen: config.VerboseMode);
@@ -152,7 +152,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -170,7 +170,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -182,7 +182,7 @@ namespace X509CryptoExe
                 X509Utils.DecryptFile(config.thumbprint, config.input, config.output, config.storeLocation);
                 if (config.WipeResidualFile)
                     DeleteFile(config.input);
-                x509CryptoLog.Info(text: string.Format("The file {0} was successfully decrypted using the private key associated with certificate thumbprint {1}\r\n\r\nPlaintext file is: {2}{3}",
+                X509CryptoLog.Info(text: string.Format("The file {0} was successfully decrypted using the private key associated with certificate thumbprint {1}\r\n\r\nPlaintext file is: {2}{3}",
                                                        config.input,
                                                        config.thumbprint,
                                                        config.output,
@@ -193,7 +193,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -214,7 +214,7 @@ namespace X509CryptoExe
                     if (cert.HasPrivateKey)
                     {
                         keyChain.Add(cert);
-                        x509CryptoLog.Info(text: string.Format("\r\n\r\nAdded certificate.\r\nThumbprint: {0}\r\nCert Store: {1}", cert.Thumbprint, config.storeLocation.Name), 
+                        X509CryptoLog.Info(text: string.Format("\r\n\r\nAdded certificate.\r\nThumbprint: {0}\r\nCert Store: {1}", cert.Thumbprint, config.storeLocation.Name), 
                                            messageType: X509Utils.MethodName(), writeToEventLog: config.VerboseMode, writeToScreen: config.VerboseMode);
                         certAdded = true;
                     }
@@ -227,7 +227,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -237,13 +237,13 @@ namespace X509CryptoExe
             try
             {
                 X509Utils.ExportPFX(config.thumbprint, config.output, config.pass, config.storeLocation);
-                x509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} along with private key was successfully exported to:\r\n{1}", config.thumbprint, config.output),
+                X509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} along with private key was successfully exported to:\r\n{1}", config.thumbprint, config.output),
                                    messageType: X509Utils.MethodName(), writeToEventLog: config.VerboseMode, writeToScreen: config.VerboseMode);
                 return RESULT_SUCCESS;
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -253,13 +253,13 @@ namespace X509CryptoExe
             try
             {
                 X509Utils.ExportCert(config.thumbprint, config.output, config.storeLocation);
-                x509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} was successfully exported to:\r\n{1}", config.thumbprint, config.output),
+                X509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} was successfully exported to:\r\n{1}", config.thumbprint, config.output),
                                    messageType: X509Utils.MethodName(), writeToEventLog: config.VerboseMode, writeToScreen: config.VerboseMode);
                 return RESULT_SUCCESS;
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -269,12 +269,12 @@ namespace X509CryptoExe
             try
             {
                 string certList = X509Utils.ListCerts(config.storeLocation, config.IncludeExpired);
-                x509CryptoLog.Info(text: certList, messageType: X509Utils.MethodName(), writeToEventLog: true, writeToScreen: true);
+                X509CryptoLog.Info(text: certList, messageType: X509Utils.MethodName(), writeToEventLog: true, writeToScreen: true);
                 return RESULT_SUCCESS;
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -285,14 +285,14 @@ namespace X509CryptoExe
             {
                 string newCertThumbprint = string.Empty;
                 X509Utils.MakeCert(config.MakeCert_Subject, config.MakeCert_KeyLength, config.MakeCert_YearsValid, config.storeLocation, out newCertThumbprint);
-                x509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} was added to the {1} store", newCertThumbprint, config.storeLocation.Name), 
+                X509CryptoLog.Info(text: string.Format("\r\n\r\nCertificate with thumbprint {0} was added to the {1} store", newCertThumbprint, config.storeLocation.Name), 
                                    messageType: X509Utils.MethodName(), writeToEventLog: true, writeToScreen: true);
                 return RESULT_SUCCESS;
 
             }
             catch (Exception ex)
             {
-                x509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
+                X509CryptoLog.Exception(ex, Criticality.CRITICAL, X509Utils.MethodName());
                 return RESULT_EXCEPTION;
             }
         }
@@ -310,7 +310,7 @@ namespace X509CryptoExe
             {
                 if (config.UseClipboard)
                     Clipboard.SetText(expression);
-                x509CryptoLog.Info(string.Format(@"Result: {0}", config.UseClipboard ? "Written to system clipboard" : expression), writeToScreen: true);
+                X509CryptoLog.Info(string.Format(@"Result: {0}", config.UseClipboard ? "Written to system clipboard" : expression), writeToScreen: true);
             }
         }
 

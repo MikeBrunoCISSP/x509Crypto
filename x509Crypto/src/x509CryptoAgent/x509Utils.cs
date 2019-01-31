@@ -69,7 +69,7 @@ namespace X509Crypto
             if (!File.Exists(path))
             {
                 string message = string.Format(@"Path does not exist: {0}", path);
-                x509CryptoLog.Error(message, MethodName(), true, true);
+                X509CryptoLog.Error(message, MethodName(), true, true);
                 throw new FileNotFoundException(message);
             }
 
@@ -101,9 +101,9 @@ namespace X509Crypto
         /// </example>
         public static string FormatThumbprint(string thumbprint, bool verbose = false)
         {
-            x509CryptoLog.Massive(string.Format(@" Original Thumbprint: {0}", thumbprint), MethodName(), verbose, verbose);
+            X509CryptoLog.Massive(string.Format(@" Original Thumbprint: {0}", thumbprint), MethodName(), verbose, verbose);
             string formattedThumbprint = Regex.Replace(thumbprint, allowedThumbprintCharsPattern, "").ToUpper();
-            x509CryptoLog.Massive(string.Format(@"Formatted Thumbprint: {0}", formattedThumbprint), MethodName(), verbose, verbose);
+            X509CryptoLog.Massive(string.Format(@"Formatted Thumbprint: {0}", formattedThumbprint), MethodName(), verbose, verbose);
             return formattedThumbprint;
         }
 
@@ -433,7 +433,7 @@ namespace X509Crypto
                     }
                     catch (CryptographicException ex)
                     {
-                        x509CryptoLog.Exception(ex, Criticality.ERROR, string.Format("Certificate with thumbprint {0} was exported to path \"{1}\" but the file seems to be corrupt and unusable", certThumbprint, exportPath));
+                        X509CryptoLog.Exception(ex, Criticality.ERROR, string.Format("Certificate with thumbprint {0} was exported to path \"{1}\" but the file seems to be corrupt and unusable", certThumbprint, exportPath));
                         throw ex;
                     }
 
