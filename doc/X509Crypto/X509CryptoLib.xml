@@ -22,14 +22,16 @@
         </member>
         <member name="F:X509Crypto.CertStore.CurrentUser">
             <summary>
-            Represents the System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser cert store
-            String representation: <see cref="F:X509Crypto.CertStore.sSTORELOCATION_CURRENTUSER"/>
+            <para>Represents the CurrentUser certificate store</para>
+            <para>Enumerable Representation <see cref="P:X509Crypto.CertStore.Location"/>: <see cref="F:System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser"/></para>
+            <para>String representation <see cref="P:X509Crypto.CertStore.Name"/>: "CURRENTUSER"</para>
             </summary>
         </member>
         <member name="F:X509Crypto.CertStore.LocalMachine">
             <summary>
-            Represents the System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine cert store
-            String representation: <see cref="F:X509Crypto.CertStore.sSTORELOCATION_LOCALMACHINE"/>
+            <para>Represents the LocalMachine certificate store</para>
+            <para>Enumerable Representation <see cref="P:X509Crypto.CertStore.Location"/>: <see cref="F:System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine"/></para>
+            <para>String representation <see cref="P:X509Crypto.CertStore.Name"/>: "LOCALMACHINE"</para>
             </summary>
         </member>
         <member name="M:X509Crypto.CertStore.GetByName(System.String)">
@@ -54,17 +56,20 @@
         </member>
         <member name="T:X509Crypto.X509CryptoAgent">
             <summary>
-            Instantiatable class which can be used to perform cryptographic operations on string expressions and files
+            Instantiatable class which can be used to perform cryptographic operations on string expressions and files. 
             </summary>
+            <remarks>
+            It is advisable to leverage an instance of this class in your method/module if you need to perform several cryptographic operations within the stack frame.
+            </remarks>
         </member>
         <member name="P:X509Crypto.X509CryptoAgent.Thumbprint">
             <summary>
-            The thumbprint of the encryption certificate
+            The thumbprint of the certificate used for cryptographic operations
             </summary>
         </member>
         <member name="P:X509Crypto.X509CryptoAgent.Store">
             <summary>
-            The certificate store from which to load the encryption certificate.
+            The certificate store from which to load the encryption certificate and private key.
             </summary>
             <remarks>
             Possible values are <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/> or <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.LocalMachine"/><br/>
@@ -288,7 +293,7 @@
             
             using (<see cref="T:X509Crypto.X509CryptoAgent"/> agent = new <see cref="T:X509Crypto.X509CryptoAgent"/>(thumbprint, certStore))
             {
-                found = agent.CertificateExists"(thumbprint, certStore);
+                found = agent.CertificateExists(thumbprint, certStore);
             }
             </code>
             </example>
@@ -636,26 +641,6 @@
             <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
             string finalExportPath = <see cref="T:X509Crypto.X509Utils"/>.ExportCert(thumbprint, exportPath, certStore);
             //finalExportPath is @"C:\data\cert.cer"
-            </code>
-            </example>
-        </member>
-        <member name="M:X509Crypto.X509Utils.MakeCert(System.String,System.Int32,System.Int32,X509Crypto.CertStore,System.String@)">
-            <summary>
-            Creates a self-signed X509 Certificate and adds it to the indicated certificate store
-            </summary>
-            <param name="name">The common name of the certificate subject (e.g. "CN=Mike")</param>
-            <param name="keyLength">The desired size of the private key (1024, 2048, 496, ...)</param>
-            <param name="yearsValid">The number of years that the certificate should be valid for</param>
-            <param name="certStore">The certificate store where the new certificate should be placed (either <see cref="F:X509Crypto.CertStore.CurrentUser"/> or <see cref="F:X509Crypto.CertStore.LocalMachine"/>)</param>
-            <param name="thumbprint">Stores the thumbprint of the generated certificate after the method terminates</param>
-            <returns></returns>
-            <example>
-            <code>
-            string name = @"Mike Bruno";
-            int keyLength = 2048;
-            int yearsValid = 2;
-            <see cref="T:X509Crypto.CertStore"/> certStore = <see cref="T:X509Crypto.CertStore"/>.<see cref="F:X509Crypto.CertStore.CurrentUser"/>;
-            string thumbprint = <see cref="T:X509Crypto.X509Utils"/>.MakeCert(name, keyLength, yearsValid, certStore);
             </code>
             </example>
         </member>

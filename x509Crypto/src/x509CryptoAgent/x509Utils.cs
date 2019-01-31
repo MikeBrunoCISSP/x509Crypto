@@ -9,19 +9,7 @@ using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
 using System.Globalization;
 using System.Security.Cryptography;
-using Org.BouncyCastle.Asn1.Pkcs;
-using Org.BouncyCastle.Asn1.Sec;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Asn1.X9;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Operators;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
 using System.Security.Principal;
-using Org.BouncyCastle.Pkcs;
 using System.Diagnostics;
 
 namespace X509Crypto
@@ -34,7 +22,6 @@ namespace X509Crypto
         #region Constants and Static Fields
 
         private static string allowedThumbprintCharsPattern = "[^a-fA-F0-9]";
-        private static SecureRandom secureRandom = new SecureRandom();
 
         /// <summary>
         /// Indicates whether the invoking user is a local administrator on the system
@@ -445,86 +432,6 @@ namespace X509Crypto
         }
 
         /// <summary>
-        /// Creates a self-signed X509 Certificate and adds it to the indicated certificate store
-        /// </summary>
-        /// <param name="name">The common name of the certificate subject (e.g. "CN=Mike")</param>
-        /// <param name="keyLength">The desired size of the private key (1024, 2048, 496, ...)</param>
-        /// <param name="yearsValid">The number of years that the certificate should be valid for</param>
-        /// <param name="certStore">The certificate store where the new certificate should be placed (either <see cref="CertStore.CurrentUser"/> or <see cref="CertStore.LocalMachine"/>)</param>
-        /// <param name="thumbprint">Stores the thumbprint of the generated certificate after the method terminates</param>
-        /// <returns></returns>
-        /// <example>
-        /// <code>
-        /// string name = @"Mike Bruno";
-        /// int keyLength = 2048;
-        /// int yearsValid = 2;
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
-        /// string thumbprint = <see cref="X509Utils"/>.MakeCert(name, keyLength, yearsValid, certStore);
-        /// </code>
-        /// </example>
-        public static void MakeCert(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
-        {
-            X509Certificate2 dotNetCert = null;
-            AsymmetricCipherKeyPair keyPair = GenerateRsaKeyPair(keyLength);
-            string formattedName = FormatX500(name);
-            X509Name issuer = new X509Name(formattedName);
-            X509Name subject = new X509Name(formattedName);
-
-            ISignatureFactory signatureFactory;
-            if (keyPair.Private is ECPrivateKeyParameters)
-            {
-                signatureFactory = new Asn1SignatureFactory(
-                    X9ObjectIdentifiers.ECDsaWithSha256.ToString(),
-                    keyPair.Private);
-            }
-            else
-            {
-                signatureFactory = new Asn1SignatureFactory(
-                    PkcsObjectIdentifiers.Sha256WithRsaEncryption.ToString(),
-                    keyPair.Private);
-            }
-
-            var certGenerator = new X509V3CertificateGenerator();
-            certGenerator.SetIssuerDN(issuer);
-            certGenerator.SetSubjectDN(subject);
-            certGenerator.SetSerialNumber(BigInteger.ValueOf(1));
-            certGenerator.SetNotAfter(DateTime.UtcNow.AddYears(yearsValid));
-            certGenerator.SetNotBefore(DateTime.UtcNow);
-            certGenerator.SetPublicKey(keyPair.Public);
-            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyEncipherment));
-            Org.BouncyCastle.X509.X509Certificate cert = certGenerator.Generate(signatureFactory);
-
-            var bouncyStore = new Pkcs12Store();
-            var certEntry = new X509CertificateEntry(cert);
-            string friendlyName = cert.SubjectDN.ToString();
-            bouncyStore.SetCertificateEntry(friendlyName, certEntry);
-            bouncyStore.SetKeyEntry(friendlyName, new AsymmetricKeyEntry(keyPair.Private), new[] { certEntry });
-            char[] pass = RandomPass();
-
-            using (MemoryStream stream = new MemoryStream())
-            {
-                bouncyStore.Save(stream, pass, secureRandom);
-                dotNetCert = new X509Certificate2(stream.ToArray(), new string(pass), X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                thumbprint = dotNetCert.Thumbprint;
-                stream.Close();
-            }
-
-            X509Store dotNetStore = new X509Store(certStore.Location);
-            dotNetStore.Open(OpenFlags.ReadWrite);
-            dotNetStore.Add(dotNetCert);
-
-            bool added = false;
-            foreach (X509Certificate2 certInStore in dotNetStore.Certificates)
-            {
-                if (certInStore.Thumbprint == thumbprint)
-                    added = true;
-            }
-
-            if (!added)
-                throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
-        }
-
-        /// <summary>
         /// Overwrites a file (as stored on disk) with random bits in order to prevent forensic recovery of the data
         /// </summary>
         /// <param name="filePath">The fully-qualified path of the file to wipe from disk</param>
@@ -668,29 +575,7 @@ namespace X509Crypto
 
         #region MakeCert Methods
 
-        private static AsymmetricCipherKeyPair GenerateRsaKeyPair(int length)
-        {
-            var keygenParam = new KeyGenerationParameters(secureRandom, length);
 
-            var keyGenerator = new RsaKeyPairGenerator();
-            keyGenerator.Init(keygenParam);
-            return keyGenerator.GenerateKeyPair();
-        }
-
-        private static string FormatX500(string name)
-        {
-            if (!string.Equals(@"cn=", name.Substring(0, 3), StringComparison.OrdinalIgnoreCase))
-                name = string.Format(@"cn={0}", name);
-            name = name.Replace(",", "\\,");
-            return name;
-        }
-
-        private static char[] RandomPass()
-        {
-            const string chars = @"ABCDEFGHIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()-=+";
-            int length = secureRandom.Next(10, 20);
-            return Enumerable.Repeat(chars, length).Select(s => s[secureRandom.Next(s.Length)]).ToArray();
-        }
 
         #endregion
 
