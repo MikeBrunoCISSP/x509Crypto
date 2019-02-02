@@ -1,0 +1,1 @@
+\DocFX\docfx.exe metadata & \DocFX\docfx.exe & \DocFX\docfx.exe serve _site

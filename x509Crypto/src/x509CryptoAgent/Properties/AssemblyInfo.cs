@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("x509Crypto")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("X509Crypto")]
+[assembly: AssemblyDescription("Simplifies performing cryptographic operations on text and files using X509 certificates")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("x509Crypto")]
-[assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyCompany("X509Crypto.org")]
+[assembly: AssemblyProduct("X509Crypto")]
+[assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
