@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using X509Crypto;
+using Org.X509Crypto;
 using System.Security.AccessControl;
 
 namespace X509CryptoExe

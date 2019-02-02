@@ -7,11 +7,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace X509Crypto
+namespace Org.X509Crypto
 {
 
     /// <summary>
-    /// Supported logging levels.  Default logging level is INFO
+    /// <para>Indicates the criticality of an entry in the X509CryptoLog.</para>
+    /// <para>When the X509CryptoAgent class is instantiated, the logging criticality is set as INFO by default. 
+    /// This means that log messages with criticality of VERBOSE and MASSIVE will not be written to the log. </para>
+    /// <para>Criticality is configurable in any of the X509CryptoAgent constructors</para>
     /// </summary>
     public enum Criticality
     {
@@ -21,7 +24,7 @@ namespace X509Crypto
         CRITICAL = 0,
 
         /// <summary>
-        /// Standard errors
+        /// Non-fatal errors
         /// </summary>
         ERROR = 1,
 
@@ -47,7 +50,7 @@ namespace X509Crypto
     }
 
     /// <summary>
-    /// A static class which provides access to an activity log maintained by the x509Crypto module.  Log contents are maintained in a string expression.  Logging verbosity is configurable
+    /// A static class which controls all logging activity for the X509Crypto library.
     /// </summary>
     public static class X509CryptoLog
     {
@@ -80,10 +83,10 @@ namespace X509Crypto
         #region Public-facing
 
         /// <summary>
-        /// Gets the current conents of the log in a string expression
+        /// Gets the current conents of the X509CryptoLog in a string expression
         /// </summary>
-        /// <returns>string containing the </returns>
-        public static string Get()
+        /// <returns>string containing the current contents of the X509CryptoLog</returns>
+        public static string Contents()
         {
             return contents;
         }
@@ -97,39 +100,9 @@ namespace X509Crypto
             level = newLevel;
         }
 
-        /// <summary>
-        /// Changes the current logging verbosity
-        /// </summary>
-        /// <param name="sNewLevel">The desired logging level as specified by a string expression</param>
-        public static void SetLevel(string sNewLevel)
-        {
-            string sanitizedLvl = sNewLevel.ToUpper().Trim();
-
-            switch (sanitizedLvl)
-            {
-                case "CRITICAL":
-                    level = Criticality.CRITICAL;
-                    break;
-                case "ERROR":
-                    level = Criticality.ERROR;
-                    break;
-                case "WARNING":
-                    level = Criticality.WARNING;
-                    break;
-                case "INFO":
-                    level = Criticality.INFO;
-                    break;
-                case "VERBOSE":
-                    level = Criticality.VERBOSE;
-                    break;
-                case "MASSIVE":
-                    level = Criticality.MASSIVE;
-                    break;
-            }
-        }
 
         /// <summary>
-        /// Clears all contents from the log
+        /// Clears all current contents from the X509CryptoLog
         /// </summary>
         public static void Clear()
         {

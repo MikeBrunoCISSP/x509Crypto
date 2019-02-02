@@ -12,10 +12,10 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Diagnostics;
 
-namespace X509Crypto
+namespace Org.X509Crypto
 {
     /// <summary>
-    /// A static class which provides access to X509Crypto namespace functionality without instantiating a X509Crypto object.
+    /// A static class which provides access to X509Crypto namespace functionality without instantiating a X509CryptoAgent object.
     /// </summary>
     public static class X509Utils
     {

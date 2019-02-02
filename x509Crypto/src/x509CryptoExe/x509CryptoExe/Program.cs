@@ -7,7 +7,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
-using X509Crypto;
+using Org.X509Crypto;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Asn1.X509;

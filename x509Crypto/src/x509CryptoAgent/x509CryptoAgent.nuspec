@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://www.gnu.org/licenses/gpl.html</licenseUrl>
+    <projectUrl>http://www.x509crypto.org</projectUrl>
+    <iconUrl>http://http://www.x509crypto.org/images/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>Intial release</releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>encryption certificate pki privacy</tags>
+  </metadata>
+</package>

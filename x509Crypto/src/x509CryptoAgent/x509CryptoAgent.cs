@@ -6,7 +6,7 @@ using System.Security.Principal;
 using System.IO;
 using System.Runtime.Serialization;
 
-namespace X509Crypto
+namespace Org.X509Crypto
 {
     /// <summary>
     /// Instantiatable class which can be used to perform cryptographic operations on string expressions and files. 
@@ -97,28 +97,6 @@ namespace X509Crypto
         /// <summary>
         /// X509CryptoAgent Constructor
         /// </summary>
-        /// <param name="Thumbprint">The thumbprint of the encryption certificate.</param>
-        /// <param name="sStore">
-        /// <para>(Optional) String representation of the certificate store where the encryption certificate resides</para>
-        /// <para>Possible values are "CURRENTUSER" or "LOCALMACHINE"</para>
-        /// <para>If not specified, default value is "CURRENTUSER"</para></param>
-        /// <param name="VerboseLogging">(Optional) Set to true to enable verbose activity logging</param>
-        public X509CryptoAgent(string Thumbprint, string sStore = "", bool VerboseLogging = false)
-        {
-            this.Thumbprint = Thumbprint;
-
-            if (string.IsNullOrEmpty(sStore))
-                Store = CertStore.CurrentUser;
-            else
-                Store = CertStore.GetByName(sStore);
-
-            this.VerboseLogging = VerboseLogging;
-            GetRSAKeys();
-        }
-
-        /// <summary>
-        /// X509CryptoAgent Constructor
-        /// </summary>
         /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
         /// <param name="Store">
         /// <para>(Optional) The certificate store from which to load the encryption certificate.</para>
@@ -137,32 +115,6 @@ namespace X509Crypto
                 this.Store = CertStore.CurrentUser;
             else
                 this.Store = Store;
-
-            this.VerboseLogging = VerboseLogging;
-            GetRSAKeys();
-        }
-
-        /// <summary>
-        /// X509CryptoAgent Constructor
-        /// </summary>
-        /// <param name="inStream">FileStream pointing to a text file containing the encryption certificate thumbprint.</param>
-        /// <param name="sStore">
-        /// <para>(Optional) String representation of the certificate store where the encryption certificate resides</para>
-        /// <para>Possible values are "CURRENTUSER" or "LOCALMACHINE"</para>
-        /// <para>If not specified, default value is "CURRENTUSER"</para></param>
-        /// <param name="VerboseLogging">Set to true to enable verbose activity logging</param>
-        public X509CryptoAgent(FileStream inStream, string sStore = "", bool VerboseLogging = false)
-        {
-            using (StreamReader reader = new StreamReader(inStream))
-            {
-                Thumbprint = reader.ReadToEnd();
-                reader.Close();
-            }
-
-            if (string.IsNullOrEmpty(sStore))
-                Store = CertStore.CurrentUser;
-            else
-                Store = CertStore.GetByName(sStore);
 
             this.VerboseLogging = VerboseLogging;
             GetRSAKeys();
