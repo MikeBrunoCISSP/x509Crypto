@@ -36,6 +36,11 @@
         "files": [
           "images/**"
         ]
+      },
+	  {
+        "files": [
+          "downloads/**"
+        ]
       }
     ],
     "overwrite": [
