@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Diagnostics;
+using System.DirectoryServices;
 
 namespace Org.X509Crypto
 {
@@ -20,6 +21,9 @@ namespace Org.X509Crypto
     public static class X509Utils
     {
         #region Constants and Static Fields
+
+        private static bool iisGroupChecked = false;
+        private static bool iisGroupExists = false;
 
         private static string allowedThumbprintCharsPattern = "[^a-fA-F0-9]";
 
@@ -542,6 +546,22 @@ namespace Org.X509Crypto
         internal static void VerifyFile(string pfxPath)
         {
             throw new NotImplementedException();
+        }
+
+        internal static bool IISGroupExists()
+        {
+            if (iisGroupChecked)
+            {
+                return iisGroupExists;
+            }
+            else
+            {
+                var machine = Environment.MachineName;
+                var server = new DirectoryEntry($"WinNT://{machine},Computer");
+                iisGroupExists = server.Children.Cast<DirectoryEntry>().Any(d => d.SchemaClassName.Equals(Constants.Group) && d.Name.Equals(Constants.IISGroup));
+                iisGroupChecked = true;
+                return iisGroupExists;
+            }
         }
 
         #endregion

@@ -12,7 +12,7 @@ using System.Security.AccessControl;
 
 namespace X509CryptoExe
 {
-    public enum Mode
+    public enum OldMode
     {
         EncryptText=0,
         DecryptText = 1,
@@ -57,9 +57,9 @@ namespace X509CryptoExe
         internal const string PATH = @"path";
         internal const string PASSWORD = @"password";
 
-        internal const string DESC_CERT_THUMBPRINT = @"cert thumbprint";
-        internal static readonly string OLD_CERT_THUMBPRINT = string.Format(@"old {0}", DESC_CERT_THUMBPRINT);
-        internal static readonly string NEW_CERT_THUMBPRINT = string.Format(@"new {0}", DESC_CERT_THUMBPRINT);
+        internal const string CERT_THUMBPRINT = @"cert thumbprint";
+        internal static readonly string OLD_CERT_THUMBPRINT = string.Format(@"old {0}", CERT_THUMBPRINT);
+        internal static readonly string NEW_CERT_THUMBPRINT = string.Format(@"new {0}", CERT_THUMBPRINT);
 
         internal static string DESC_CERT_STORE = string.Format(@"{0}|{1}",CertStore.CurrentUser.Name, CertStore.LocalMachine.Name);
         internal static readonly string OLD_CERT_STORE = string.Format(@"old {0}", DESC_CERT_STORE);
@@ -233,7 +233,7 @@ namespace X509CryptoExe
         #region Crypto Text Usage Messages
 
         private static readonly string SYNTAX_CRYPTO_TEXT = string.Format("{0} {1} {2} [{3}] {4} [{5}] {{ {6} [{7}] {8} [{9}|{10}] }}",
-                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, PARAM_THUMB, DESC_CERT_THUMBPRINT,
+                                                                          PLACEHOLDER_CRYPTO_COMMAND, CRYPTO_MODE_TEXT, PARAM_THUMB, CERT_THUMBPRINT,
                                                                           PARAM_IN, PLACEHOLDER_CRYPTO_PLAINTEXT_CIPHERTEXT,
                                                                           PARAM_CERTSTORE, DESC_CERT_STORE, PARAM_OUT, PATH, SETTING_CRYPTO_CLIPBOARD);
         private static Dictionary<string, string> CryptoModesText = new Dictionary<string, string>
@@ -257,7 +257,7 @@ namespace X509CryptoExe
 
         //Encrypt File
         private static readonly string SYNTAX_ENCRYPT_FILE = string.Format("{0} {1} {2} [{3}] {4} [{5}] {{ {6} [{7}] {8} [{9}] {10}}}",
-                                                                          MAIN_MODE_ENCRYPT, CRYPTO_MODE_FILE, PARAM_THUMB, DESC_CERT_THUMBPRINT,
+                                                                          MAIN_MODE_ENCRYPT, CRYPTO_MODE_FILE, PARAM_THUMB, CERT_THUMBPRINT,
                                                                           PARAM_IN, CRYPTO_PLAINTEXT,
                                                                           PARAM_CERTSTORE, DESC_CERT_STORE, PARAM_OUT, PATH, CRYPTO_PARAM_WIPE[0]);
         private static Dictionary<string, string> cryptoModesEncrypt = new Dictionary<string, string>
@@ -275,7 +275,7 @@ namespace X509CryptoExe
                                                                                                                                                                                       .Replace(PLACEHOLDER_CRYPTO_USAGE_WIPE, CRYPTO_WIPE_USAGE);
         //Decrypt File
         private static readonly string SYNTAX_DECRYPT_FILE = string.Format("{0} {1} {2} [{3}] {4} [{5}] {{ {6} [{7}] {8} [{9}] }}",
-                                                                          MAIN_MODE_DECRYPT, CRYPTO_MODE_FILE, PARAM_THUMB, DESC_CERT_THUMBPRINT,
+                                                                          MAIN_MODE_DECRYPT, CRYPTO_MODE_FILE, PARAM_THUMB, CERT_THUMBPRINT,
                                                                           PARAM_IN, CRYPTO_CIPHERTEXT,
                                                                           PARAM_CERTSTORE, DESC_CERT_STORE, PARAM_OUT, PATH);
         private static Dictionary<string, string> cryptoModesFile = new Dictionary<string, string>
@@ -346,7 +346,7 @@ namespace X509CryptoExe
         private static readonly string USAGE_CERT_LIST = GetUsage(SYNTAX_CERT_LIST, certModeList, IS_PARAMETERS);
 
         //IMPORT USAGE
-        private static readonly string SYNTAX_CERT_IMPORT = string.Format(@"{0} {1} [{2}] {{{3} [{4}] {5} [{6}]}}", MAIN_MODE_IMPORT, PARAM_IN, PATH, CERT_PARAM_PASSWORD.First(), PASSWORD, PARAM_CERTSTORE, DESC_CERT_STORE);
+        private static readonly string SYNTAX_CERT_IMPORT = string.Format(@"{0} {1} [{2}] {3} [{4}] {{{5} [{6}]", MAIN_MODE_IMPORT, PARAM_IN, PATH, CERT_PARAM_PASSWORD, PASSWORD, PARAM_CERTSTORE, DESC_CERT_STORE);
         private static Dictionary<string, string> certModeImport = new Dictionary<string, string>
         {
             {PARAM_IN, @"The fully-qualified path to the PKCS #12 (.pfx or .p12) file to be imported" },
@@ -356,13 +356,12 @@ namespace X509CryptoExe
         private static readonly string USAGE_CERT_IMPORT = GetUsage(SYNTAX_CERT_IMPORT, certModeImport, IS_PARAMETERS);
 
         //EXPORT USAGE
-        private static readonly string SYNTAX_CERT_EXPORT = string.Format(@"{9} [{10}] {0} [{1}|{2}] {3} [{4}] {5} [{6}] {{{7} [{8}]}}", MAIN_MODE_EXPORT, CERT_EXPORT_PARAM_INCLUDE_KEY, CERT_EXPORT_PARAM_NOKEY, CERT_PARAM_PASSWORD.First(), PASSWORD, PARAM_OUT, PATH, PARAM_CERTSTORE, DESC_CERT_STORE, PARAM_THUMB, DESC_CERT_THUMBPRINT);
+        private static readonly string SYNTAX_CERT_EXPORT = string.Format(@"{0} [{1}|{2}] {3} [{4}] {5} [{6}] {7} [{8}]", MAIN_MODE_EXPORT, CERT_EXPORT_PARAM_INCLUDE_KEY, CERT_EXPORT_PARAM_NOKEY, CERT_PARAM_PASSWORD, PASSWORD, PARAM_CERTSTORE, DESC_CERT_STORE, PARAM_OUT, PATH);
         private static Dictionary<string, string> certModeExport = new Dictionary<string, string>
         {
-            {PARAM_THUMB, @"The thumbprint of the encryption certificate you wish to export" },
             {string.Format(@"{0}/{1}", CERT_EXPORT_PARAM_INCLUDE_KEY, CERT_EXPORT_PARAM_NOKEY), string.Empty +
                                        USAGE_INDENT + @"(Optional) Indicates whether the private key should be exported with the cert" +
-                                       USAGE_INDENT + "Default selection is " + CERT_EXPORT_PARAM_NOKEY},
+                                       USAGE_INDENT + "\r\nDefault selection is " + CERT_EXPORT_PARAM_NOKEY},
             {CERT_PARAM_PASSWORD.First(), "password to protect the PKCS#12 file" +
                                    USAGE_INDENT + string.Format(@"(Only compatible with {0} option)", CERT_EXPORT_PARAM_INCLUDE_KEY)},
             {PARAM_CERTSTORE, DESC_STORE_LOCATION },
@@ -371,10 +370,10 @@ namespace X509CryptoExe
         private static readonly string USAGE_CERT_EXPORT = GetUsage(SYNTAX_CERT_EXPORT, certModeExport, IS_PARAMETERS);
 
         //MAKECERT USAGE
-        private static readonly string SYNTAX_MAKE_CERT = string.Format(@"{0} {1} [{2}] {{ {3} [{4}] {5} [{6}] {7} [{8}] }}",
+        private static readonly string SYNTAX_MAKE_CERT = string.Format(@"{0} {1} [{2}] {{ {3} [{4}] {5} [{6}] {7} [{8}] {9} [{10}] }}",
                                                                         MAIN_MODE_MAKECERT, MAKECERT_PARAM_SUBJECT, MAKECERT_DESC_SUBJECT, 
                                                                         MAKECERT_PARAM_KEYLENGTH, MAKECERT_DESC_KEYLENGTH, PARAM_CERTSTORE, DESC_CERT_STORE, 
-                                                                        MAKECERT_PARAM_VALIDITY_PERIOD.First(), MAKECERT_DESC_VALIDITY_PERIOD);
+                                                                        CERT_PARAM_WORKING_DIR.First(), PATH, MAKECERT_PARAM_VALIDITY_PERIOD.First(), MAKECERT_DESC_VALIDITY_PERIOD);
         private static Dictionary<string, string> certModeMake = new Dictionary<string, string>
         {
             {MAKECERT_PARAM_SUBJECT, @"The subject (name) that should be given to the certificate" },
@@ -382,6 +381,8 @@ namespace X509CryptoExe
                                        USAGE_INDENT + @"larger key length provides more security but impacts performance" +
                                        USAGE_INDENT + string.Format(@"Default is {0}", MAKECERT_SIZE_MEDIUM.First())},
             {PARAM_CERTSTORE, DESC_STORE_LOCATION_MAKECERT },
+            {CERT_PARAM_WORKING_DIR.First(), @"(Optional) The fully-qualified path to where any temporary files should be written. " +
+                                             string.Format("{0}Default path is \"{1}\"", USAGE_INDENT, DEFAULT_WORKING_DIRECTORY) },
             {MAKECERT_PARAM_VALIDITY_PERIOD.First(), MAKECERT_USAGE_VALIDITY_PERIOD }
         };
         private static readonly string USAGE_MAKE_CERT = GetUsage(SYNTAX_MAKE_CERT, certModeMake, IS_PARAMETERS);
@@ -398,7 +399,7 @@ namespace X509CryptoExe
                       usage;
 
         public CertStore storeLocation = CertStore.CurrentUser;
-        public Mode mode = Mode.Unknown;
+        public OldMode mode = OldMode.Unknown;
         private int offset = 0;
 
         public bool GotThumbprint { get; set; } = false;
@@ -486,11 +487,11 @@ namespace X509CryptoExe
                     switch (GetContentType(args[++offset]))
                     {
                         case ContentType.Text:
-                            mode = Mode.EncryptText;
+                            mode = OldMode.EncryptText;
                             usage = USAGE_CRYPTO_ENCRYPT_TEXT;
                             return true;
                         case ContentType.File:
-                            mode = Mode.EncryptFile;
+                            mode = OldMode.EncryptFile;
                             usage = USAGE_CRYPTO_ENCRYPT_FILE;
                             return true;
                         default:
@@ -505,11 +506,11 @@ namespace X509CryptoExe
                     switch (GetContentType(args[++offset]))
                     {
                         case ContentType.Text:
-                            mode = Mode.DecryptText;
+                            mode = OldMode.DecryptText;
                             usage = USAGE_CRYPTO_DECRYPT_TEXT;
                             return true;
                         case ContentType.File:
-                            mode = Mode.DecryptFile;
+                            mode = OldMode.DecryptFile;
                             usage = USAGE_CRYPTO_DECRYPT_FILE;
                             return true;
                         default:
@@ -524,11 +525,11 @@ namespace X509CryptoExe
                     switch (GetContentType(args[++offset]))
                     {
                         case ContentType.Text:
-                            mode = Mode.ReEncryptText;
+                            mode = OldMode.ReEncryptText;
                             usage = USAGE_CRYPTO_REENCRYPT_TEXT;
                             return true;
                         case ContentType.File:
-                            mode = Mode.ReEncryptFile;
+                            mode = OldMode.ReEncryptFile;
                             usage = USAGE_CRYPTO_REENCRYPT_FILE;
                             return true;
                         default:
@@ -540,7 +541,7 @@ namespace X509CryptoExe
                 if (Match(currentArg, MAIN_MODE_LIST))
                 {
                     usage = USAGE_CERT_LIST;
-                    mode = Mode.List;
+                    mode = OldMode.List;
                     return true;
                 }
 
@@ -548,7 +549,7 @@ namespace X509CryptoExe
                 if (Match(currentArg, MAIN_MODE_IMPORT))
                 {
                     usage = USAGE_CERT_IMPORT;
-                    mode = Mode.ImportCert;
+                    mode = OldMode.ImportCert;
                     return true;
                 }
 
@@ -556,7 +557,7 @@ namespace X509CryptoExe
                 if (Match(currentArg, MAIN_MODE_EXPORT))
                 {
                     usage = USAGE_CERT_EXPORT;
-                    mode = Mode.ExportCert;
+                    mode = OldMode.ExportCert;
                     return true;
                 }
 
@@ -564,14 +565,14 @@ namespace X509CryptoExe
                 if (Match(currentArg, MAIN_MODE_MAKECERT))
                 {
                     usage = USAGE_MAKE_CERT;
-                    mode = Mode.MakeCert;
+                    mode = OldMode.MakeCert;
                     return true;
                 }
 
                 //Help
                 if (Match(currentArg, MAIN_MODE_HELP))
                 {
-                    mode = Mode.Help;
+                    mode = OldMode.Help;
                     Console.WriteLine(usage);
                     return false;
                 }
@@ -603,7 +604,7 @@ namespace X509CryptoExe
                     //Help?
                     if (Match(args[offset], MAIN_MODE_HELP))
                     {
-                        mode = Mode.Help;
+                        mode = OldMode.Help;
                         Console.WriteLine(usage);
                         return true;
                     }
@@ -628,10 +629,10 @@ namespace X509CryptoExe
                     GotOutput = GotOutput || CheckOutFile(args);
                     switch (mode)
                     {
-                        case Mode.ExportCert:
+                        case OldMode.ExportCert:
                             AddExtension(CERT_EXPORT_CERT_EXT, ref output);
                             break;
-                        case Mode.ExportPFX:
+                        case OldMode.ExportPFX:
                             AddExtension(CERT_EXPORT_KEY_EXT, ref output);
                             break;
                     }
@@ -643,17 +644,17 @@ namespace X509CryptoExe
                     GotPass = GotPass || CheckSetting(args, SETTING_GENERAL_PASSWORD, ref pass);
 
                     //Export Key?
-                    if (mode == Mode.ExportCert)
+                    if (mode == OldMode.ExportCert)
                     {
                         if (Match(args[offset], CERT_EXPORT_PARAM_INCLUDE_KEY))
-                            mode = Mode.ExportPFX;
+                            mode = OldMode.ExportPFX;
                     }
 
                     //List include Expired?
                     IncludeExpired = IncludeExpired || Match(args[offset], SETTING_LIST_INCLUDE_EXPIRED);
 
                     //Wipe residual file?
-                    if (mode == Mode.EncryptFile || mode == Mode.DecryptFile)
+                    if (mode == OldMode.EncryptFile || mode == OldMode.DecryptFile)
                         WipeResidualFile = WipeResidualFile || Match(args[offset], SETTING_CRYPTO_WIPE);
 
                     //Debug mode?
@@ -700,40 +701,40 @@ namespace X509CryptoExe
 
                 switch (mode)
                 {
-                    case Mode.DecryptFile:
+                    case OldMode.DecryptFile:
                         Valid = GotThumbprint && GotInput;
                         break;
-                    case Mode.DecryptText:
-                        Valid = GotThumbprint && GotInput;
-                        WriteToFile = GotOutput & !UseClipboard;
-                        break;
-                    case Mode.EncryptFile:
-                        Valid = GotThumbprint && GotInput;
-                        break;
-                    case Mode.EncryptText:
+                    case OldMode.DecryptText:
                         Valid = GotThumbprint && GotInput;
                         WriteToFile = GotOutput & !UseClipboard;
                         break;
-                    case Mode.ReEncryptFile:
+                    case OldMode.EncryptFile:
+                        Valid = GotThumbprint && GotInput;
+                        break;
+                    case OldMode.EncryptText:
+                        Valid = GotThumbprint && GotInput;
+                        WriteToFile = GotOutput & !UseClipboard;
+                        break;
+                    case OldMode.ReEncryptFile:
                         Valid = GotOldThumbprint && GotNewThumbprint && GotInput;
                         break;
-                    case Mode.ReEncryptText:
+                    case OldMode.ReEncryptText:
                         Valid = GotOldThumbprint && GotNewThumbprint && GotInput;
                         WriteToFile = GotOutput & !UseClipboard;
                         break;
-                    case Mode.ImportCert:
+                    case OldMode.ImportCert:
                         Valid = GotThumbprint && GotPass;
                         break;
-                    case Mode.ExportCert:
+                    case OldMode.ExportCert:
                         Valid = GotThumbprint && GotOutput;
                         break;
-                    case Mode.ExportPFX:
+                    case OldMode.ExportPFX:
                         Valid = GotThumbprint && GotOutput && GotPass;
                         break;
-                    case Mode.MakeCert:
+                    case OldMode.MakeCert:
                         Valid = GotCertSubject && DirectoryWritable(workingDir);
                         break;
-                    case Mode.List:
+                    case OldMode.List:
                         Valid = true;
                         break;
                 }
@@ -784,9 +785,9 @@ namespace X509CryptoExe
 
         private bool CheckCiphertext(string[] args)
         {
-            if (CheckCryptoInput(args, SETTING_CRYPTO_CIPHERTEXT, Mode.DecryptFile, ref cipherText))
+            if (CheckCryptoInput(args, SETTING_CRYPTO_CIPHERTEXT, OldMode.DecryptFile, ref cipherText))
             {
-                if (mode == Mode.DecryptFile)
+                if (mode == OldMode.DecryptFile)
                     output = GetPlaintextFileName(cipherText);
                 return true;
             }
@@ -794,7 +795,7 @@ namespace X509CryptoExe
                 return false;
         }
 
-        private bool CheckCryptoInput(string[] args, string[] setting_type, Mode fileMode, ref string field)
+        private bool CheckCryptoInput(string[] args, string[] setting_type, OldMode fileMode, ref string field)
         {
             if (Match(args[offset], setting_type))
             {
@@ -812,9 +813,9 @@ namespace X509CryptoExe
 
         private bool CheckPlainText(string[] args)
         {
-            if (CheckCryptoInput(args, SETTING_CRYPTO_PLAINTEXT, Mode.EncryptFile, ref plainText))
+            if (CheckCryptoInput(args, SETTING_CRYPTO_PLAINTEXT, OldMode.EncryptFile, ref plainText))
             {
-                if (mode == Mode.EncryptFile)
+                if (mode == OldMode.EncryptFile)
                     output = GetCipherTextFileName(plainText);
                 return true;
             }
@@ -847,7 +848,7 @@ namespace X509CryptoExe
             {
                 input = NextArgument(args);
 
-                if (mode == Mode.DecryptFile || mode == Mode.EncryptFile || mode == Mode.ReEncryptFile || mode == Mode.ImportCert)
+                if (mode == OldMode.DecryptFile || mode == OldMode.EncryptFile || mode == OldMode.ReEncryptFile || mode == OldMode.ImportCert)
                 {
                     if (!File.Exists(input))
                         throw new Exception(string.Format("\"{0}\": file not found", input));
@@ -857,11 +858,11 @@ namespace X509CryptoExe
                 {
                     switch (mode)
                     {
-                        case Mode.EncryptFile:
+                        case OldMode.EncryptFile:
                             output = GetCipherTextFileName(input);
                             GotOutput = true;
                             break;
-                        case Mode.DecryptFile:
+                        case OldMode.DecryptFile:
                             output = GetPlaintextFileName(input);
                             GotOutput = true;
                             break;

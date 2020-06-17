@@ -61,29 +61,29 @@ namespace X509CryptoExe
 
             switch(config.mode)
             {
-                case Mode.EncryptText:
+                case OldMode.EncryptText:
                     return EncryptText();
-                case Mode.ReEncryptText:
+                case OldMode.ReEncryptText:
                     return ReEncryptText();
-                case Mode.EncryptFile:
+                case OldMode.EncryptFile:
                     return EncryptFile();
-                case Mode.ReEncryptFile:
+                case OldMode.ReEncryptFile:
                     return ReEncryptFile();
-                case Mode.DecryptText:
+                case OldMode.DecryptText:
                     return DecryptText();
-                case Mode.DecryptFile:
+                case OldMode.DecryptFile:
                     return DecryptFile();
-                case Mode.ImportCert:
+                case OldMode.ImportCert:
                     return ImportPFX();
-                case Mode.ExportCert:
+                case OldMode.ExportCert:
                     return ExportCert();
-                case Mode.ExportPFX:
+                case OldMode.ExportPFX:
                     return ExportPFX();
-                case Mode.List:
+                case OldMode.List:
                     return ListCerts();
-                case Mode.MakeCert:
+                case OldMode.MakeCert:
                     return MakeCert();
-                case Mode.Help:
+                case OldMode.Help:
                     return RESULT_SUCCESS;
                 default:
                     return RESULT_BAD_INPUT;
@@ -431,6 +431,13 @@ namespace X509CryptoExe
                 else
                     throw ex;
             }
+        }
+
+        static void Initialize()
+        {
+            Parameter.Initialize();
+            Mode.Initialize();
+            Command.Initialize();
         }
 
         #endregion

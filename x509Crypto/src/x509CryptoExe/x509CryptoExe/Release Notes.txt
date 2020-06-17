@@ -1,4 +1,0 @@
-﻿v1.0.1 Release Notes:
-
-* 05-Feb-2019 - Remediated Import and Export command usage statement
-* 06-Feb-2019 - Remediated MakeCert Usage statement
