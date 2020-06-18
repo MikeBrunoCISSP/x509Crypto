@@ -12,7 +12,11 @@ namespace Org.X509Crypto
     public class X509AliasNotFoundException : Exception
     {
         internal X509AliasNotFoundException(X509Alias Alias)
-            : base($"No X509Alias by the name {Alias.Name} exists in the {Alias.Context.Name} context")
+            : base($"No {nameof(X509Alias)} by the name {Alias.Name} exists in the {Alias.Context.Name} context")
+        { }
+
+        internal X509AliasNotFoundException(string thumbprint, X509Context Context)
+            : base($"No {nameof(X509Alias)} exists in the {Context.Name} {nameof(X509Context)} containing an encryption certificate with thumbprint {thumbprint.InQuotes()}")
         { }
     }
 
@@ -21,7 +25,11 @@ namespace Org.X509Crypto
     /// </summary>
     public class X509AliasAlreadyExistsException : Exception
     {
-        internal X509AliasAlreadyExistsException(X509Alias Alias)
+        /// <summary>
+        /// Instantiates an X509AliasAlreadyExistsException
+        /// </summary>
+        /// <param name="Alias">The X509Alias that already exists</param>
+        public X509AliasAlreadyExistsException(X509Alias Alias)
             : base($"An X509Alias named \"{Alias.Name}\" already exists in the {Alias.Context.Name} context.")
         { }
     }
@@ -41,7 +49,12 @@ namespace Org.X509Crypto
     /// </summary>
     public class X509CryptoCertificateNotFoundException : Exception
     {
-        internal X509CryptoCertificateNotFoundException(string thumbprint, X509Context Context)
+        /// <summary>
+        /// Instantiates an X509CryptoCertificateNotFoundException
+        /// </summary>
+        /// <param name="thumbprint">The thumbprint of the certificate which could not be located in the specified X509Context</param>
+        /// <param name="Context">The X509Context which was checked for the encryption certificate</param>
+        public X509CryptoCertificateNotFoundException(string thumbprint, X509Context Context)
             : base($"A certificate with thumbprint \"{thumbprint}\" was not found in the \"{Context.Name}\" context.")
         { }
     }
@@ -76,13 +89,25 @@ namespace Org.X509Crypto
         { }
     }
 
+    /// <summary>
+    /// Thrown to indicate an otherwise unclassified exception
+    /// </summary>
     public class X509CryptoException : Exception
     {
-        internal X509CryptoException(string message)
+        /// <summary>
+        /// Throws an exception with the indicated message
+        /// </summary>
+        /// <param name="message">The message to display in the exception</param>
+        public X509CryptoException(string message)
             : base(message)
         { }
 
-        internal X509CryptoException(string message, Exception innerException)
+        /// <summary>
+        /// Throws an exception with the indicated message and includes an inner exception
+        /// </summary>
+        /// <param name="message">The message to display in the exception</param>
+        /// <param name="innerException">The exception that actually occurred to prompt this exception</param>
+        public X509CryptoException(string message, Exception innerException)
             : base(message, innerException)
         { }
     }

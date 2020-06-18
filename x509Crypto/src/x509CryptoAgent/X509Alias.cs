@@ -171,14 +171,26 @@ namespace Org.X509Crypto
         }
 
         /// <summary>
-        /// Re-Encrypts and stores a secret from a different X509Alias in the current X509Alias
+        /// Re-Encrypts a ciphertext expression, currently encrypted in a different X509Alias, using this X509Alias
         /// </summary>
-        /// <param name="Name">The identifier of the secret to be reencrypted</param>
+        /// <param name="ciphertext">The ciphertext expression to be reencrypted</param>
         /// <param name="OldAlias">The identifier of the X509Alias where the input secret is located</param>
         /// <returns>A Bas64-encoded ciphertext string</returns>
-        public string ReEncryptText(string Name, X509Alias OldAlias)
+        public string ReEncryptText(string ciphertext, X509Alias OldAlias)
         {
-            string plaintext = OldAlias.RecoverSecret(Name);
+            string plaintext = OldAlias.DecryptText(ciphertext);
+            return EncryptText(plaintext);
+        }
+
+        /// <summary>
+        /// Re-Encrypts a secret that is stored in a different X509Alias
+        /// </summary>
+        /// <param name="secretName">The identifier of the secret to be re-encrypted</param>
+        /// <param name="OldAlias">The X509Alias where the secret is stored</param>
+        /// <returns>A Base64-encoded ciphtertext string</returns>
+        public string ReEncryptSecret(string secretName, X509Alias OldAlias)
+        {
+            string plaintext = OldAlias.RecoverSecret(secretName);
             return EncryptText(plaintext);
         }
 
@@ -211,15 +223,22 @@ namespace Org.X509Crypto
             return Secret.Value;
         }
 
+        public void AddSecret(KeyValuePair<string,string> tuple, bool overwriteExisting)
+        {
+            X509Secret Secret = new X509Secret(tuple.Key, tuple.Value);
+            ExtendSecrets(Secret, overwriteExisting);
+        }
+
         /// <summary>
         /// Re-encrypts a secret from a different X509Alias and stores it in this X509Alias
         /// </summary>
         /// <param name="key">The identifier of the secret as it is stored in the old X509Alias</param>
         /// <param name="OldAlias">The old X509Alias where the secret is currently encrypted and stored</param>
+        /// <param name="overwriteExisting">If true, an existing secret in this X509Alias with the same identifier may be overwritten</param>
         /// <returns>A Base64-encoded ciphertext expression</returns>
-        public string AddSecret(string key, X509Alias OldAlias)
+        public string AddSecret(string key, X509Alias OldAlias, bool overwriteExisting)
         {
-            return AddSecret(key, OldAlias.RecoverSecret(key), false);
+            return AddSecret(key, OldAlias.RecoverSecret(key), overwriteExisting);
         }
 
         /// <summary>
@@ -412,6 +431,8 @@ namespace Org.X509Crypto
             {
                 DecodeFromFile();
             }
+
+            return true;
         }
 
         private void LoadSecret(string key, string ciphertext)
@@ -574,11 +595,15 @@ namespace Org.X509Crypto
 
         internal static string GetOne(string thumbprint, X509Context Context)
         {
-            X509Alias CurrentAlias;
             foreach(X509Alias Alias in Context.GetAliases())
             {
-
+                if (Alias.Thumbprint.Matches(thumbprint))
+                {
+                    return Alias.Name;
+                }
             }
+
+            throw new X509AliasNotFoundException(thumbprint, Context);
         }
 
         private static X509Certificate2Collection GetCertificates(X509Context Context)

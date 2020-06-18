@@ -37,7 +37,7 @@ namespace X509CryptoExe
             return itemSet.Any(p => p.Name.Matches(compareItem));
         }
 
-        internal static X509Context GetContext(this OldMode mode, Parameter param, X509Context DefaultContext = null)
+        internal static X509Context GetContext(this Mode mode, Parameter param, X509Context DefaultContext = null)
         {
             Parameter Result = mode.GetParameter(param);
             if (Result.IsContext)
@@ -59,18 +59,6 @@ namespace X509CryptoExe
                 }
             }
             else
-            {
-                throw new InvalidX509ContextNameException(param.Name);
-            }
-        }
-
-        internal static X509Context GetContext(this OldMode mode, Parameter param)
-        {
-            try
-            {
-                return mode.Parameters.First(p => p.Name.IsMatch(param.Name)).SelectedContext;
-            }
-            catch
             {
                 throw new InvalidX509ContextNameException(param.Name);
             }
@@ -121,11 +109,6 @@ namespace X509CryptoExe
             return $"[{expression}]";
         }
 
-        internal static string InQuotes(this string expression)
-        {
-            return $"\"{expression}\"";
-        }
-
         internal static string BarDelimited(this IEnumerable<string> elements)
         {
             return string.Join("|", elements.ToArray());
@@ -160,7 +143,7 @@ namespace X509CryptoExe
             }
         }
 
-        private static Parameter GetParameter(this OldMode mode, Parameter param)
+        private static Parameter GetParameter(this Mode mode, Parameter param)
         {
             Parameter Result = mode.Parameters.FirstOrDefault(p => p.ID == param.ID);
             if (Result == null)

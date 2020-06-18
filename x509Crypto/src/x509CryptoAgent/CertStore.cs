@@ -60,7 +60,7 @@ namespace Org.X509Crypto
         /// 
         /// string sCertStore = ConfigurationManager.AppSettings["CertStore"];
         /// string thumbprint = ConfigurationManager.AppSettings["CertThumbprint"];
-        /// X509CryptoAgent agent = new X509CryptoAgent(thumbprint, <see cref="CertStore"/>.GetByName(sCertStore));
+        /// X509CryptoAgent agent = new X509CryptoAgent(thumbprint, <see cref="X509Context"/>.GetByName(sCertStore));
         /// </code>
         /// </example>
         public static CertStore GetByName(string name)

@@ -7,6 +7,13 @@ using System.Threading.Tasks;
 
 namespace X509CryptoExe
 {
+    internal enum Output
+    {
+        File = 0,
+        Clipboard = 1,
+        Screen = 2
+    }
+
     internal class Mode
     {
         internal static List<Mode> Collection = new List<Mode>();
@@ -27,7 +34,28 @@ namespace X509CryptoExe
         internal int ID { get; private set; }
         internal string Description { get; private set; }
         internal bool IsDefault { get; private set; } = false;
-        internal bool UseClipboard { get; private set; } = false;
+
+        internal Output OutputType
+        {
+            get
+            {
+                if (UseClipboard)
+                {
+                    return Output.Clipboard;
+                }
+                if (OutToFile)
+                {
+                    return Output.File;
+                }
+                else
+                {
+                    return Output.Screen;
+                }
+            }
+        }
+
+        internal bool UseClipboard { get; set; } = false;
+        private bool OutToFile { get; set; } = false;
         internal bool UnrecognizedExpressionEncountered { get; private set; } = false;
 
         internal List<Parameter> Parameters { get; private set; } = new List<Parameter>();
@@ -127,30 +155,113 @@ namespace X509CryptoExe
         {
             if (!NeedsParameters)
             {
-                Console.WriteLine(string.Format(UsageExpression.UnrecognizedExpression, args[index]));
-                UnrecognizedExpressionEncountered = true;
+                throw new UnrecognizedExpressionException(args[index]);
             }
 
-            bool recognized = false;
-            foreach(Parameter param in Parameters)
+            try
             {
-                if (param.Name.Matches(args[index]))
+                bool recognized = false;
+                foreach (Parameter param in Parameters)
                 {
-                    recognized = true;
-                    index++;
-                    param.TryDefine(args, ref index);
-                    if (param.IsPath && param.IsDefined)
+                    if (param.Name.Matches(args[index]))
                     {
-                        UseClipboard = UseClipboard || param.UseClipboard;
+                        recognized = true;
+                        index++;
+                        param.TryDefine(args, ref index);
+                        if (param.IsPath && param.IsDefined)
+                        {
+                            UseClipboard = UseClipboard || param.UseClipboard;
+                            OutToFile = OutToFile || param.OutToFile;
+                        }
+                        break;
                     }
-                    break;
+                }
+
+                if (!recognized)
+                {
+                    throw new UnrecognizedExpressionException(args[index]);
                 }
             }
-
-            if (!recognized)
+            catch (Exception ex)
             {
-                Console.WriteLine(string.Format(UsageExpression.UnrecognizedExpression, args[index]));
-                UnrecognizedExpressionEncountered = true;
+                if (ex is IndexOutOfRangeException)
+                {
+                    throw new InvalidArgumentsException();
+                }
+                else
+                {
+                    throw ex;
+                }
+            }
+        }
+
+        internal string GetString(int id)
+        {
+            try
+            {
+                return Parameters.First(p => p.ID == id).TextValue;
+            }
+            catch (Exception)
+            {
+                throw new ParameterNotSupportedException(Name);
+            }
+        }
+
+        internal bool GetBool(int id)
+        {
+            try
+            {
+                return Parameters.Where(p => p.IsBool)
+                                 .First(p => p.ID == id).BoolValue;
+            }
+            catch (Exception)
+            {
+                throw new ParameterNotSupportedException(Name);
+            }
+        }
+
+        internal int GetInt(int id)
+        {
+            try
+            {
+                return Parameters.Where(p => p.IsInt)
+                                 .First(p => p.ID == id).IntValue;
+            }
+            catch (Exception)
+            {
+                throw new ParameterNotSupportedException(Name);
+            }
+        }
+
+        internal bool IsParameterDefined(int id)
+        {
+            try
+            {
+                return Parameters.First(p => p.ID == id).IsDefined;
+            }
+            catch (Exception)
+            {
+                throw new ParameterNotSupportedException(Name);
+            }
+        }
+
+        internal X509Context GetContext(int id, X509Context DefaultContext = null)
+        {
+            try
+            {
+                return Parameters.Where(p => p.IsDefined && p.IsContext)
+                                 .First(p => p.ID == id).SelectedContext;
+            }
+            catch (Exception)
+            {
+                if (DefaultContext != null)
+                {
+                    return DefaultContext;
+                }
+                else
+                {
+                    throw new InvalidX509ContextNameException();
+                }
             }
         }
 
@@ -385,7 +496,8 @@ namespace X509CryptoExe
                 Parameters =
                 {
                     Parameter.Context,
-                    Parameter.ListType
+                    Parameter.ListType,
+                    Parameter.OutList
                 }
             };
             Collection.Add(List);
@@ -426,16 +538,16 @@ namespace X509CryptoExe
             Collection.Add(Exit);
         }
 
-        internal static Mode GetMode(Command verb, string[] args, bool inCli, ref int index)
+        internal static Mode Select(Command command, string[] args, bool inCli, ref int index)
         {
-            if (verb.HasDefaultMode)
+            if (command.HasDefaultMode)
             {
-                return verb.SupportedModes.FirstOrDefault();
+                return command.SupportedModes.FirstOrDefault();
             }
 
             if (index < args.Length)
             {
-                Mode mode = verb.SupportedModes.Find(args[index++]);
+                Mode mode = command.SupportedModes.Find(args[index++]);
                 return mode;
             }
             else

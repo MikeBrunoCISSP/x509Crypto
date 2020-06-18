@@ -31,24 +31,7 @@ namespace X509CryptoExe
 
         internal string Sample { get; private set; }
 
-        internal string TextValue
-        {
-            get
-            {
-                return textValue;
-            }
-            private set
-            {
-                if (value[0] == '\"' && value[value.Length - 1] == '\"')
-                {
-                    textValue = value.Substring(1, value.Length - 2);
-                }
-                else
-                {
-                    textValue = value;
-                }
-            }
-        }
+        internal string TextValue { get; private set; }
 
         internal int IntValue { get; private set; } = 0;
         internal int MinIntValue { get; private set; } = 0;
@@ -395,6 +378,7 @@ namespace X509CryptoExe
                                   OutReEncFile,
                                   OutDecText,
                                   OutDecFile,
+                                  OutList,
                                   OutExportAlias,
                                   OutDumpAlias,
                                   OutWriteExistingFile,
@@ -855,6 +839,19 @@ namespace X509CryptoExe
                 FileExtension = FileExtensions.Csv
             };
             Collection.Add(OutDumpAlias);
+
+            OutList = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Out,
+                Sample = Samples.PathOr,
+                Description = $"The file path to write the output. {UsageExpression.Clipboard}",
+                IsPath = true,
+                ControlsOutput = true,
+                FileExtension = FileExtensions.Txt,
+                DefinitionRequired = false
+            };
+            Collection.Add(OutList);
 
             OverWriteExistingFile = new Parameter()
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -291,6 +292,26 @@ namespace X509CryptoExe
                     Mode.Cli
                 }
             };
+        }
+
+        internal static Command Select(string[] args, ref int index)
+        {
+            if (args.Length < 1)
+            {
+                return Cli;
+            }
+
+            Command SelectedCommand;
+
+            try
+            {
+                SelectedCommand = Collection.Find(args[index++]);
+                return SelectedCommand;
+            }
+            catch (Exception)
+            {
+                throw new UnrecognizedExpressionException(args[index]);
+            }
         }
     }
 }

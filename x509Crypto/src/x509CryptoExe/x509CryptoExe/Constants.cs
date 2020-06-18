@@ -65,6 +65,7 @@ namespace X509CryptoExe
         internal const string Ciphertext = @".ctx";
         internal const string Plaintext = @".ptx";
         internal const string Csv = @".csv";
+        internal const string Txt = @".txt";
     }
 
     internal static class CommandName

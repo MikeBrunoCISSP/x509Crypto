@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -73,6 +75,40 @@ namespace Org.X509Crypto
             }
             StringComparison compareType = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
             return string.Equals(expression, compareExpression, compareType);
+        }
+
+        /// <summary>
+        /// Converts a SecureString object to a normal string expression
+        /// </summary>
+        /// <param name="secret">The SecureString object to be converted</param>
+        /// <returns>converted string expression</returns>
+        public static string Plaintext(this SecureString secret)
+        {
+            if (secret == null)
+            {
+                throw new ArgumentNullException(nameof(secret));
+            }
+
+            IntPtr unmanagedString = IntPtr.Zero;
+            try
+            {
+                unmanagedString = Marshal.SecureStringToGlobalAllocUnicode(secret);
+                return Marshal.PtrToStringUni(unmanagedString);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(unmanagedString);
+            }
+        }
+
+        /// <summary>
+        /// Surrounds the specified expression with double-quotes
+        /// </summary>
+        /// <param name="expression">the expression to be surrounded with double-quotes</param>
+        /// <returns></returns>
+        public static string InQuotes(this string expression)
+        {
+            return $"\"{expression}\"";
         }
     }
 }

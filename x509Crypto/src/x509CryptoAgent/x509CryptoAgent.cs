@@ -33,8 +33,8 @@ namespace Org.X509Crypto
         /// The certificate store from which to load the encryption certificate and private key.
         /// </summary>
         /// <remarks>
-        /// Possible values are <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/> or <see cref="CertStore"/>.<see cref="CertStore.LocalMachine"/><br/>
-        /// If not specified, default value is <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>
+        /// Possible values are <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/> or <see cref="X509Context"/>.<see cref="CertStore.LocalMachine"/><br/>
+        /// If not specified, default value is <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>
         /// </remarks>
         public X509Context Context { get; private set; }
 
@@ -86,7 +86,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// 
         /// string plaintext = @"Hello world!";
         /// string ciphertext;
@@ -179,7 +179,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// string plaintextFilePath = @"C:\data\SSNs.txt";
         /// string ciphertextFilePath = Path.GetFileNameWithoutExtension(plaintextFilePath)" + <see cref="X509Utils.CRYPTO_ENCRYPTED_FILE_EXT"/>;
         /// 
@@ -264,7 +264,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// byte[] fileBytes = File.ReadAllBytes(@"C:\data\example.txt");
         /// string ciphertextFilePath = @"C:\data\example_encrypted.ctx";
         /// 
@@ -347,7 +347,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// 
         /// string ciphertext = File.ReadAllText(@"C:\data\connectionString.txt");
         /// string plaintext;
@@ -447,7 +447,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// 
         /// string ciphertextFilePath = @"C:\data\SSNs.txt.ctx";
         /// string plaintextFilePath = @"C:\data\SSNs.txt";
@@ -538,7 +538,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// 
         /// string ciphertextFilePath = @"C:\data\SSNs.txt.ctx";
         /// byte[] plaintextBytes;
@@ -631,7 +631,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// 
         /// string ciphertextFilePath = @"C:\data\connectionString.txt";
         /// string plaintext;
@@ -706,7 +706,7 @@ namespace Org.X509Crypto
         /// <example>
         /// <code>
         /// string thumbprint = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688";
-        /// <see cref="CertStore"/> certStore = <see cref="CertStore"/>.<see cref="CertStore.CurrentUser"/>;
+        /// <see cref="X509Context"/> certStore = <see cref="X509Context"/>.<see cref="X509Context.UserReadOnly"/>;
         /// 
         /// bool found;
         /// 
