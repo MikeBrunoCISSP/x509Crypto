@@ -108,6 +108,9 @@ namespace Org.X509Crypto
             }
         }
 
+        /// <summary>
+        /// X509Alias Destructor
+        /// </summary>
         public void Dispose()
         {
             Name = null;
@@ -152,6 +155,12 @@ namespace Org.X509Crypto
             }
         }
 
+        /// <summary>
+        /// Recovers the specified encrypted file
+        /// </summary>
+        /// <param name="inFile">The path to the encrypted file to be recovered. Path must exist</param>
+        /// <param name="outFile">The path in which to write the recovered plaintext file</param>
+        /// <param name="wipeTimesToWrite">Performs n-pass forensic wipe of the disk sectors where the input file was stored.</param>
         public void DecryptFile(string inFile, string outFile, int wipeTimesToWrite = 0)
         {
             using (X509CryptoAgent Agent = new X509CryptoAgent(this))
@@ -223,6 +232,11 @@ namespace Org.X509Crypto
             return Secret.Value;
         }
 
+        /// <summary>
+        /// Adds a secret (which has already been encrypted using the certificate associated with this X509Alias) and its identifier to this X509Alias
+        /// </summary>
+        /// <param name="tuple">Key should be the secret identifier, Value should be the encrypted secret</param>
+        /// <param name="overwriteExisting">Indicates whether an existing secret in the alias with the same value for "Name" as specified may be overwritten</param>
         public void AddSecret(KeyValuePair<string,string> tuple, bool overwriteExisting)
         {
             X509Secret Secret = new X509Secret(tuple.Key, tuple.Value);
@@ -276,6 +290,11 @@ namespace Org.X509Crypto
             return false;
         }
 
+        /// <summary>
+        /// Recovers a secret from an X509Alias with the specified identifier
+        /// </summary>
+        /// <param name="key">The identifier of the secret to be recovered</param>
+        /// <returns>The recovered, plaintext secret</returns>
         public string RecoverSecret(string key)
         {
             foreach(X509Secret secret in Secrets)
@@ -314,6 +333,7 @@ namespace Org.X509Crypto
 
             Thumbprint = newThumbprint;
             Context = newContext;
+            Commit();
         }
 
         /// <summary>
@@ -333,9 +353,9 @@ namespace Org.X509Crypto
         /// <param name="overwriteExisting">Indicates whether an existing file may be overwritten if a file should exist at the indicated export path</param>
         public void Export(string exportPath, bool overwriteExisting = false)
         {
-            if (!Path.GetExtension(exportPath).Matches(FileExtensions.Json))
+            if (!Path.GetExtension(exportPath).Matches(FileExtensions.X509Alias))
             {
-                exportPath = $"{exportPath}{FileExtensions.Json}";
+                exportPath = $"{exportPath}{FileExtensions.X509Alias}";
             }
 
             if (File.Exists(exportPath) && !overwriteExisting)
@@ -370,7 +390,7 @@ namespace Org.X509Crypto
         /// </summary>
         public void Remove()
         {
-            Directory.Delete(StoragePath, true);
+            X509Utils.DeleteFile(StoragePath);
 
             if (AliasExists(this))
             {
@@ -390,8 +410,9 @@ namespace Org.X509Crypto
                 return $"No secrets stored in X509Alias {Context.Name}\\{Name}";
             }
 
-            StringBuilder Output = new StringBuilder($"{Secrets.Length} secrets exist in X509Alias {Context.Name}\\{Name}:\r\n");
-            Output.AppendLine(@"------------------------------------------------------------");
+            string firstLine = $"{Secrets.Length} secrets exist in X509Alias {Context.Name}\\{Name}:";
+            StringBuilder Output = new StringBuilder($"{firstLine}\r\n");
+            Output.AppendLine(firstLine.Dashes());
             for (int x = 0; x<Secrets.Length; x++)
             {
                 Output.AppendLine(reveal ? Secrets[x].Dump(x, this) : Secrets[x].Dump(x));

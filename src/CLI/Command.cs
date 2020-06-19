@@ -102,6 +102,7 @@ namespace X509CryptoExe
                                 DumpAlias,
                                 InstallCert,
                                 MakeCert,
+                                ExportCert,
                                 List,
                                 Cli,
                                 Impersonate,
@@ -170,6 +171,7 @@ namespace X509CryptoExe
                 ID = index++,
                 Name = CommandName.UpdateAlias,
                 HasDefaultMode = true,
+                Description = @"Updates an X509Alias to use a different encryption certificate",
                 SupportedModes =
                 {
                     Mode.UpdateAlias
@@ -249,6 +251,18 @@ namespace X509CryptoExe
             };
             Collection.Add(MakeCert);
 
+            ExportCert = new Command()
+            {
+                Name = CommandName.ExportCert,
+                Description = @"Exports the specified certificate and key pair to a PKCS#12 file",
+                HasDefaultMode = true,
+                SupportedModes =
+                {
+                    Mode.ExportCert
+                }
+            };
+            Collection.Add(ExportCert);
+
             List = new Command()
             {
                 Name = CommandName.List,
@@ -324,7 +338,7 @@ namespace X509CryptoExe
             }
             catch (Exception)
             {
-                throw new UnrecognizedExpressionException(args[index]);
+                throw new UnrecognizedExpressionException(args[index - 1]);
             }
         }
     }

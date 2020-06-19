@@ -166,6 +166,12 @@ namespace Org.X509Crypto
             }
         }
 
+        /// <summary>
+        /// Re-encrypts the specified ciphertext expression using a different X509CryptoAgent
+        /// </summary>
+        /// <param name="ciphertext">the ciphertext expression to be re-encrypted</param>
+        /// <param name="newAgent">the X509CryptoAgent to be used to perform re-encryption</param>
+        /// <returns></returns>
         public string ReEncryptText(string ciphertext, X509CryptoAgent newAgent)
         {
             return newAgent.EncryptText(DecryptText(ciphertext));
@@ -683,6 +689,7 @@ namespace Org.X509Crypto
                 {
                     publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                     privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
+                    break;
                 }
                 valid = true;
             }
@@ -727,12 +734,6 @@ namespace Org.X509Crypto
                 if (cert.Thumbprint.Matches(certThumbprint) && IsUsable(cert, true))
                 {
                     return true;
-                }
-                else
-                {
-                    X509CryptoLog.Warning(text: $"A certificate with thumbprint {certThumbprint} was found in the {Context.Name} context, but is not usable for encryption",
-                                          messageType: X509Utils.MethodName(), writeToEventLog: true, writeToScreen: true);
-                    return false;
                 }
             }
 
@@ -870,7 +871,14 @@ namespace Org.X509Crypto
             return false;
         }
 
-        private static void ExportPFX(string thumbprint, X509Context Context, string pfxPath, string password)
+        /// <summary>
+        /// Exports the encryption certificate and corresponding key pair to a file in PKCS#12 format
+        /// </summary>
+        /// <param name="thumbprint">The thumbprint of the encryption certificate</param>
+        /// <param name="Context">The X509Context where the certificate and corresponding key pair exist</param>
+        /// <param name="pfxPath">The path to where the PKCS#12 file should be written</param>
+        /// <param name="password">The password which will protect the PKCS#12 file</param>
+        public static void ExportPFX(string thumbprint, X509Context Context, string pfxPath, string password)
         {
             if (File.Exists(pfxPath))
             {

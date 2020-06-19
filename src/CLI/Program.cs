@@ -159,7 +159,7 @@ namespace X509CryptoExe
                     }
                     catch (Exception ex)
                     {
-                        ConsoleError(@"Unable to enter the selected mode as the impersonated user", ex);
+                        ConsoleError(new X509CryptoException(@"Unable to enter the selected mode as the impersonated user", ex));
                     }
                 }
                 else
@@ -257,6 +257,12 @@ namespace X509CryptoExe
                     return;
                 }
 
+                if (SelectedMode.ID == Mode.ExportCert.ID)
+                {
+                    ExportCert();
+                    return;
+                }
+
                 if (SelectedMode.ID == Mode.List.ID)
                 {
                     List();
@@ -282,7 +288,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                ConsoleError(ex.Message, SelectedMode.Usage(SelectedCommand.Name, InCli));
+                ConsoleError(ex, SelectedMode.Usage(SelectedCommand.Name, InCli));
             }
         }
 
@@ -538,7 +544,7 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                ConsoleError(@"Unable to re-encrypt the specified expression", SelectedMode.Usage(SelectedCommand.Name, InCli), ex);
+                ConsoleError(new X509CryptoException(@"Unable to re-encrypt the specified expression", ex), SelectedMode.Usage(SelectedCommand.Name, InCli));
             }
         }
 
@@ -746,15 +752,26 @@ namespace X509CryptoExe
         {
             string infile = string.Empty;
             string thumbprint = string.Empty;
+            string aliasName = string.Empty;
             X509Context Context = null;
+            X509Alias Alias = null;
 
             try
             {
                 infile = SelectedMode.GetString(Parameter.InInstallCert.ID);
-                Context = SelectedMode.GetContext(Parameter.Context.ID);
+                Context = SelectedMode.GetContext(Parameter.InstallCertContext.ID);
                 SecureString PfxPassword = GetSecret($"Enter the password to unlock {Path.GetFileName(infile).InQuotes()}");
                 thumbprint = X509Utils.InstallCert(infile, PfxPassword, Context);
-                ConsoleMessage($"Added encryption certificate to the {Context.Name} {nameof(X509Context)}. \r\nCertificate Thumbprint: {thumbprint}");
+                StringBuilder Expression = new StringBuilder($"Added encryption certificate to the {Context.Name} {nameof(X509Context)}. \r\nCertificate Thumbprint: {thumbprint}");
+
+                if (SelectedMode.IsParameterDefined(Parameter.AliasToInstall.ID))
+                {
+                    aliasName = SelectedMode.GetString(Parameter.AliasToInstall.ID);
+                    Alias = new X509Alias(aliasName, thumbprint, Context, true);
+                    Alias.Commit();
+                    Expression.Append($"\r\n             {nameof(X509Alias)}: {aliasName}");
+                }
+                ConsoleMessage(Expression.ToString());
             }
             catch (Exception ex)
             {
@@ -813,7 +830,74 @@ namespace X509CryptoExe
             }
             catch (Exception ex)
             {
-                ConsoleError($"An exception occurred attempting to generate a new encryption certificate", ex);
+                ConsoleError(new X509CryptoException(@"An exception occurred attempting to generate a new encryption certificate",ex));
+            }
+        }
+
+        private static void ExportCert()
+        {
+            string outfile = string.Empty;
+            string thumbprint = string.Empty;
+            string aliasName = string.Empty;
+            SecureString Password = null;
+            X509Context Context = null;
+            X509Alias Alias = null;
+
+            try
+            {
+                if (!(SelectedMode.IsParameterDefined(Parameter.AliasExportCert.ID) ^ SelectedMode.IsParameterDefined(Parameter.ThumbprintToExport.ID)))
+                {
+                    throw new ArgumentException($"Either {Parameter.AliasExportCert.Name} or {Parameter.ThumbprintToExport.Name} must be defined, but not both");
+                }
+
+                outfile = SelectedMode.GetString(Parameter.OutExportCert.ID);
+                try
+                {
+                    Path.GetFullPath(outfile);
+                }
+                catch
+                {
+                    throw new IOException($"Not a valid NTFS path: {outfile}");
+                }
+                if (!Path.GetExtension(outfile).Matches(FileExtensions.Pfx))
+                {
+                    outfile = $"{outfile}{FileExtensions.Pfx}";
+                }
+                if (File.Exists(outfile))
+                {
+                    if (WarnConfirm($"The specified file {outfile} already exists. Do you wish to overwrite it?"))
+                    {
+                        X509Utils.DeleteFile(outfile, confirmDelete: true);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+                Context = SelectedMode.GetContext(Parameter.Context.ID);
+
+                if (SelectedMode.IsParameterDefined(Parameter.AliasExportCert.ID))
+                {
+                    aliasName = SelectedMode.GetString(Parameter.AliasExportCert.ID);
+                    Alias = new X509Alias(aliasName, Context);
+                    thumbprint = Alias.Thumbprint;
+                }
+                else
+                {
+                    thumbprint = SelectedMode.GetString(Parameter.ThumbprintToExport.ID);
+                }
+
+                Password = GetSecret(@"Enter a strong password: ", Constants.ConfirmPasswordsMatch);
+
+                X509CryptoAgent.ExportPFX(thumbprint, Context, outfile, Password.Plaintext());
+
+                ConsoleMessage($"Encryption certificate with thumbprint {thumbprint} from the {Context.Name} {nameof(X509Context)} has been exported to the file {outfile.InQuotes()}");
+
+            }
+            catch (Exception ex)
+            {
+                throw new X509CryptoException(@"Unable to export the specified certificate and key pair", ex);
             }
         }
 
@@ -856,23 +940,31 @@ namespace X509CryptoExe
 
         #region Console Output Methods
 
-        private static void ConsoleError(string message, Exception ex = null)
+        private static void ConsoleError(Exception ex)
         {
-            StringBuilder Expression = new StringBuilder($"\r\n{message}\r\n");
-            if (ex != null)
-            {
-                Expression.Append($"\r\nException Details: \r\n{ex.ToString()}\r\n");
-            }
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(Expression.ToString());
+            Console.WriteLine($"\r\n{ex.Message}\r\n", ConsoleColor.Red);
+            if (ex.InnerException != null)
+            {
+                ConsoleError(ex.InnerException);
+            }
+            Console.ResetColor();
         }
 
-        private static void ConsoleError(string message, string usage, Exception ex = null)
+        private static void ConsoleError(Exception ex, string usage)
         {
-            ConsoleError(message, ex);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"\r\n{ex.Message}\r\n", ConsoleColor.Red);
 
-            Console.ResetColor();
-            Console.WriteLine($"{usage}\r\n");
+            if (ex.InnerException != null)
+            {
+                ConsoleError(ex.InnerException, usage);
+            }
+            else
+            {
+                Console.ResetColor();
+                Console.WriteLine($"\r\n{usage}\r\n");
+            }
         }
 
         private static void ConsoleMessage(string message)
@@ -905,133 +997,5 @@ namespace X509CryptoExe
 
         #endregion
 
-        #region MakeCert Support Methods
-
-        static void MakeCertWorker(string name, int keyLength, int yearsValid, X509Context Context, out string thumbprint)
-        {
-            X509Certificate2 dotNetCert = null;
-            AsymmetricCipherKeyPair keyPair = GenerateRsaKeyPair(keyLength);
-            string formattedName = FormatX500(name);
-            X509Name issuer = new X509Name(formattedName);
-            X509Name subject = new X509Name(formattedName);
-
-            ISignatureFactory signatureFactory;
-            if (keyPair.Private is ECPrivateKeyParameters)
-            {
-                signatureFactory = new Asn1SignatureFactory(
-                    X9ObjectIdentifiers.ECDsaWithSha256.ToString(),
-                    keyPair.Private);
-            }
-            else
-            {
-                signatureFactory = new Asn1SignatureFactory(
-                    PkcsObjectIdentifiers.Sha256WithRsaEncryption.ToString(),
-                    keyPair.Private);
-            }
-
-            var certGenerator = new X509V3CertificateGenerator();
-            certGenerator.SetIssuerDN(issuer);
-            certGenerator.SetSubjectDN(subject);
-            certGenerator.SetSerialNumber(BigInteger.ValueOf(1));
-            certGenerator.SetNotAfter(DateTime.UtcNow.AddYears(yearsValid));
-            certGenerator.SetNotBefore(DateTime.UtcNow);
-            certGenerator.SetPublicKey(keyPair.Public);
-            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyEncipherment));
-            Org.BouncyCastle.X509.X509Certificate cert = certGenerator.Generate(signatureFactory);
-
-            var bouncyStore = new Pkcs12Store();
-            var certEntry = new X509CertificateEntry(cert);
-            string friendlyName = cert.SubjectDN.ToString();
-            bouncyStore.SetCertificateEntry(friendlyName, certEntry);
-            bouncyStore.SetKeyEntry(friendlyName, new AsymmetricKeyEntry(keyPair.Private), new[] { certEntry });
-            char[] pass = RandomPass();
-
-            using (MemoryStream stream = new MemoryStream())
-            {
-                bouncyStore.Save(stream, pass, secureRandom);
-                dotNetCert = new X509Certificate2(stream.ToArray(), new string(pass), X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                thumbprint = dotNetCert.Thumbprint;
-                stream.Close();
-            }
-
-            X509Store dotNetStore = new X509Store(Context.Location);
-            dotNetStore.Open(OpenFlags.ReadWrite);
-            dotNetStore.Add(dotNetCert);
-
-            bool added = false;
-            foreach (X509Certificate2 certInStore in dotNetStore.Certificates)
-            {
-                if (certInStore.Thumbprint == thumbprint)
-                    added = true;
-            }
-
-            if (!added)
-                throw new Exception($"A certificate could not be added to the {Context.Name} {nameof(X509Context)}.");
-        }
-
-        private static AsymmetricCipherKeyPair GenerateRsaKeyPair(int length)
-        {
-            var keygenParam = new KeyGenerationParameters(secureRandom, length);
-
-            var keyGenerator = new RsaKeyPairGenerator();
-            keyGenerator.Init(keygenParam);
-            return keyGenerator.GenerateKeyPair();
-        }
-
-        private static string FormatX500(string name)
-        {
-            if (!string.Equals(@"cn=", name.Substring(0, 3), StringComparison.OrdinalIgnoreCase))
-                name = string.Format(@"cn={0}", name);
-            name = name.Replace(",", "\\,");
-            return name;
-        }
-
-        private static char[] RandomPass()
-        {
-            const string chars = @"ABCDEFGHIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()-=+";
-            int length = secureRandom.Next(10, 20);
-            return Enumerable.Repeat(chars, length).Select(s => s[secureRandom.Next(s.Length)]).ToArray();
-        }
-
-        #endregion
-
-        //#region Assist Methods
-
-        //[STAThread]
-        //static void Output(string expression)
-        //{
-        //    if (config.WriteToFile)
-        //        File.WriteAllText(config.output, expression);
-        //    else
-        //    {
-        //        if (config.UseClipboard)
-        //            Clipboard.SetText(expression);
-        //        X509CryptoLog.Info(string.Format(@"Result: {0}", config.UseClipboard ? "Written to system clipboard" : expression), writeToScreen: true);
-        //    }
-        //}
-
-        //static void DeleteFile(string path, int triesRemaining = 3)
-        //{
-        //    try
-        //    {
-        //        File.Delete(path);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        if (triesRemaining < 0)
-        //            DeleteFile(path, --triesRemaining);
-        //        else
-        //            throw ex;
-        //    }
-        //}
-
-        //static void Initialize()
-        //{
-        //    Parameter.Initialize();
-        //    Mode.Initialize();
-        //    Command.Initialize();
-        //}
-
-        //#endregion
     }
 }

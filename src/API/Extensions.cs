@@ -110,5 +110,12 @@ namespace Org.X509Crypto
         {
             return $"\"{expression}\"";
         }
+
+
+
+        internal static string Dashes(this string expression)
+        {
+            return new string('-', expression.Length);
+        }
     }
 }

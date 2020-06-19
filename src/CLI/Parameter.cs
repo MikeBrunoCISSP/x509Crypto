@@ -12,8 +12,7 @@ namespace X509CryptoExe
     {
         internal static List<Parameter> Collection { get; private set; } = new List<Parameter>();
 
-        private string name,
-                       textValue;
+        private string name;
 
         internal int ID { get; private set; }
 
@@ -348,6 +347,7 @@ namespace X509CryptoExe
         }
 
         internal static Parameter Thumbprint,
+                                  ThumbprintToExport,
                                   AliasName,
                                   AliasEnc,
                                   AliasDec,
@@ -357,6 +357,8 @@ namespace X509CryptoExe
                                   AliasToExport,
                                   AliasToImport,
                                   AliasToDump,
+                                  AliasToInstall,
+                                  AliasExportCert,
                                   OldAlias,
                                   NewAlias,
                                   NewAliasReEnc,
@@ -386,6 +388,7 @@ namespace X509CryptoExe
                                   OutDecFile,
                                   OutList,
                                   OutExportAlias,
+                                  OutExportCert,
                                   OutDumpAlias,
                                   Wipe,
                                   Reveal,
@@ -484,6 +487,16 @@ namespace X509CryptoExe
                 DefinitionRequired = false
             };
             Collection.Add(AliasToImport);
+
+            AliasToInstall = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Alias,
+                Sample = Samples.Name,
+                Description = $"The desired name for the {nameof(X509Alias)} (if you wish to use this encryption certificate in an {nameof(X509Alias)})",
+                DefinitionRequired = false
+            };
+            Collection.Add(AliasToInstall);
 
             AliasToDump = new Parameter()
             {
@@ -916,6 +929,37 @@ namespace X509CryptoExe
                 DefinitionRequired = false
             };
             Collection.Add(MakeCertYearsValid);
+
+            OutExportCert = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Out,
+                Sample = Samples.PathOnly,
+                Description = @"The path where the PKCS#12 certificate and key pair bundle file should be written",
+                IsPath = true
+            };
+            Collection.Add(OutExportCert);
+
+            AliasExportCert = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Alias,
+                Sample = Samples.Name,
+                Description = $"The {nameof(X509Alias)} from which to export the encryption certificate and key pair (cannot be used with {ParameterName.Thumbprint})",
+                DefinitionRequired = false
+            };
+            Collection.Add(AliasExportCert);
+
+            ThumbprintToExport = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Thumbprint,
+                Sample = Samples.Thumbprint,
+                Description = $"The thumbprint of the encryption certificate to export (cannot be used with {ParameterName.Alias})",
+                DefinitionRequired = false,
+                IsThumbprint = true
+            };
+            Collection.Add(ThumbprintToExport);
         }
     }
 }

@@ -65,7 +65,7 @@ namespace Org.X509Crypto
 
         internal string Dump(int index, X509Alias Alias)
         {
-            StringBuilder sb = new StringBuilder($"Artifact #{index + 1}\r\nName: {Key}\r\n");
+            StringBuilder sb = new StringBuilder($"Secret #{index + 1}\r\nName: {Key}\r\n");
             sb.AppendLine($"Value: {Reveal(Alias)}\r\n");
             return sb.ToString();
         }
@@ -83,6 +83,7 @@ namespace Org.X509Crypto
         internal void ReEncrypt(X509Alias Alias, string newThumbprint, X509Context newContext)
         {
             string newValue = X509Utils.ReEncryptText(Alias.Thumbprint, newThumbprint, Value, Alias.Context, newContext);
+            Value = newValue;
         }
     }
 }

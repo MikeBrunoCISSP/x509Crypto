@@ -588,6 +588,27 @@ namespace Org.X509Crypto
         }
 
         /// <summary>
+        /// Deletes the specified file
+        /// </summary>
+        /// <param name="filePath">The path of the file to be deleted</param>
+        /// <param name="complainIfNotFound">If true, an exception is thrown if the file does not currently exist</param>
+        /// <param name="confirmDelete">If true, the file will be confirmed to no longer exist. If it still exists, an exception is thrown</param>
+        public static void DeleteFile(string filePath, bool complainIfNotFound = false, bool confirmDelete = false)
+        {
+            if (!File.Exists(filePath) && complainIfNotFound)
+            {
+                throw new FileNotFoundException(filePath);
+            }
+
+            File.Delete(filePath);
+
+            if (confirmDelete && File.Exists(filePath))
+            {
+                throw new IOException($"The file {filePath.InQuotes()} could not be deleted");
+            }
+        }
+
+        /// <summary>
         /// Gets the name of the calling method
         /// </summary>
         /// <returns>The name of the calling method</returns>

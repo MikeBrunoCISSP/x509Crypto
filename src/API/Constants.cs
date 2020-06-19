@@ -59,7 +59,7 @@ namespace Org.X509Crypto
         private static readonly string Thumbprint = nameof(Thumbprint).LeftAlign(Padding.Thumbprint);
         private static readonly string Assigned_Alias = nameof(Assigned_Alias).LeftAlign(Padding.Assigned_Alias);
         private static readonly string Expires = nameof(Expires).LeftAlign(Padding.Expires);
-        internal static readonly string HeaderRow = $"{Thumbprint}   {Assigned_Alias}   {Expires}\r\n{Constants.Dashes.LeftAlign(Padding.Thumbprint)}   {Constants.Dashes.LeftAlign(Padding.Assigned_Alias)}   {Constants.Dashes.LeftAlign(Padding.Expires)}";
+        internal static readonly string HeaderRow = $"{Thumbprint}   {Assigned_Alias}   {Expires}\r\n{Thumbprint.Dashes().LeftAlign(Padding.Thumbprint)}   {Assigned_Alias.Dashes().LeftAlign(Padding.Assigned_Alias)}   {Expires.Dashes().LeftAlign(Padding.Expires)}";
     }
 
     internal static class ListAliasFormat
@@ -67,7 +67,7 @@ namespace Org.X509Crypto
         private static readonly string Alias = @"Alias Name".LeftAlign(Padding.Alias);
         private static readonly string Thumbprint = nameof(Thumbprint).LeftAlign(Padding.Thumbprint);
         private static readonly string Expires = nameof(Expires).LeftAlign(Padding.Expires);
-        internal static readonly string HeaderRow = $"{Alias}   {Thumbprint}   {Expires}\r\n{Constants.Dashes.LeftAlign(Padding.Alias)}   {Constants.Dashes.LeftAlign(Padding.Thumbprint)}   {Constants.Dashes.LeftAlign(Padding.Expires)}";
+        internal static readonly string HeaderRow = $"{Alias}   {Thumbprint}   {Expires}\r\n{Alias.Dashes().LeftAlign(Padding.Alias)}   {Thumbprint.Dashes().LeftAlign(Padding.Thumbprint)}   {Expires.Dashes().LeftAlign(Padding.Expires)}";
     }
 
     internal static class X509ContextName

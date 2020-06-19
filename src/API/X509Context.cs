@@ -130,6 +130,12 @@ namespace Org.X509Crypto
 
         internal static readonly IEnumerable<X509Context> SupportedContexts = new X509Context[] { UserReadOnly, UserFull, SystemReadOnly, SystemFull };
 
+        /// <summary>
+        /// Returns an X509Context object based on the indicated expression
+        /// </summary>
+        /// <param name="name">The name of the desired X509Context</param>
+        /// <param name="writeable">Determines whether the X509Context should be writeable or not (this feature currently has no impact)</param>
+        /// <returns>An X509Context object</returns>
         public static X509Context Select(string name, bool writeable)
         {
             X509Context SelectedContext;
@@ -212,6 +218,10 @@ namespace Org.X509Crypto
             }
         }
 
+        /// <summary>
+        /// Creates the directory for an impersonated user where X509Alias files will be stored for later retrieval
+        /// </summary>
+        /// <param name="sAMAccountName">The username of the impersonated user</param>
         public static void CreateImpersonatedUserAppDirectory(string sAMAccountName)
         {
             string impUserAppDir = X509Directory.ImpersonatedUser(sAMAccountName);

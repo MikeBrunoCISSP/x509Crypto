@@ -111,11 +111,6 @@ namespace X509CryptoExe
                 Expression.Append($" {Name}");
             }
 
-            if (!IsDefault)
-            {
-                Expression.Append($" {Name}");
-            }
-
             //Required Parameters
             RequiredParams = Parameters.Where(p => p.DefinitionRequired).ToList();
             if (RequiredParams.Count() > 0)
@@ -279,6 +274,7 @@ namespace X509CryptoExe
                              DumpAlias,
                              InstallCert,
                              MakeCert,
+                             ExportCert,
                              List,
                              Impersonate,
                              Help,
@@ -485,7 +481,8 @@ namespace X509CryptoExe
                 Parameters =
                 {
                     Parameter.InInstallCert,
-                    Parameter.InstallCertContext
+                    Parameter.InstallCertContext,
+                    Parameter.AliasToInstall
                 }
             };
             Collection.Add(InstallCert);
@@ -504,6 +501,21 @@ namespace X509CryptoExe
                 }
             };
             Collection.Add(MakeCert);
+
+            ExportCert = new Mode()
+            {
+                ID = index++,
+                IsDefault = true,
+                Description = @"Exports the specified certificate and key pair to a PKCS#12 file",
+                Parameters =
+                {
+                    Parameter.Context,
+                    Parameter.OutExportCert,
+                    Parameter.AliasExportCert,
+                    Parameter.ThumbprintToExport
+                }
+            };
+            Collection.Add(ExportCert);
 
             List = new Mode()
             {

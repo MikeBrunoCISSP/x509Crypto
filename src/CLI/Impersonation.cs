@@ -207,12 +207,33 @@ namespace X509CryptoExe
             }
         }
 
-        private static SecureString GetSecret(string prompt)
+        private static SecureString GetSecret(string prompt, bool confirmMatch = false)
+        {
+            SecureString Secret = new SecureString();
+            SecureString Confirm = new SecureString();
+
+            Console.Write($"\r\n{prompt}: ");
+            Secret = GetSecretWorker();
+
+            if (confirmMatch)
+            {
+                Console.Write($"Confirm: ");
+                Confirm = GetSecretWorker();
+                if (!Secret.Matches(Confirm))
+                {
+                    Console.WriteLine($"Entries do not match. Please try again.\r\n");
+                    return GetSecret(prompt, confirmMatch);
+                }
+            }
+
+            return Secret;
+        }
+
+        private static SecureString GetSecretWorker()
         {
             SecureString Secret = new SecureString();
             ConsoleKeyInfo key;
 
-            Console.Write($"\r\n{prompt}: ");
             do
             {
                 key = Console.ReadKey(true);

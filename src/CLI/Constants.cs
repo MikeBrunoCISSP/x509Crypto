@@ -9,7 +9,7 @@ namespace X509CryptoExe
         internal static string AssemblyTitle = Assembly.GetExecutingAssembly().GetName().Name;
         internal static string AssemblyFile = $"{AssemblyTitle}.exe";
         internal static string CLIPrompt = $"\r\n{AssemblyTitle}>";
-        internal const int MaxDescriptionLength = 50;
+        internal const int MaxDescriptionLength = 65;
         internal const string Affirm = @"YES";
         internal const string CommandLineRegexPattern = @"[\""].+?[\""]|[^ ]+";
         internal const int LOGON32_PROVIDER_DEFAULT = 0;
@@ -17,6 +17,7 @@ namespace X509CryptoExe
         internal const int BaseIndent = 3;
         internal const int DefaultKeyLength = 2048;
         internal const int DefaultYearsValid = 10;
+        internal const bool ConfirmPasswordsMatch = true;
     }
 
     internal static class UsageIndent
@@ -68,6 +69,7 @@ namespace X509CryptoExe
         internal const string Plaintext = @".ptx";
         internal const string Csv = @".csv";
         internal const string Txt = @".txt";
+        internal const string Pfx = @".pfx";
     }
 
     internal static class CommandName
@@ -83,6 +85,7 @@ namespace X509CryptoExe
         internal const string DumpAlias = nameof(DumpAlias);
         internal const string InstallCert = nameof(InstallCert);
         internal const string MakeCert = nameof(MakeCert);
+        internal const string ExportCert = nameof(ExportCert);
         internal const string List = nameof(List);
         internal const string Impersonate = nameof(Impersonate);
         internal const string Help = nameof(Help);
