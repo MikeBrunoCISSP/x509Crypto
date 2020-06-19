@@ -77,7 +77,7 @@ namespace X509CryptoExe
         internal static string Display(this List<ValidSelection> itemSet)
         {
             StringBuilder sb = new StringBuilder("\r\nAcceptable entries are:");
-            itemSet.ForEach(p => sb.AppendLine(p.Name.Align()));
+            itemSet.ForEach(p => sb.Append(p.Name.Align()));
             return sb.ToString();
         }
 

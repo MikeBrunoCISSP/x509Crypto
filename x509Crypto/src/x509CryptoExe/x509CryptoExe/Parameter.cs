@@ -247,6 +247,12 @@ namespace X509CryptoExe
             {
                 entry = entry.RemoveNonHexChars();
             }
+
+            if (IsContext)
+            {
+                SelectedContext = X509Context.Select(entry, false);
+            }
+
             TextValue = entry;
             IsDefined = true;
         }
@@ -381,14 +387,15 @@ namespace X509CryptoExe
                                   OutList,
                                   OutExportAlias,
                                   OutDumpAlias,
-                                  OutWriteExistingFile,
-                                  OutWriteExistingAlias,
                                   Wipe,
                                   Reveal,
                                   ImpUser,
                                   EndImp,
                                   OverWriteExistingFile,
-                                  OverWriteExistingAlias;
+                                  OverWriteExistingAlias,
+                                  MakeCertKeySize,
+                                  MakeCertSubject,
+                                  MakeCertYearsValid;
 
         internal static void Initialize()
         {
@@ -876,6 +883,39 @@ namespace X509CryptoExe
                 DefinitionRequired = false
             };
             Collection.Add(OverWriteExistingAlias);
+
+            MakeCertKeySize = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.KeySize,
+                Sample = Samples.KeySize,
+                Description = @"Indicates the length of the key pair which will be generated. The larger the key, the higher the security, but performance may be slower",
+                DefaultEntry = ValidSelection.MediumKey.Name,
+                DefinitionRequired = false
+            };
+            Collection.Add(MakeCertKeySize);
+
+            MakeCertSubject = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Name,
+                Sample = Samples.Name,
+                Description = @"Indicates the identity of the person or device this certificate will be issued to. If not indicated, the logged in username or the device name will be used",
+                DefinitionRequired = false
+            };
+            Collection.Add(MakeCertSubject);
+
+            MakeCertYearsValid = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.YearsValid,
+                Sample = Samples.Years,
+                Description = @"Indicates the validity period of the encryption certificate. Once the certificate expires, it can no longer be used to encrypt new secrets.",
+                DefaultEntry = Constants.DefaultYearsValid.ToString(),
+                IsInt = true,
+                DefinitionRequired = false
+            };
+            Collection.Add(MakeCertYearsValid);
         }
     }
 }

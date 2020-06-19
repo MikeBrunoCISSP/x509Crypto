@@ -15,6 +15,8 @@ namespace X509CryptoExe
         internal const int LOGON32_PROVIDER_DEFAULT = 0;
         internal const bool ProbeMode = true;
         internal const int BaseIndent = 3;
+        internal const int DefaultKeyLength = 2048;
+        internal const int DefaultYearsValid = 10;
     }
 
     internal static class UsageIndent
@@ -80,6 +82,7 @@ namespace X509CryptoExe
         internal const string ExportAlias = nameof(ExportAlias);
         internal const string DumpAlias = nameof(DumpAlias);
         internal const string InstallCert = nameof(InstallCert);
+        internal const string MakeCert = nameof(MakeCert);
         internal const string List = nameof(List);
         internal const string Impersonate = nameof(Impersonate);
         internal const string Help = nameof(Help);
@@ -118,12 +121,29 @@ namespace X509CryptoExe
         internal const string ImpUser = @"user";
         internal const string EndImp = @"end";
         internal const string Reveal = @"reveal";
+
+        internal const string KeySize = @"keysize";
+        internal const string YearsValid = @"years";
     }
 
     internal static class ListType
     {
         internal const string Certs = @"cert";
         internal const string Aliases = @"alias";
+    }
+
+    internal static class KeySize
+    {
+        internal const string Small = @"small";
+        internal const string Medium = @"medium";
+        internal const string Large = @"large";
+    }
+
+    internal static class KeyLength
+    {
+        internal const int Small = 1024;
+        internal const int Medium = 2048;
+        internal const int Large = 4096;
     }
 
     internal static class Samples
@@ -140,6 +160,8 @@ namespace X509CryptoExe
         internal const string User = @"USER ACCOUNT";
         internal const string Plaintext = @"text";
         internal const string Ciphertext = @"ciphertext";
+        internal const string KeySize = @"size";
+        internal const string Years = @"years";
     }
 
     internal static class UsageExpression

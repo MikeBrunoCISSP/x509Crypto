@@ -278,6 +278,7 @@ namespace X509CryptoExe
                              ExportAlias,
                              DumpAlias,
                              InstallCert,
+                             MakeCert,
                              List,
                              Impersonate,
                              Help,
@@ -488,6 +489,21 @@ namespace X509CryptoExe
                 }
             };
             Collection.Add(InstallCert);
+
+            MakeCert = new Mode()
+            {
+                ID = index++,
+                IsDefault = true,
+                Description = @"Generates a new, self-signed encryption certificate",
+                Parameters =
+                {
+                    Parameter.MakeCertSubject,
+                    Parameter.MakeCertKeySize,
+                    Parameter.MakeCertYearsValid,
+                    Parameter.Context
+                }
+            };
+            Collection.Add(MakeCert);
 
             List = new Mode()
             {

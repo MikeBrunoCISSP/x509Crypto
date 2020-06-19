@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Org.X509Crypto;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -100,6 +101,7 @@ namespace X509CryptoExe
                                 ExportAlias,
                                 DumpAlias,
                                 InstallCert,
+                                MakeCert,
                                 List,
                                 Cli,
                                 Impersonate,
@@ -234,6 +236,18 @@ namespace X509CryptoExe
                 }
             };
             Collection.Add(InstallCert);
+
+            MakeCert = new Command()
+            {
+                Name = CommandName.MakeCert,
+                Description = $"Creates and installs a new, self-signed encryption certificate in the specified {nameof(X509Context)}",
+                HasDefaultMode = true,
+                SupportedModes =
+                {
+                    Mode.MakeCert
+                }
+            };
+            Collection.Add(MakeCert);
 
             List = new Command()
             {

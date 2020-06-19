@@ -46,6 +46,27 @@ namespace X509CryptoExe
         {
             //Allow more than 256 characters in Console.ReadLine()
             Console.SetIn(new StreamReader(Console.OpenStandardInput(8192)));
+
+            SelectMode(args);
+            if (SelectedMode.ID == Mode.Exit.ID)
+            {
+                Console.ReadKey();
+                return;
+            }
+
+            if (SelectedMode.ID == Mode.Cli.ID)
+            {
+                StartCli();
+            }
+            else
+            {
+                EnterMode();
+
+                if (InCli)
+                {
+                    StartCli();
+                }
+            }
         }
 
         private static void SelectMode(string[] args)
@@ -227,6 +248,12 @@ namespace X509CryptoExe
                 if (SelectedMode.ID == Mode.InstallCert.ID)
                 {
                     InstallCert();
+                    return;
+                }
+
+                if (SelectedMode.ID == Mode.MakeCert.ID)
+                {
+                    MakeCert();
                     return;
                 }
 
@@ -658,11 +685,15 @@ namespace X509CryptoExe
         {
             string output = string.Empty;
             string outfile = string.Empty;
-            string listType = SelectedMode.GetString(Parameter.ListType.ID);
+            string listType = string.Empty;
+            X509Context Context = null;
 
             try
             {
-                switch(listType)
+                listType = SelectedMode.GetString(Parameter.ListType.ID);
+                Context = SelectedMode.GetContext(Parameter.Context.ID);
+
+                switch (listType)
                 {
                     case ListType.Certs:
                         output = X509CryptoAgent.ListCerts(SelectedMode.GetContext(Parameter.Context.ID));
@@ -728,6 +759,61 @@ namespace X509CryptoExe
             catch (Exception ex)
             {
                 throw new X509CryptoException(@"Unable to install the specified certificate", ex);
+            }
+        }
+
+        private static void MakeCert()
+        {
+            string subject = string.Empty;
+            string keySize = string.Empty;
+            string thumbprint = string.Empty;
+            int keyLength = Constants.DefaultKeyLength;
+            int yearsValid = Constants.DefaultYearsValid;
+            X509Context Context = null;
+
+            try
+            {
+                Context = SelectedMode.GetContext(Parameter.Context.ID);
+
+                if (SelectedMode.IsParameterDefined(Parameter.MakeCertSubject.ID))
+                {
+                    subject = SelectedMode.GetString(Parameter.MakeCertSubject.ID);
+                }
+                else
+                {
+                    subject = Context.Name.Matches(X509Context.UserReadOnly.Name) ? Environment.UserName : Environment.MachineName;
+                }
+
+                if (SelectedMode.IsParameterDefined(Parameter.MakeCertKeySize.ID))
+                {
+                    keySize = SelectedMode.GetString(Parameter.MakeCertKeySize.ID);
+                    switch (keySize)
+                    {
+                        case KeySize.Small:
+                            keyLength = KeyLength.Small;
+                            break;
+                        case KeySize.Medium:
+                            keyLength = KeyLength.Medium;
+                            break;
+                        case KeySize.Large:
+                            keyLength = KeyLength.Large;
+                            break;
+                        default:
+                            throw new InvalidArgumentsException(Parameter.MakeCertKeySize.Name, keySize);
+                    }
+                }
+
+                if (SelectedMode.IsParameterDefined(Parameter.MakeCertYearsValid.ID))
+                {
+                    yearsValid = SelectedMode.GetInt(Parameter.MakeCertYearsValid.ID);
+                }
+
+                MakeCertWorker(subject, keyLength, yearsValid, Context, out thumbprint);
+                ConsoleMessage($"Certificate with thumbprint {thumbprint} was added to the {Context.Name} {nameof(X509Context)}");
+            }
+            catch (Exception ex)
+            {
+                ConsoleError($"An exception occurred attempting to generate a new encryption certificate", ex);
             }
         }
 
@@ -821,7 +907,7 @@ namespace X509CryptoExe
 
         #region MakeCert Support Methods
 
-        static void MakeCertWorker(string name, int keyLength, int yearsValid, CertStore certStore, out string thumbprint)
+        static void MakeCertWorker(string name, int keyLength, int yearsValid, X509Context Context, out string thumbprint)
         {
             X509Certificate2 dotNetCert = null;
             AsymmetricCipherKeyPair keyPair = GenerateRsaKeyPair(keyLength);
@@ -868,7 +954,7 @@ namespace X509CryptoExe
                 stream.Close();
             }
 
-            X509Store dotNetStore = new X509Store(certStore.Location);
+            X509Store dotNetStore = new X509Store(Context.Location);
             dotNetStore.Open(OpenFlags.ReadWrite);
             dotNetStore.Add(dotNetCert);
 
@@ -880,7 +966,7 @@ namespace X509CryptoExe
             }
 
             if (!added)
-                throw new Exception(string.Format(@"A certificate could not be added to the {0} store.", certStore.Name));
+                throw new Exception($"A certificate could not be added to the {Context.Name} {nameof(X509Context)}.");
         }
 
         private static AsymmetricCipherKeyPair GenerateRsaKeyPair(int length)
