@@ -80,7 +80,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\x509CryptoAgent\X509Crypto.csproj">
+    <ProjectReference Include="..\API\X509Crypto.csproj">
       <Project>{4c9f14c2-8b7f-49b5-9167-8a065e01cb57}</Project>
       <Name>X509Crypto</Name>
     </ProjectReference>
