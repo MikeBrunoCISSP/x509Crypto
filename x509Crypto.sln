@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "X509Crypto", "src\API\X509Crypto.csproj", "{4C9F14C2-8B7F-49B5-9167-8A065E01CB57}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "x509CryptoExe", "src\CLI\x509CryptoExe.csproj", "{FDC69484-5A1E-4168-AEB4-23EEF207861A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4C9F14C2-8B7F-49B5-9167-8A065E01CB57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C9F14C2-8B7F-49B5-9167-8A065E01CB57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C9F14C2-8B7F-49B5-9167-8A065E01CB57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C9F14C2-8B7F-49B5-9167-8A065E01CB57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1D5D3E30-ADE6-46E9-8D26-CB8717051348}
+	EndGlobalSection
+EndGlobal
