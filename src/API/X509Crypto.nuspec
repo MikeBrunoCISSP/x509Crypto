@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+	<license type="file">LICENSE.txt</license>
+    <projectUrl>http://www.x509crypto.org</projectUrl>
+	<repository type="git" url="https://github.com/MikeBrunoCISSP/x509Crypto/" />
+    <iconUrl>http://x509crypto.org/images/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>This version uses an Alias/Context model for addressing encryption certificates and encrypted secrets (as opposed to using certificate thumbprints and raw ciphertext). You may experience compatibility issues if you are using a previous version</releaseNotes>
+    <copyright>Copyright 2020</copyright>
+    <tags>encryption certificate pki privacy crypto secret</tags>
+  </metadata>
+   <files>
+    <file src="..\..\bin\API\*.dll" target="lib\net462"/>
+	<file src="..\..\bin\API\*.txt"/>
+  </files>
+</package>

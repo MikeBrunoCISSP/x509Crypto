@@ -25,11 +25,11 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\bin\Org.X509Crypto\</OutputPath>
+    <OutputPath>..\..\bin\API\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\..\..\doc\Org.X509Crypto\Org.X509CryptoLib.xml</DocumentationFile>
+    <!--<DocumentationFile>..\..\..\doc\Org.X509Crypto\Org.X509CryptoLib.xml</DocumentationFile>-->
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -56,6 +56,11 @@
     <Compile Include="X509Directory.cs" />
     <Compile Include="X509Secret.cs" />
     <Compile Include="x509Utils.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
