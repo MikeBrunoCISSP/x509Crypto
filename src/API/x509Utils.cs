@@ -552,7 +552,7 @@ namespace Org.X509Crypto
         /// <summary>
         /// Lists the thumbprint value for each certificate in the specified store location which include "Key Encipherment" in its Key Usage extension
         /// </summary>
-        /// <param name="certStore">Store location from which to list certificate details (Either <see cref="X509Context.UserReadOnly"/> or <see cref="CertStore.LocalMachine"/>)</param>
+        /// <param name="Context">Store location from which to list certificate details (Either <see cref="X509Context.UserReadOnly"/> or <see cref="X509Context.SystemReadOnly"/>)</param>
         /// <param name="allowExpired">If set to True, expired certificates will be included in the output (Note that .NET will not perform cryptographic operations using a certificate which is not within its validity period)</param>
         /// <returns>A string expression listing all available certificate thumbprints and their expiration dates</returns>
         /// <example>
@@ -560,15 +560,15 @@ namespace Org.X509Crypto
         /// string availableCerts = <see cref="X509Utils"/>.<see cref="ListCerts"/>(<see cref="X509Context.UserReadOnly"/>);
         /// </code>
         /// </example>
-        public static string ListCerts(CertStore certStore = null, bool allowExpired = false)
+        public static string ListCerts(X509Context Context = null, bool allowExpired = false)
         {
-            if (certStore == null)
-                certStore = CertStore.CurrentUser;
+            if (Context == null)
+                Context = X509Context.UserReadOnly;
 
             string output = "Key Encipherment Certificates found:\r\n\r\n";
             bool firstAdded = false;
 
-            X509Store store = new X509Store(certStore.Location);
+            X509Store store = new X509Store(Context.Location);
             store.Open(OpenFlags.ReadOnly);
             foreach (X509Certificate2 cert in store.Certificates)
             {
