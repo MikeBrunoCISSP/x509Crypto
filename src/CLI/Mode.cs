@@ -497,7 +497,8 @@ namespace X509CryptoExe
                     Parameter.MakeCertSubject,
                     Parameter.MakeCertKeySize,
                     Parameter.MakeCertYearsValid,
-                    Parameter.Context
+                    Parameter.Context,
+                    Parameter.AliasToInstall
                 }
             };
             Collection.Add(MakeCert);
