@@ -2,7 +2,7 @@ X509Crypto allows you to encrypt and recover text expressions and files using X5
 
 ## Encrypting a secret using X509Crypto
 
-#### Use the [X509Crypto Commandline Interface](https://github.com/MikeBrunoCISSP/x509Crypto/tree/master/zip) (CLI) to generate a new encryption certificate and key pair 
+### Use the [X509Crypto Commandline Interface](https://github.com/MikeBrunoCISSP/x509Crypto/tree/master/zip) (CLI) to generate a new encryption certificate and key pair 
 Note: Certification Authority-issued certificates are supported as well as long as they include the *Key Encipherment* key usage extension
 
 ```
@@ -18,7 +18,7 @@ The **context** argument can be either *user* or *system* depending on the conte
 
 The **keyzise** argument can be *small*, *medium*, or *large*. The larger the key pair, the higher the security, but performance will be slower.
 
-#### Use the **AddAlias** command in the CLI to bind your newly-created certificate to an *X509Alias*. 
+### Use the **AddAlias** command in the CLI to bind your newly-created certificate to an *X509Alias*. 
 For demonstration purposes, we will create an *X509Alias* called "myvault".
 
 ```
@@ -29,7 +29,7 @@ New X509Alias "myvault" was created in the user X509Context using certificate wi
 X509Crypto>
 ```
 
-#### Use the **Encrypt** CLI command to add a secret to your new *X509Alias*
+### Use the **Encrypt** CLI command to add a secret to your new *X509Alias*
 
 ```
 X509Crypto> encrypt -text -alias myvault -context user -secret apikey -in "80EAF03248965AC2B78090"
@@ -49,7 +49,7 @@ The **-in** argument indicates the text expression to be encrypted.
 
 
 
-#### Reference the secret in your program
+### Reference the secret in your program
 
 Once you have an *X509Alias* established with your secret(s) added, it is trivial to retreive them in your program with the Org.X509Crypto nuget package installed:
 
