@@ -1,4 +1,4 @@
-X509Crypto allows you to encrypt and recover text expression using X509 digital certificates and key pairs. The latest release eliminates the need to include any secrets (even in an encrypted form) in your source code, configuration files or database.
+X509Crypto allows you to encrypt and recover text expressions and files using X509 digital certificates and key pairs. The latest release eliminates the need to include any secrets (even in an encrypted form) in your source code, configuration files or database tables.
 
 ## Encrypting a secret using X509Crypto
 
@@ -47,30 +47,7 @@ The **-secret** argument assigns an identifier to the secret we're about to encr
 
 The **-in** argument indicates the text expression to be encrypted.
 
-The contents of the *X509Alias* are saved as a base64-encoded file:
 
-```
-C:\Users\mikeb>type c:\users\mikeb\AppData\Local\X509Crypto\myvault.xca
-eyJDb250ZXh0Ijp7fSwiTmFtZSI6...
-```
-
-If you remove the encoding, you'll find an object in json format. The secrets contained in the *X509Alias* remain in an encrypted form, of course:
-
-```
-{
-   "Context":{
-
-   },
-   "Name":"myvault",
-   "Secrets":[
-      {
-         "Key":"apikey",
-         "Value":"AAEAABAAAAAHjn58kwkbA4SDinqSVjWHY..."
-      }
-   ],
-   "Thumbprint":"B31FE7E7AE5229F8186782742CF579197FA859FD"
-}
-```
 
 #### Reference the secret in your program
 

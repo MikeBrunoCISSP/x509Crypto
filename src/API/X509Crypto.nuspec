@@ -17,7 +17,7 @@
     <tags>encryption certificate pki privacy crypto secret</tags>
   </metadata>
    <files>
-    <file src="..\..\bin\API\*.dll" target="lib\net462"/>
+    <file src="..\..\bin\API\*.dll" target="lib\net46"/>
 	<file src="..\..\bin\API\*.txt"/>
   </files>
 </package>
