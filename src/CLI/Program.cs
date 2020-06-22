@@ -754,7 +754,6 @@ namespace X509CryptoExe
             string thumbprint = string.Empty;
             string aliasName = string.Empty;
             X509Context Context = null;
-            X509Alias Alias = null;
 
             try
             {
@@ -767,9 +766,10 @@ namespace X509CryptoExe
                 if (SelectedMode.IsParameterDefined(Parameter.AliasToInstall.ID))
                 {
                     aliasName = SelectedMode.GetString(Parameter.AliasToInstall.ID);
-                    Alias = new X509Alias(aliasName, thumbprint, Context, true);
-                    Alias.Commit();
-                    Expression.Append($"\r\n             {nameof(X509Alias)}: {aliasName}");
+                    if (CreateAlias(aliasName, thumbprint, Context))
+                    {
+                        Expression.Append($"\r\n             {nameof(X509Alias)}: {aliasName}");
+                    }
                 }
                 ConsoleMessage(Expression.ToString());
             }
@@ -784,6 +784,7 @@ namespace X509CryptoExe
             string subject = string.Empty;
             string keySize = string.Empty;
             string thumbprint = string.Empty;
+            string aliasName = string.Empty;
             int keyLength = Constants.DefaultKeyLength;
             int yearsValid = Constants.DefaultYearsValid;
             X509Context Context = null;
@@ -826,7 +827,17 @@ namespace X509CryptoExe
                 }
 
                 MakeCertWorker(subject, keyLength, yearsValid, Context, out thumbprint);
-                ConsoleMessage($"Certificate with thumbprint {thumbprint} was added to the {Context.Name} {nameof(X509Context)}");
+                StringBuilder Expression = new StringBuilder($"Certificate was created and added to the {Context.Name} {nameof(X509Context)}\r\nCertificate Thumbprint: {thumbprint}");
+                if (SelectedMode.IsParameterDefined(Parameter.AliasToInstall.ID))
+                {
+                    aliasName = SelectedMode.GetString(Parameter.AliasToInstall.ID);
+                    if (CreateAlias(aliasName, thumbprint, Context))
+                    {
+                        Expression.Append($"\r\n             {nameof(X509Alias)}: {aliasName}");
+                    }
+                }
+
+                ConsoleMessage(Expression.ToString());
             }
             catch (Exception ex)
             {
@@ -935,6 +946,30 @@ namespace X509CryptoExe
                     }
                     break;
 
+            }
+        }
+
+        private static bool CreateAlias(string aliasName, string thumbprint, X509Context Context)
+        {
+            X509Alias Alias = null;
+            try
+            {
+                Alias = new X509Alias(aliasName, thumbprint, Context, true);
+                Alias.Commit();
+                return true;
+            }
+            catch (X509AliasAlreadyExistsException)
+            {
+                if (WarnConfirm($"{nameof(X509Alias)} {aliasName.InQuotes()} already exists. Do you wish to overwrite it?"))
+                {
+                    Alias = new X509Alias(aliasName, thumbprint, Context, false);
+                    Alias.Commit();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
 
