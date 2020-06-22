@@ -9,15 +9,18 @@
 	<license type="file">LICENSE.txt</license>
     <projectUrl>http://www.x509crypto.org</projectUrl>
 	<repository type="git" url="https://github.com/MikeBrunoCISSP/x509Crypto/" />
-    <iconUrl>http://x509crypto.org/images/logo.png</iconUrl>
+    <!--<iconUrl>http://x509crypto.org/images/logo.png</iconUrl>-->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>This version uses an Alias/Context model for addressing encryption certificates and encrypted secrets (as opposed to using certificate thumbprints and raw ciphertext). You may experience compatibility issues if you are using a previous version</releaseNotes>
+	<summary>$description$</summary>
+    <releaseNotes>This version eliminates the need to include ciphertext directly in your source code or configuration files. Refer to the project page for more info</releaseNotes>
     <copyright>Copyright 2020</copyright>
     <tags>encryption certificate pki privacy crypto secret</tags>
+	<icon>logo_small.png</icon>
   </metadata>
    <files>
     <file src="..\..\bin\API\*.dll" target="lib\net46"/>
 	<file src="..\..\bin\API\*.txt"/>
+	<file src="images\logo_small.png" target="\"/>
   </files>
 </package>

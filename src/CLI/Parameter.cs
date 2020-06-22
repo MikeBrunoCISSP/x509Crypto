@@ -165,6 +165,14 @@ namespace X509CryptoExe
             return Expression.ToString();
         }
 
+        internal string Markdown
+        {
+            get
+            {
+                return $"|{Name}|{(DefinitionRequired ? MarkdownExpression.Required : $"Not {MarkdownExpression.Required}")}|{Description}|";
+            }
+        }
+
         internal void TryDefine(string[] args, ref int index)
         {
             if (StandAlone)
@@ -390,6 +398,7 @@ namespace X509CryptoExe
                                   OutExportAlias,
                                   OutExportCert,
                                   OutDumpAlias,
+                                  OutMakeDoc,
                                   Wipe,
                                   Reveal,
                                   ImpUser,
@@ -859,6 +868,17 @@ namespace X509CryptoExe
                 FileExtension = FileExtensions.Csv
             };
             Collection.Add(OutDumpAlias);
+
+            OutMakeDoc = new Parameter()
+            {
+                ID = index++,
+                Name = ParameterName.Out,
+                Sample = Samples.PathOnly,
+                Description = @"The file path to write the Markdown document",
+                IsPath = true,
+                FileExtension = FileExtensions.Md
+            };
+            Collection.Add(OutMakeDoc);
 
             OutList = new Parameter()
             {

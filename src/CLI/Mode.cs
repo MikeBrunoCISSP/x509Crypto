@@ -93,7 +93,7 @@ namespace X509CryptoExe
             return $"{Name.AsKey()}: {Description}".Align(UsageIndent.Mode, padLength);
         }
 
-        internal string Usage(string commandName, bool inCLI)
+        internal string Usage(string commandName, bool inCLI, bool onlyCommandline = false)
         {
             List<Parameter> RequiredParams;
             List<Parameter> OptionalParams;
@@ -129,6 +129,11 @@ namespace X509CryptoExe
                 Expression.Append(tmp.ToString().InBraces());
             }
 
+            if (onlyCommandline)
+            {
+                return Expression.ToString();
+            }
+
             if (Parameters.Count > 0)
             {
                 int padding = Parameters.Select(p => p.Name).GetPadding();
@@ -143,6 +148,22 @@ namespace X509CryptoExe
                 }
             }
 
+            return Expression.ToString();
+        }
+
+        internal string Markdown(string commandName, bool defaultMode)
+        {
+            StringBuilder Expression = new StringBuilder(string.Empty);
+            if (!defaultMode)
+            {
+                Expression.Append($"\r\n### {commandName} {Name} Mode");
+            }
+            Expression.Append($"\r\n{Description}\r\n\r\n");
+            Expression.AppendLine($"**{Usage(commandName, false, true)}**\r\n");
+            Expression.AppendLine(MarkdownExpression.ParameterHeader);
+            Parameters.Where(p => p.DefinitionRequired).ToList().ForEach(p => Expression.AppendLine(p.Markdown));
+            Parameters.Where(p => !p.DefinitionRequired).ToList().ForEach(p => Expression.AppendLine(p.Markdown));
+            Expression.Append(MarkdownExpression.EndCommand);
             return Expression.ToString();
         }
 
@@ -277,6 +298,7 @@ namespace X509CryptoExe
                              ExportCert,
                              List,
                              Impersonate,
+                             MakeDoc,
                              Help,
                              Cli,
                              Exit;
@@ -551,6 +573,18 @@ namespace X509CryptoExe
                 }
             };
             Collection.Add(Impersonate);
+
+            MakeDoc = new Mode()
+            {
+                ID = index++,
+                Description = @"Creates Markdown documenation for this command line utility",
+                IsDefault = true,
+                Parameters =
+                {
+                    Parameter.OutMakeDoc
+                }
+            };
+            Collection.Add(MakeDoc);
 
             Help = new Mode()
             {

@@ -16,10 +16,19 @@ namespace X509CryptoExe
         internal List<Mode> SupportedModes { get; private set; } = new List<Mode>();
         internal Mode SelectedMode { get; private set; } = null;
         internal bool HasDefaultMode { get; private set; } = false;
+        internal bool IncludeInHelp { get; private set; } = true;
 
         public override string ToString()
         {
             return Name;
+        }
+
+        internal string Markdown
+        {
+            get
+            {
+                return $"|{Name}|{Description}|";
+            }
         }
 
         internal string ShowDescription(int padLength)
@@ -59,7 +68,7 @@ namespace X509CryptoExe
             return Expression.ToString();
         }
 
-        internal string Usage(bool inCLI = false)
+        internal string Usage(bool inCLI = false, bool onlyCommandline = false)
         {
             StringBuilder Expression = new StringBuilder(UsageExpression.Prefix);
 
@@ -70,13 +79,31 @@ namespace X509CryptoExe
 
             Expression.Append(Name);
 
-            if (SupportedModes.Count() > 0)
+            if (SupportedModes.Count() > 1)
             {
                 Expression.Append($" {SupportedModes.Select(p => p.Name).BarDelimited().InBrackets()}");
             }
 
+            if (onlyCommandline)
+            {
+                return Expression.ToString();
+            }
+
             Expression.Append(UsageDetail());
             Expression.AppendLine();
+            return Expression.ToString();
+        }
+
+        internal string MarkdownDetail()
+        {
+            bool hasDefaultMode = SupportedModes.Count == 1;
+            StringBuilder Expression = new StringBuilder($"\r\n## {Name} Command\r\n");
+            if (!hasDefaultMode)
+            {
+                Expression.AppendLine($"{Description}\r\n\r\n**{Usage(false, true)}**\r\n");
+                Expression.AppendLine(MarkdownExpression.SupportedModes);
+            }
+            SupportedModes.ForEach(p => Expression.AppendLine(p.Markdown(Name, hasDefaultMode)));
             return Expression.ToString();
         }
 
@@ -107,6 +134,7 @@ namespace X509CryptoExe
                                 Cli,
                                 Impersonate,
                                 Help,
+                                MakeDoc,
                                 Exit;
 
         internal static void Initialize()
@@ -298,6 +326,18 @@ namespace X509CryptoExe
                 }
             };
             Collection.Add(Help);
+
+            MakeDoc = new Command()
+            {
+                Name = CommandName.MakeDoc,
+                HasDefaultMode = true,
+                IncludeInHelp = false,
+                SupportedModes =
+                {
+                    Mode.MakeDoc
+                }
+            };
+            Collection.Add(MakeDoc);
 
             Exit = new Command()
             {

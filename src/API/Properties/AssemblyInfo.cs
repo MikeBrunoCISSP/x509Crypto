@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("X509Crypto")]
-[assembly: AssemblyDescription("Simplifies performing cryptographic operations on text and files using X509 certificates")]
+[assembly: AssemblyDescription("Lets you easily and securely encrypt and recover text expressions and files in your .NET programs using X509 digital certificates and private keys. No prior experience with certificates required!")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("X509Crypto.org")]
 [assembly: AssemblyProduct("X509Crypto")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

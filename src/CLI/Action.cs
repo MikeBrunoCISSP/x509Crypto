@@ -75,7 +75,8 @@ namespace X509CryptoExe
 
         internal static string Usage(bool inCli)
         {
-            List<string> CommandNames = Command.Collection.Select(p => p.Name).ToList();
+            List<string> CommandNames = Command.Collection.Where(p => p.IncludeInHelp)
+                                                          .Select(p => p.Name).ToList();
             int padding = CommandNames.GetPadding();
 
             StringBuilder Expression = new StringBuilder(UsageExpression.Prefix);

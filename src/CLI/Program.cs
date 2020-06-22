@@ -275,6 +275,12 @@ namespace X509CryptoExe
                     return;
                 }
 
+                if (SelectedMode.ID == Mode.MakeDoc.ID)
+                {
+                    MakeDoc();
+                    return;
+                }
+
                 if (SelectedMode.ID == Mode.Help.ID)
                 {
                     Help();
@@ -915,6 +921,28 @@ namespace X509CryptoExe
         private static void Help()
         {
             ConsoleMessage(Action.Usage(InCli));
+        }
+
+        private static void MakeDoc()
+        {
+            string outfile = string.Empty;
+
+            try
+            {
+                outfile = SelectedMode.GetString(Parameter.OutMakeDoc.ID);
+                StringBuilder Expression = new StringBuilder($"**{Constants.Usage}**\r\n");
+                Expression.AppendLine(MarkdownExpression.CommandHeader);
+                List<Command> CommandsInScope = Command.Collection.Where(p => p.IncludeInHelp).ToList();
+                CommandsInScope.ForEach(p => Expression.AppendLine(p.Markdown));
+                Expression.Append(MarkdownExpression.EndCommand);
+                CommandsInScope.ForEach(p => Expression.AppendLine(p.MarkdownDetail()));
+                File.WriteAllText(outfile, Expression.ToString());
+                ConsoleMessage($"Markdown file written to {outfile.InQuotes()}");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         #endregion

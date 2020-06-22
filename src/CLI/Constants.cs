@@ -8,6 +8,7 @@ namespace X509CryptoExe
     {
         internal static string AssemblyTitle = Assembly.GetExecutingAssembly().GetName().Name;
         internal static string AssemblyFile = $"{AssemblyTitle}.exe";
+        internal static readonly string Usage = $"Usage: {AssemblyFile} [COMMAND]";
         internal static string CLIPrompt = $"\r\n{AssemblyTitle}>";
         internal const int MaxDescriptionLength = 65;
         internal const string Affirm = @"YES";
@@ -70,6 +71,7 @@ namespace X509CryptoExe
         internal const string Csv = @".csv";
         internal const string Txt = @".txt";
         internal const string Pfx = @".pfx";
+        internal const string Md = @".md";
     }
 
     internal static class CommandName
@@ -88,9 +90,23 @@ namespace X509CryptoExe
         internal const string ExportCert = nameof(ExportCert);
         internal const string List = nameof(List);
         internal const string Impersonate = nameof(Impersonate);
+        internal const string MakeDoc = nameof(MakeDoc);
         internal const string Help = nameof(Help);
         internal const string CLI = nameof(CLI);
         internal const string Exit = nameof(Exit);
+    }
+
+    internal static class MarkdownExpression
+    {
+        internal const string Command = nameof(Command);
+        internal const string Description = nameof(Description);
+        internal const string Parameter = nameof(Parameter);
+        internal const string Required = nameof(Required);
+        internal const string SupportedCommands = "\r\nSupported Commands:\r\n";
+        internal const string SupportedModes = "\r\nSupported Modes:\r\n";
+        internal const string EndCommand = "\r\n<br>\r\n";
+        internal static readonly string CommandHeader = $"\r\n|{Command}|{Description}|\r\n|{new string('-', Command.Length)}|{new string('-', Description.Length)}|";
+        internal static readonly string ParameterHeader = $"\r\n|{Parameter}|{Required}?|{Description}|\r\n|{new string('-', Parameter.Length)}|{new string('-', Required.Length+1)}|{new string('-', Description.Length)}|";
     }
 
     internal static class CipherMode
