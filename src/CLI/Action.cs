@@ -86,7 +86,7 @@ namespace X509CryptoExe
                 Expression.Append($"{Constants.AssemblyFile} {CommandNames.BarDelimited()}\r\n\r\n{UsageExpression.AvailableCommands}");
             }
 
-            foreach(Command command in Command.Collection)
+            foreach(Command command in Command.Collection.Where(p => p.IncludeInHelp))
             {
                 Expression.Append(command.ShowDescription(padding));
             }
