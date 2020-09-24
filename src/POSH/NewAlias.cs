@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Org.X509Crypto;
 using System.Management.Automation;
 
-namespace x509CryptoPOSH
+namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsCommon.New, nameof(X509Alias))]
     public class NewAlias : Cmdlet
@@ -24,6 +24,8 @@ namespace x509CryptoPOSH
 
         private X509Context context;
 
+        private X509Alias Result;
+
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
@@ -33,6 +35,7 @@ namespace x509CryptoPOSH
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+            WriteObject(Result);
         }
 
         private void DoWork()
@@ -46,6 +49,7 @@ namespace x509CryptoPOSH
             X509Alias Alias = new X509Alias(Name, Thumbprint, context, true);
             Alias.Commit();
             Console.WriteLine($"New alias {Name.InQuotes()} committed to {context.Name.InQuotes()} {nameof(X509Context)}\r\nThumbprint: {Alias.Thumbprint}");
+            Result = Alias;
         }
 
         private string MakeCert()

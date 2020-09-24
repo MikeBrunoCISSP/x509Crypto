@@ -7,8 +7,8 @@
     <ProjectGuid>{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>x509CryptoPOSH</RootNamespace>
-    <AssemblyName>x509CryptoPOSH</AssemblyName>
+    <RootNamespace>X509CryptoPOSH</RootNamespace>
+    <AssemblyName>X509CryptoPOSH</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -44,10 +44,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ProtectText.cs" />
     <Compile Include="NewAlias.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShowX509Alias.cs" />
     <Compile Include="ShowX509CryptoCert.cs" />
+    <Compile Include="UnprotectX509Alias.cs" />
+    <Compile Include="UnprotectText.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\API\X509Crypto.csproj">

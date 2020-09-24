@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Org.X509Crypto;
 using System.Management.Automation;
 
-namespace x509CryptoPOSH
+namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsCommon.Show, "X509CryptoCert")]
     public class ShowX509CryptoCert : Cmdlet

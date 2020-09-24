@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "X509Crypto", "src\API\X509C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "x509CryptoExe", "src\CLI\x509CryptoExe.csproj", "{FDC69484-5A1E-4168-AEB4-23EEF207861A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "x509CryptoPOSH", "src\POSH\x509CryptoPOSH.csproj", "{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "X509CryptoPOSH", "src\POSH\X509CryptoPOSH.csproj", "{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
