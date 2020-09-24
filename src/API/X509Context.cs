@@ -10,7 +10,7 @@ namespace Org.X509Crypto
     /// <summary>
     /// Defines the CAPI store, file system location and name for an X509Cryto encryption context
     /// </summary>
-    public class X509Context
+    public partial class X509Context
     {
         private static bool systemAppDirectoryCreated = false;
 

@@ -27,7 +27,7 @@ namespace X509CryptoExe
 {
     partial class Program
     {
-        private static SecureRandom secureRandom = new SecureRandom();
+        //private static SecureRandom secureRandom = new SecureRandom();
 
         private static Mode SelectedMode;
         private static Command SelectedCommand;
@@ -832,7 +832,7 @@ namespace X509CryptoExe
                     yearsValid = SelectedMode.GetInt(Parameter.MakeCertYearsValid.ID);
                 }
 
-                MakeCertWorker(subject, keyLength, yearsValid, Context, out thumbprint);
+                Context.MakeCertWorker(subject, keyLength, yearsValid, out thumbprint);
                 StringBuilder Expression = new StringBuilder($"Certificate was created and added to the {Context.Name} {nameof(X509Context)}\r\nCertificate Thumbprint: {thumbprint}");
                 if (SelectedMode.IsParameterDefined(Parameter.AliasToInstall.ID))
                 {
