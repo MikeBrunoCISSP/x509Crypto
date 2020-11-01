@@ -437,6 +437,15 @@ namespace Org.X509Crypto
             return Output.ToString();
         }
 
+        /// <summary>
+        /// Indicates whether the X509Alias already exists on the local system (meaning committed to storage)
+        /// </summary>
+        /// <returns>True if the X509Alias already exists on the local system</returns>
+        public bool Exists()
+        {
+            return File.Exists(StoragePath);
+        }
+
         private bool LoadIfExists(bool complainIfExists)
         {
             if (!File.Exists(StoragePath))

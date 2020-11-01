@@ -11,7 +11,7 @@ namespace Org.X509Crypto
     /// </summary>
     public class X509AliasNotFoundException : Exception
     {
-        internal X509AliasNotFoundException(X509Alias Alias)
+        public X509AliasNotFoundException(X509Alias Alias)
             : base($"No {nameof(X509Alias)} by the name {Alias.Name} exists in the {Alias.Context.Name} context")
         { }
 

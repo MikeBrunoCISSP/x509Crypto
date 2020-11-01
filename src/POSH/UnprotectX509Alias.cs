@@ -8,7 +8,7 @@ using Org.X509Crypto;
 
 namespace X509CryptoPOSH
 {
-    [Cmdlet(VerbsSecurity.Unprotect, "X509Alias")]
+    [Cmdlet(VerbsSecurity.Unprotect, nameof(X509Alias))]
     public class UnprotectX509Alias : Cmdlet
     {
         [Parameter(Mandatory = true, HelpMessage = "The X509Alias from which to list secrets")]

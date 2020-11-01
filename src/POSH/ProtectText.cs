@@ -5,18 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Org.X509Crypto;
 using System.Management.Automation;
+using System.Security.Policy;
 
 namespace X509CryptoPOSH
 {
+    #region Protect-Text
+
     [Cmdlet(VerbsSecurity.Protect, "Text")]
     public class ProtectText : Cmdlet
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The X509Alias which points to the encryption certificate")]
-        public string Alias { get; set; } = string.Empty;
-
-        [Parameter(Mandatory = true, HelpMessage = "The X509Context in which the encryption certificate exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("X509Context", "Store")]
-        public string Context { get; set; } = string.Empty;
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
+        public ContextedAlias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The text expression to be encrypted")]
         [Alias("Text", "String")]
@@ -29,8 +28,6 @@ namespace X509CryptoPOSH
         [Alias("SecretName", "Identifier")]
         public string Secret { get; set; } = string.Empty;
 
-        private X509Alias alias;
-        private X509Context context;
         private string Result = string.Empty;
 
         protected override void BeginProcessing()
@@ -47,20 +44,73 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            context = X509Context.Select(Context, false);
-            alias = new X509Alias(Alias, context);
 
             if (!string.IsNullOrEmpty(Secret))
             {
-                alias.AddSecret(Secret, Expression, false);
-                alias.Commit();
-                Console.WriteLine($"Secret {Secret.InQuotes()} added to {nameof(X509Alias)} {Alias.InQuotes()} in the {context.Name} {nameof(X509Context)}");
-                Result = alias.GetSecret(Secret);
+                Alias.Alias.AddSecret(Secret, Expression, false);
+                Alias.Alias.Commit();
+                Console.WriteLine($"Secret {Secret.InQuotes()} added to {nameof(X509Alias)} {Alias.Alias.Name.InQuotes()} in the {Alias.Context.Name} {nameof(X509Context)}");
+                Result = Alias.Alias.GetSecret(Secret);
             }
             else
             {
-                Result = alias.EncryptText(Expression);
+                Result = Alias.Alias.EncryptText(Expression);
             }
         }
     }
+
+    #endregion
+
+    #region Unprotect-Text
+
+    [Cmdlet(VerbsSecurity.Unprotect, "Text")]
+    public class UnprotectText : Cmdlet
+    {
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
+        public ContextedAlias Alias { get; set; }
+
+        [Parameter(HelpMessage = "The text expression to be encrypted. May not be combined with \"-Secret\"")]
+        [Alias("Text", "Ciphertext", "EncryptedText")]
+        public string Expression { get; set; } = string.Empty;
+
+        [Parameter(HelpMessage = "The identifier under which the encrypted secret is stored within the X509Alias. May not be combined with \"-Expression\"")]
+        [Alias("SecretName", "Identifier")]
+        public string Secret { get; set; } = string.Empty;
+
+        private string Result = string.Empty;
+
+        protected override void BeginProcessing()
+        {
+            base.BeginProcessing();
+            DoWork();
+        }
+
+        protected override void ProcessRecord()
+        {
+            base.ProcessRecord();
+            WriteObject(Result);
+        }
+
+        private void DoWork()
+        {
+            if (string.IsNullOrEmpty(Expression) ^ string.IsNullOrEmpty(Secret))
+            {
+
+                if (!string.IsNullOrEmpty(Secret))
+                {
+                    Result = Alias.Alias.RecoverSecret(Secret);
+                }
+                else
+                {
+                    Result = Alias.Alias.DecryptText(Expression);
+                }
+            }
+            else
+            {
+                throw new X509CryptoException("Either the \"-Secret\" or the  \"-Expression\" must be defined, but not both.");
+            }
+        }
+    }
+
+    #endregion
 }
