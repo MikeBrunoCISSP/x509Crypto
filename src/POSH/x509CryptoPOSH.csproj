@@ -44,7 +44,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddSecret.cs" />
     <Compile Include="Models\ContextedAlias.cs" />
     <Compile Include="ProtectText.cs" />
     <Compile Include="NewAlias.cs" />

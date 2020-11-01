@@ -9,9 +9,9 @@ using System.Security.Policy;
 
 namespace X509CryptoPOSH
 {
-    #region Protect-Text
+    #region Protect-Secret
 
-    [Cmdlet(VerbsSecurity.Protect, "Text")]
+    [Cmdlet(VerbsSecurity.Protect, "Secret")]
     public class ProtectText : Cmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
@@ -61,7 +61,7 @@ namespace X509CryptoPOSH
 
     #endregion
 
-    #region Unprotect-Text
+    #region Unprotect-Secret
 
     [Cmdlet(VerbsSecurity.Unprotect, "Text")]
     public class UnprotectText : Cmdlet
