@@ -33,12 +33,12 @@ namespace X509CryptoPOSH
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
-            DoWork();
         }
 
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+            DoWork();
             WriteObject(Result);
         }
 

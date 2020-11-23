@@ -689,6 +689,7 @@ namespace Org.X509Crypto
                 {
                     publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                     privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
+                    var pk = cert.GetRSAPrivateKey();
                     break;
                 }
                 valid = true;

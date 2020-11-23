@@ -30,7 +30,7 @@ namespace X509CryptoPOSH
             }
             else
             {
-                if (mustNotExist)
+                if (mustExist)
                 {
                     throw new X509AliasNotFoundException(Alias);
                 }

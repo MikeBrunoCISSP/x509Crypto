@@ -167,7 +167,11 @@ namespace Org.X509Crypto
             return AliasNames;
         }
 
-        internal List<X509Alias> GetAliases()
+        /// <summary>
+        /// Returns the collection of all <see cref="X509Alias"/>es found in this context
+        /// </summary>
+        /// <returns>the collection of all <see cref="X509Alias"/>es found in this context</returns>
+        public List<X509Alias> GetAliases(bool includeIfCertNotFound = true)
         {
             List<X509Alias> Aliases = new List<X509Alias>();
             List<string> AliasNames = GetAliasNames();
@@ -177,6 +181,10 @@ namespace Org.X509Crypto
                 try
                 {
                     X509Alias Alias = new X509Alias(name, this);
+                    if (!includeIfCertNotFound)
+                    {
+                        _ = Alias.Certificate;
+                    }
                     Aliases.Add(Alias);
                 }
                 catch

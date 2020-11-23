@@ -5,9 +5,21 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.ComponentModel;
 
 namespace Org.X509Crypto
 {
+
+    /// <summary>
+    /// Specifies a format in which to output the decrypted secrets from a <see cref="X509Alias"/>
+    /// </summary>
+    public enum SecretDumpFormat
+    {
+        Text = 0,
+        CommaSeparated = 1,
+        Dictionary = 2
+    }
+
     /// <summary>
     /// Represents an X509Context, a certificate/key pair and 0 or more secrets encrypted by the certificate/key pair
     /// </summary>
@@ -69,6 +81,38 @@ namespace Org.X509Crypto
         private X509Alias(X509Context Context)
         {
             this.Context = Context;
+        }
+
+        private bool certificateFound = false;
+        private X509Certificate2 certificate = null;
+        public X509Certificate2 Certificate
+        {
+            get
+            {
+                if (!certificateFound)
+                {
+                    using (X509Store Store = new X509Store(Context.Location))
+                    {
+                        Store.Open(OpenFlags.ReadOnly);
+                        foreach (var Cert in Store.Certificates)
+                        {
+                            if (Cert.Thumbprint.Matches(Thumbprint))
+                            {
+                                certificateFound = true;
+                                certificate = Cert;
+                                break;
+                            }
+                        }
+                        Store.Close();
+
+                        if (!certificateFound)
+                        {
+                            throw new X509CryptoException($"The certificate associated with {nameof(X509Alias)} name {FullName.InQuotes()} ({Thumbprint}) was not found.");
+                        }
+                    }
+                }
+                return certificate;
+            }
         }
 
         /// <summary>
@@ -399,11 +443,31 @@ namespace Org.X509Crypto
         }
 
         /// <summary>
+        /// Generates a data structure, in the selected format of all secret names and values contained within the <see cref="X509Alias"/>
+        /// </summary>
+        /// <param name="selectedFormat">The desired fromat in which to return the data</param>
+        /// <param name="reveal">indicates whether the encrypted value for each secret should be decrypted and included with the output.</param>
+        public dynamic DumpSecrets(SecretDumpFormat selectedFormat, bool reveal)
+        {
+            switch(selectedFormat)
+            {
+                case SecretDumpFormat.Text:
+                    return DumpSecretsText(reveal);
+                case SecretDumpFormat.CommaSeparated:
+                    return DumpSecretsCSV(reveal);
+                case SecretDumpFormat.Dictionary:
+                    return DumpSecretsDict(reveal);
+                default:
+                    throw new X509CryptoException($"Unsupported {nameof(SecretDumpFormat)}: {(int)selectedFormat}");
+            }
+        }
+
+        /// <summary>
         /// Generates a text report of the X509Artifacts contained within this X509Alias
         /// </summary>
         /// <param name="reveal">Indicates whether the plaintext values of each X509Secret should be revealed in the output</param>
         /// <returns>A text report listing all X509Secrets contained within this X509Alias</returns>
-        public string DumpSecrets(bool reveal)
+        private string DumpSecretsText(bool reveal)
         {
             if (Secrets.Length == 0)
             {
@@ -426,7 +490,7 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="reveal">Indicates whether the plaintext values of each X509Secret should be revealed in the output</param>
         /// <returns>A comma-separated report listing all X509Secrets contained within this X509Alias</returns>
-        public string DumpSecretsCSV(bool reveal)
+        private string DumpSecretsCSV(bool reveal)
         {
             StringBuilder Output = new StringBuilder(string.Empty);
             Output.AppendLine(reveal ? CSVHeader.WithSecrets : CSVHeader.WithoutSecrets);
@@ -435,6 +499,16 @@ namespace Org.X509Crypto
                 Output.AppendLine(reveal ? Secrets[x].DumpCSV(x, this) : Secrets[x].DumpCSV(x));
             }
             return Output.ToString();
+        }
+
+        private Dictionary<string, string> DumpSecretsDict(bool reveal)
+        {
+            var Result = new Dictionary<string, string>();
+            for (int x = 0; x<Secrets.Length; x++)
+            {
+                Result.Add(Secrets[x].Key, reveal ? Secrets[x].Reveal(this) : string.Empty);
+            }
+            return Result;
         }
 
         /// <summary>

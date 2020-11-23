@@ -744,7 +744,7 @@ namespace X509CryptoExe
 
                 using (X509Alias Alias = new X509Alias(aliasName, Context))
                 {
-                    output = SelectedMode.OutputType == Output.File ? Alias.DumpSecretsCSV(reveal) : Alias.DumpSecrets(reveal);
+                    output = SelectedMode.OutputType == Output.File ? Alias.DumpSecrets(SecretDumpFormat.CommaSeparated, reveal) : Alias.DumpSecrets(SecretDumpFormat.Text, reveal);
                 }
                 WriteOutput(output, Parameter.OutDumpAlias.ID);
             }
