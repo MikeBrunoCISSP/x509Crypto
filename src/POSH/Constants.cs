@@ -10,6 +10,8 @@ namespace X509CryptoPOSH
     {
         internal const string NoAliasAssigned = @"Non Assigned";
         internal const bool DoNotIncludeIfCertNotFound = false;
+        internal const string Affirm = @"YES";
+        internal const int WipeRepititions = 5;
     }
 
     static class PrivilegeLevel

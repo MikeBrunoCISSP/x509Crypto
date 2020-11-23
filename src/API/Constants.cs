@@ -9,9 +9,15 @@ namespace Org.X509Crypto
 {
     public static class FileExtensions
     {
-        public static readonly string X509Alias = @".xca";
-        public static readonly string Csv = @".csv";
-        internal const string Json = @".json";
+        public const string X509Alias = @".xca";
+        public const string Csv = @".csv";
+        public const string Json = @".json";
+        public const string ExportAlias = @".json";
+        public const string Ciphertext = @".ctx";
+        public const string Plaintext = @".ptx";
+        public const string Txt = @".txt";
+        public const string Pfx = @".pfx";
+        public const string Md = @".md";
     }
 
     internal static class Constants

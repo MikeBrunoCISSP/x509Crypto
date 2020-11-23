@@ -66,7 +66,7 @@ namespace X509CryptoPOSH
         {
             if (!(contextSet ^ nameSet))
             {
-                throw new X509CryptoException($"Either the {nameof(Context).InQuotes()} or the {nameof(Name).InQuotes()} must be specified, but not both");
+                throw new InvalidParametersException(nameof(Context), nameof(Name));
             }
 
             if (nameSet)
