@@ -59,7 +59,7 @@
     <Compile Include="ReadX509Context.cs" />
     <Compile Include="ShowX509CryptoCert.cs" />
     <Compile Include="RemoveX509Alias.cs" />
-    <Compile Include="UnmountX509Alias.cs" />
+    <Compile Include="DismountX509Alias.cs" />
     <Compile Include="ReadSecret.cs" />
     <Compile Include="UnprotectX509Alias.cs" />
     <Compile Include="Utils.cs" />
