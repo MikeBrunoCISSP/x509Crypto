@@ -46,23 +46,26 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="ExportX509Alias.cs" />
     <Compile Include="GetX509Context.cs" />
+    <Compile Include="ImportX509Alias.cs" />
+    <Compile Include="InstallX509CryptoCertificate.cs" />
     <Compile Include="Models\ContextedAlias.cs" />
     <Compile Include="Models\ProtectedSecret.cs" />
     <Compile Include="Models\X509AliasDescription.cs" />
     <Compile Include="MountX509Alias.cs" />
     <Compile Include="ProtectFile.cs" />
+    <Compile Include="UnprotectFile.cs" />
     <Compile Include="UpdateAlias.cs" />
     <Compile Include="ProtectSecret.cs" />
     <Compile Include="NewAlias.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReadX509Context.cs" />
-    <Compile Include="ShowX509CryptoCert.cs" />
     <Compile Include="RemoveX509Alias.cs" />
     <Compile Include="DismountX509Alias.cs" />
     <Compile Include="ReadSecret.cs" />
     <Compile Include="UnprotectX509Alias.cs" />
-    <Compile Include="Utils.cs" />
+    <Compile Include="UpdateFileEncryption.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\API\X509Crypto.csproj">

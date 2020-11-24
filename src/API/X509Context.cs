@@ -34,6 +34,8 @@ namespace Org.X509Crypto
         /// </summary>
         public string Name { get; private set; }
 
+        public List<string> Aliases { get; private set; }
+
         internal bool Writeable;
 
         /// <summary>
@@ -92,6 +94,7 @@ namespace Org.X509Crypto
             Index = Indexer.UserReadOnly,
             Location = StoreLocation.CurrentUser,
             Name = X509ContextName.User,
+            Aliases = new List<string>() { X509ContextName.User, X509ContextName.CurrentUser },
             Writeable = false
         };
 
@@ -103,6 +106,7 @@ namespace Org.X509Crypto
             Index = Indexer.UserFull,
             Location = StoreLocation.CurrentUser,
             Name = X509ContextName.User,
+            Aliases = new List<string>() { X509ContextName.User, X509ContextName.CurrentUser },
             Writeable = true
         };
 
@@ -114,6 +118,7 @@ namespace Org.X509Crypto
             Index = Indexer.SystemReadOnly,
             Location = StoreLocation.LocalMachine,
             Name = X509ContextName.System,
+            Aliases = new List<string>() { X509ContextName.System, X509ContextName.LocalSystem },
             Writeable = false
         };
 
@@ -125,6 +130,7 @@ namespace Org.X509Crypto
             Index = Indexer.SystemFull,
             Location = StoreLocation.LocalMachine,
             Name = X509ContextName.System,
+            Aliases = new List<string>() { X509ContextName.System, X509ContextName.LocalSystem },
             Writeable = true
         };
 
@@ -142,7 +148,8 @@ namespace Org.X509Crypto
 
             try
             {
-                SelectedContext = SupportedContexts.Where(p => p.Writeable == writeable).First(p => p.Name.Matches(name));
+                SelectedContext = SupportedContexts.Where(p => p.Writeable == writeable)
+                                                   .First(p => p.Aliases.Contains(name, false));
                 return SelectedContext;
             }
             catch

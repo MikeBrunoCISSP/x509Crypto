@@ -163,6 +163,24 @@ namespace Org.X509Crypto
             Secrets = null;
         }
 
+        public bool HasCert(X509Context Context)
+        {
+            bool found = false;
+            using (var Store = new X509Store(Context.Location))
+            {
+                Store.Open(OpenFlags.ReadOnly);
+                foreach(var Cert in Store.Certificates)
+                {
+                    if (Cert.Thumbprint.Matches(Thumbprint))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            return found;
+        }
+
         /// <summary>
         /// Encrypts the specified text expression
         /// </summary>
@@ -395,7 +413,7 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="exportPath">The path where the export file should be written (a .json extension is added if no file extension is specified)</param>
         /// <param name="overwriteExisting">Indicates whether an existing file may be overwritten if a file should exist at the indicated export path</param>
-        public void Export(string exportPath, bool overwriteExisting = false)
+        public void Export(ref string exportPath, bool overwriteExisting = false)
         {
             if (!Path.GetExtension(exportPath).Matches(FileExtensions.X509Alias))
             {
@@ -426,7 +444,8 @@ namespace Org.X509Crypto
                 Directory.CreateDirectory(Context.StorageDirectory);
             }
 
-            Export(StoragePath, true);
+            var tmp = StoragePath;
+            Export(ref tmp, true);
         }
 
         /// <summary>
@@ -607,7 +626,7 @@ namespace Org.X509Crypto
             }
         }
 
-        private void DecodeFromFile(string importPath = "")
+        private void DecodeFromFile(string importPath = "", string newName = "")
         {
             string fileToDecode = string.IsNullOrEmpty(importPath) ? StoragePath : importPath;
 
@@ -622,6 +641,7 @@ namespace Org.X509Crypto
                     MemStream.Close();
                 }
 
+                Name = string.IsNullOrEmpty(newName) ? tmp.Name : newName;
                 Thumbprint = tmp.Thumbprint;
                 Secrets = tmp.Secrets;
             }
@@ -649,12 +669,7 @@ namespace Org.X509Crypto
             try
             {
                 X509Alias Alias = new X509Alias(Context);
-                Alias.DecodeFromFile(importPath);
-
-                if (!string.IsNullOrEmpty(newName))
-                {
-                    Alias.Name = newName;
-                }
+                Alias.DecodeFromFile(importPath, newName);
                 return Alias;
             }
             catch (Exception ex)

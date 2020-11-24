@@ -10,7 +10,8 @@ namespace X509CryptoPOSH
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true,
                    HelpMessage = "The name of the X509Context in which to list existing X509Aliases. Acceptable values are \"user\" and \"system\"")]
-        public string Name { get; set; }
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        public string Location { get; set; }
 
         [Parameter(HelpMessage = "Determines whether the X509Context should be open as writeable. Acceptable values are \"Read\" and \"Change\"")]
         public string Privilege { get; set; } = PrivilegeLevel.Read;
@@ -32,7 +33,7 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            Result = X509Context.Select(Name, Privilege.Matches(PrivilegeLevel.Change));
+            Result = X509Context.Select(Location, Privilege.Matches(PrivilegeLevel.Change));
         }
     }
 }

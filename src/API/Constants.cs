@@ -34,6 +34,7 @@ namespace Org.X509Crypto
         internal const string BeginBase64Certificate = @"-----BEGIN CERTIFICATE-----";
         internal const string EndBase64Certificate = @"-----END CERTIFICATE-----";
         internal const string NoAliasAssigned = @"None assigned";
+        internal const string Affirm = @"YES";
     }
 
     internal static class CryptoConstants
@@ -79,6 +80,15 @@ namespace Org.X509Crypto
     internal static class X509ContextName
     {
         internal const string User = @"user";
+        internal const string CurrentUser = @"currentuser";
+
         internal const string System = @"system";
+        internal const string LocalSystem = @"localsystem";
+    }
+
+    internal static class AllowSecretOverwrite
+    {
+        internal const bool Yes = true;
+        internal const bool No = false;
     }
 }

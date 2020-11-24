@@ -14,6 +14,11 @@ namespace X509CryptoPOSH
         internal const int WipeRepititions = 5;
     }
 
+    static class PoshSyntax
+    {
+        internal const string True = @"$True";
+    }
+
     static class PrivilegeLevel
     {
         internal const string Read = nameof(Read);

@@ -16,11 +16,12 @@ namespace X509CryptoPOSH
         private bool caliasSet = false;
 
         [Parameter(HelpMessage = "The X509Alias from which to list secrets")]
+        [Alias(@"Alias", @"X509Alias")]
         public string Name { get; set; } = string.Empty;
 
         [Parameter(HelpMessage = "The X509Context in which the encryption certificate exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("X509Context", "Store")]
-        public string Context { get; set; } = string.Empty;
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        public string Location { get; set; } = string.Empty;
 
         [Parameter(ValueFromPipeline = true, HelpMessage = "An X509Alias object created using either the \"Get-X509Alias\" or the \"New-X509Alias\" cmdlet")]
         public ContextedAlias Alias
@@ -54,9 +55,9 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            if (!(caliasSet ^ (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Context))))
+            if (!(caliasSet ^ (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Location))))
             {
-                throw new X509CryptoException($"Either the {nameof(Alias).InQuotes()} or both the {nameof(Name).InQuotes()} and {nameof(Context).InQuotes()} must be set.");
+                throw new X509CryptoException($"Either the {nameof(Alias).InQuotes()} or both the {nameof(Name).InQuotes()} and {nameof(Location).InQuotes()} must be set.");
             }
 
             if (caliasSet)
@@ -65,7 +66,7 @@ namespace X509CryptoPOSH
             }
             else
             {
-                context = X509Context.Select(Context, false);
+                context = X509Context.Select(Location, false);
                 alias = new X509Alias(Name, context);
             }
 

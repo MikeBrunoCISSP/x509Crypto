@@ -324,7 +324,7 @@ namespace X509CryptoExe
                 string aliasName = SelectedMode.GetString(Parameter.AliasToRemove.ID);
                 X509Context Context = SelectedMode.GetContext(Parameter.Context.ID);
 
-                if (WarnConfirm($"This will ERASE the {nameof(X509Alias)} {aliasName.InQuotes()} from the {Context.Name} {nameof(X509Context)} on this computer."))
+                if (Util.WarnConfirm($"This will ERASE the {nameof(X509Alias)} {aliasName.InQuotes()} from the {Context.Name} {nameof(X509Context)} on this computer.", Constants.Affirm))
                 {
                     X509Alias AliasToRemove = new X509Alias(aliasName, Context);
                     AliasToRemove.Remove();
@@ -417,7 +417,7 @@ namespace X509CryptoExe
                 X509Context Context = SelectedMode.GetContext(Parameter.Context.ID);
 
                 X509Alias Alias = new X509Alias(aliasName, Context);
-                Alias.Export(outfile, overwriteExisting);
+                Alias.Export(ref outfile, overwriteExisting);
                 ConsoleMessage($"{nameof(X509Alias)} aliasName was successfully exported to file {outfile.InQuotes()}");
             }
             catch (FileNotFoundException)
@@ -456,7 +456,7 @@ namespace X509CryptoExe
                     {
                         secretName = SelectedMode.GetString(Parameter.SecretEnc.ID);
                         ciphertext = Alias.EncryptText(plaintext);
-                        secretAdded = AddSecret(secretName, ciphertext, Alias);
+                        secretAdded = Util.AddSecret(secretName, ciphertext, Alias);
                     }
                 }
 
@@ -540,7 +540,7 @@ namespace X509CryptoExe
                 if (Parameter.SecretReEnc.IsDefined)
                 {
                     secretName = SelectedMode.GetString(Parameter.SecretReEnc.ID);
-                    secretAdded = AddSecret(secretName, newCiphertext, TargetAlias);
+                    secretAdded = Util.AddSecret(secretName, newCiphertext, TargetAlias);
                 }
 
                 if (!secretAdded)
@@ -576,11 +576,11 @@ namespace X509CryptoExe
                 }
 
                 overwriteExisting = SelectedMode.GetBool(Parameter.OverWriteExistingFile.ID);
-                CheckForExistingFile(outfile, overwriteExisting);
+                Util.CheckForExistingFile(outfile, overwriteExisting, Parameter.OverWriteExistingFile.Name, Constants.Affirm);
 
                 if (Parameter.Wipe.IsDefined)
                 {
-                    if (!WarnConfirm($"You have included the {Parameter.Wipe.Name.InQuotes()} argument. This will permanently delete the file {inFile.InQuotes()} from disk."))
+                    if (!Util.WarnConfirm($"You have included the {Parameter.Wipe.Name.InQuotes()} argument. This will permanently delete the file {inFile.InQuotes()} from disk.", Constants.Affirm))
                     {
                         return;
                     }
@@ -631,13 +631,13 @@ namespace X509CryptoExe
                 }
                 else
                 {
-                    outfile = GetPlaintextFilename(infile);
+                    outfile = Util.GetPlaintextFilename(infile);
                 }
-                CheckForExistingFile(outfile, overwriteExistingFile);
+                Util.CheckForExistingFile(outfile, overwriteExistingFile, Parameter.OverWriteExistingFile.Name, Constants.Affirm);
 
                 if (SelectedMode.IsParameterDefined(Parameter.Wipe.ID))
                 {
-                    if (!WarnConfirm($"You have included the {Parameter.Wipe.Name.InQuotes()} argument. This will permanently delete the file {infile.InQuotes()} from disk."))
+                    if (!Util.WarnConfirm($"You have included the {Parameter.Wipe.Name.InQuotes()} argument. This will permanently delete the file {infile.InQuotes()} from disk.", Constants.Affirm))
                     {
                         return;
                     }
@@ -882,7 +882,7 @@ namespace X509CryptoExe
                 }
                 if (File.Exists(outfile))
                 {
-                    if (WarnConfirm($"The specified file {outfile} already exists. Do you wish to overwrite it?"))
+                    if (Util.WarnConfirm($"The specified file {outfile} already exists. Do you wish to overwrite it?", Constants.Affirm))
                     {
                         X509Utils.DeleteFile(outfile, confirmDelete: true);
                     }
@@ -988,7 +988,7 @@ namespace X509CryptoExe
             }
             catch (X509AliasAlreadyExistsException)
             {
-                if (WarnConfirm($"{nameof(X509Alias)} {aliasName.InQuotes()} already exists. Do you wish to overwrite it?"))
+                if (Util.WarnConfirm($"{nameof(X509Alias)} {aliasName.InQuotes()} already exists. Do you wish to overwrite it?", Constants.Affirm))
                 {
                     Alias = new X509Alias(aliasName, thumbprint, Context, false);
                     Alias.Commit();
@@ -1038,24 +1038,6 @@ namespace X509CryptoExe
         private static void ConsoleWarning(string message)
         {
             Console.WriteLine($"\r\n{message}\r\n", ConsoleColor.Yellow);
-        }
-
-        private static bool WarnConfirm(string message)
-        {
-            string entry = string.Empty;
-
-            Console.WriteLine($"\r\nWARNING! {message} Enter {Constants.Affirm.InQuotes()} if you wish to proceed", ConsoleColor.Yellow);
-            Console.Write(@"Your entry: ");
-            entry = Console.ReadLine();
-            if (entry.Matches(Constants.Affirm, caseSensitive: true))
-            {
-                return true;
-            }
-            else
-            {
-                ConsoleMessage(@"No action was taken.");
-                return false;
-            }
         }
 
         #endregion

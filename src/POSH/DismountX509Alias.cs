@@ -9,7 +9,8 @@ namespace X509CryptoPOSH
     public class DismountX509Alias : Cmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context to dismount")]
-        public ContextedAlias Alias;
+        [Alias("Alias", @"X509Alias")]
+        public ContextedAlias Name;
 
         protected override void BeginProcessing()
         {
@@ -20,14 +21,14 @@ namespace X509CryptoPOSH
         {
             base.ProcessRecord();
             DoWork();
-            WriteObject(Alias);
+            WriteObject(Name);
         }
 
         private void DoWork()
         {
-            string name = Alias.Alias.Name;
-            Alias.Alias.Dispose();
-            Alias = null;
+            string name = Name.Alias.Name;
+            Name.Alias.Dispose();
+            Name = null;
             Console.WriteLine($"{nameof(X509Alias)} {name.InQuotes()} has been dismounted.");
         }
     }

@@ -9,43 +9,14 @@ namespace X509CryptoPOSH
     [OutputType(typeof(ContextedAlias))]
     public class MountX509Alias : Cmdlet
     {
-        private string location = string.Empty;
-        private bool locationSet = false;
-
-        private bool contextSet = false;
+        
         [Parameter(Mandatory = true, HelpMessage = "The name for the X509Alias to retrieve")]
-        [Alias("N", "Alias")]
+        [Alias("Alias", @"X509Alias")]
         public string Name { get; set; }
 
         [Parameter(HelpMessage = "The name of X509Context where the X509Alias exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Store")]
-        public string Location
-        {
-            get
-            {
-                return location;
-            }
-            set
-            {
-                location = value;
-                locationSet = true;
-            }
-        }
-
-        [Parameter(ValueFromPipeline = true, HelpMessage = "The X509Context where the X509Alias exists. Not to be combined with the \"Location\" parameter")]
-        [Alias("Context", "X509Context")]
-        public X509Context Type
-        {
-            get
-            {
-                return context;
-            }
-            set
-            {
-                context = value;
-                contextSet = true;
-            }
-        }
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        public string Location { get; set; }
 
         private X509Context context;
         private ContextedAlias Result;
@@ -64,16 +35,8 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            if (!(locationSet ^ contextSet))
-            {
-                throw new InvalidParametersException(nameof(Location), nameof(Type));
-            }
 
-            if (locationSet)
-            {
-                context = X509Context.Select(Location, true);
-            }
-
+            context = X509Context.Select(Location, true);
             X509Alias Alias = new X509Alias(Name, context);
             Result = new ContextedAlias(Alias, context);
             Result.CheckExists(mustExist: true);

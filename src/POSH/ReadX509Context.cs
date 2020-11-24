@@ -10,41 +10,13 @@ namespace X509CryptoPOSH
     [OutputType(typeof(X509AliasDescription))]
     public class ReadX509Context : Cmdlet
     {
-        private X509Context context;
-        private bool contextSet;
+        private X509Context Context;
 
-        private string name;
-        private bool nameSet;
+        [Parameter(Position = 0, HelpMessage = "The X509Context from which to list existing X509Aliases and/or encryption certificates. Acceptable values are \"user\" and \"system\"")]
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        public string Location { get; set; }
 
-        [Parameter(ValueFromPipeline = true, HelpMessage = "The X509Context from which to list existing X509Aliases.")]
-        public X509Context Context
-        {
-            get
-            {
-                return context;
-            }
-            set
-            {
-                context = value;
-                contextSet = true;
-            }
-        }
-
-        [Parameter(HelpMessage = "The name of the X509Context in which to list existing X509Aliases. Acceptable values are \"user\" and \"system\"")]
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                name = value;
-                nameSet = true;
-            }
-        }
-
-        [Parameter(HelpMessage = "If set to true, certificates that are not currently assigned to an X509Alias will also be included in the output")]
+        [Parameter(Position = 1, HelpMessage = "If $True, certificates that are not currently assigned to an X509Alias will also be included in the output. Default select is $False")]
         public bool All { get; set; } = false;
 
         private List<X509AliasDescription> Result = new List<X509AliasDescription>();
@@ -64,28 +36,25 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            if (!(contextSet ^ nameSet))
-            {
-                throw new InvalidParametersException(nameof(Context), nameof(Name));
-            }
 
-            if (nameSet)
-            {
-                Context = X509Context.Select(Name, false);
-            }
+            Context = X509Context.Select(Location, false);
 
             var Aliases = Context.GetAliases(Constants.DoNotIncludeIfCertNotFound);
             Aliases.ForEach(p => Result.Add(new X509AliasDescription(p)));
 
             var AssignedThumbprints = Aliases.Select(p => p.Certificate.Thumbprint.ToUpper()).ToList();
-            using (var Store = new X509Store(Context.Location))
+
+            if (All)
             {
-                Store.Open(OpenFlags.ReadOnly);
-                foreach(X509Certificate2 Cert in Store.Certificates)
+                using (var Store = new X509Store(Context.Location))
                 {
-                    if (!AssignedThumbprints.Contains(Cert.Thumbprint.ToUpper()))
+                    Store.Open(OpenFlags.ReadOnly);
+                    foreach (X509Certificate2 Cert in Store.Certificates)
                     {
-                        Result.Add(new X509AliasDescription(Cert));
+                        if (!AssignedThumbprints.Contains(Cert.Thumbprint.ToUpper()))
+                        {
+                            Result.Add(new X509AliasDescription(Cert));
+                        }
                     }
                 }
             }

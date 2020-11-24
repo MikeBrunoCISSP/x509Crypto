@@ -5,6 +5,7 @@ using System.Management.Automation;
 namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsCommon.Remove, nameof(X509Alias))]
+    [OutputType(typeof(bool))]
     public class RemoveAlias : Cmdlet
     {
         [Parameter(Mandatory = true, HelpMessage = "The name for the X509Alias to remove")]
@@ -12,8 +13,8 @@ namespace X509CryptoPOSH
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The X509Context where the X509Alias exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("X509Context", "Store")]
-        public string Context { get; set; }
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        public string Location { get; set; }
 
         private X509Context context;
         private bool Result = false;
@@ -32,7 +33,7 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            context = X509Context.Select(Context, true);
+            context = X509Context.Select(Location, true);
             X509Alias Alias = new X509Alias(Name, context);
             var ca = new ContextedAlias(Alias, context);
             ca.CheckExists(mustExist: true);

@@ -6,19 +6,19 @@ using System.Text;
 
 namespace X509CryptoPOSH
 {
-    [Cmdlet(VerbsSecurity.Protect, @"File")]
+    [Cmdlet(VerbsSecurity.Unprotect, @"File")]
     [OutputType(typeof(FileInfo))]
-    public class ProtectFile : PSCmdlet
+    public class UnprotectFile : PSCmdlet
     {
         private string path = string.Empty;
         private string output = string.Empty;
         private bool outputSet = false;
 
-        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias to use for encryption")]
-        [Alias(@"Alias", @"X509Alias")]
-        public ContextedAlias Name { get; set; }
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias that was used to encrypt the file")]
+        [Alias(@"X509Alias")]
+        public ContextedAlias Alias { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "The path to the file to encrypt")]
+        [Parameter(Mandatory = true, HelpMessage = "The path to the file to decrypt")]
         public string Path
         {
             get
@@ -33,12 +33,12 @@ namespace X509CryptoPOSH
                 }
                 else
                 {
-                    path = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentFileSystemLocation.Path, value)).FullName;
+                    path = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentLocation.Path, value)).FullName;
                 }
             }
         }
 
-        [Parameter(HelpMessage = "The path to which to write the encrypted file. If not specified, the name of the file indicated for \"\" will be appended with a \".ctx\" extension")]
+        [Parameter(HelpMessage = "The path to which to write the decrypted file. If not specified, the original plaintext file name will be restored, or will be appended with a \".ptx\" file extension")]
         public string Output
         {
             get
@@ -53,16 +53,16 @@ namespace X509CryptoPOSH
                 }
                 else
                 {
-                    output = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentFileSystemLocation.Path, value)).FullName;
+                    output = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentLocation.Path, value)).FullName;
                 }
                 outputSet = true;
             }
         }
 
-        [Parameter(HelpMessage = "If $True, the plaintext file specified for \"Path\" will be wiped from disk. Default selection is $False.")]
+        [Parameter(HelpMessage = "If $True, the ciphertext file specified for \"Path\" will be wiped from disk. Default selection is $False.")]
         public bool Delete { get; set; } = false;
 
-        [Parameter(HelpMessage = "If $False, no warning will be displayed before the plaintext file specified for \"Path\" is wiped from disk. Not appliable if \"-Delete\" is $False")]
+        [Parameter(HelpMessage = "If $False, no warning will be displayed before the ciphertext file specified for \"Path\" is wiped from disk. Not appliable if \"-Delete\" is $False")]
         public bool Confirm { get; set; } = true;
 
         [Parameter(HelpMessage = "If $True, should a file already exist under the same path as specified/inferred for \"Output\", it will be replaced. Default selection is $False.")]
@@ -92,7 +92,7 @@ namespace X509CryptoPOSH
 
             if (!outputSet)
             {
-                output = $"{Path}{FileExtensions.Ciphertext}";
+                Output = Util.GetPlaintextFilename(Path);
             }
             Util.CheckForExistingFile(Output, Overwrite, nameof(Overwrite), PoshSyntax.True);
 
@@ -109,11 +109,11 @@ namespace X509CryptoPOSH
             }
 
 
-            Name.Alias.EncryptFile(Path, Output, wipeTimesToWrite);
-            StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully encrypted. The ciphertext file name is {Output.InQuotes()}");
+            Alias.Alias.DecryptFile(Path, Output, wipeTimesToWrite);
+            StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully decrypted. The recovered file name is {Output.InQuotes()}");
             if (Delete)
             {
-                Expression.Append($"\r\nThe plaintext file has also been erased from disk");
+                Expression.Append($"\r\nThe ciphertext file has also been erased from disk");
             }
             Console.WriteLine($"\r\n{Expression}\r\n");
 

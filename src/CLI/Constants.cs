@@ -57,12 +57,6 @@ namespace X509CryptoExe
         internal const bool No = false;
     }
 
-    internal static class AllowSecretOverwrite
-    {
-        internal const bool Yes = true;
-        internal const bool No = false;
-    }
-
     internal static class CommandName
     {
         internal const string Encrypt = nameof(Encrypt);

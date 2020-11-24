@@ -15,7 +15,7 @@ namespace X509CryptoPOSH
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
         [Alias(@"Alias", @"X509Alias")]
-        public ContextedAlias Id { get; set; }
+        public ContextedAlias Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The text expression to be encrypted")]
         [Alias("Text", "Expression")]
@@ -25,8 +25,8 @@ namespace X509CryptoPOSH
         public bool Overwrite { get; set; } = false;
 
         [Parameter(HelpMessage = "The identifier under which to store the encrypted secret (used for retrieval)")]
-        [Alias("SecretName", "Identifier")]
-        public string Secret { get; set; } = string.Empty;
+        [Alias("Secret", "SecretName", "Identifier")]
+        public string Id { get; set; } = string.Empty;
 
         private string Result = string.Empty;
 
@@ -45,16 +45,16 @@ namespace X509CryptoPOSH
         private void DoWork()
         {
 
-            if (!string.IsNullOrEmpty(Secret))
+            if (!string.IsNullOrEmpty(Id))
             {
-                Id.Alias.AddSecret(Secret, Input, false);
-                Id.Alias.Commit();
-                Console.WriteLine($"Secret {Secret.InQuotes()} added to {nameof(X509Alias)} {Id.Alias.Name.InQuotes()} in the {Id.Context.Name} {nameof(X509Context)}");
-                Result = Id.Alias.GetSecret(Secret);
+                Name.Alias.AddSecret(Id, Input, false);
+                Name.Alias.Commit();
+                Console.WriteLine($"Secret {Id.InQuotes()} added to {nameof(X509Alias)} {Name.Alias.Name.InQuotes()} in the {Name.Context.Name} {nameof(X509Context)}");
+                Result = Name.Alias.GetSecret(Id);
             }
             else
             {
-                Result = Id.Alias.EncryptText(Input);
+                Result = Name.Alias.EncryptText(Input);
             }
         }
     }

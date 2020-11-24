@@ -78,6 +78,79 @@ namespace Org.X509Crypto
         }
 
         /// <summary>
+        /// Extension method which indicates whether a string expression is found in a collection of strings
+        /// </summary>
+        /// <param name="Collection">this string collection</param>
+        /// <param name="compareExpression">string expression to be compared with this string</param>
+        /// <param name="caseSensitive">Indicates whether the compare should be case sensistive or not</param>
+        /// <returns>true if any element in this collection matches the compare expression</returns>
+        public static bool Contains(this IEnumerable<string> Collection, string compareExpression, bool caseSensitive = false)
+        {
+            return Collection.Any(p => p.Matches(compareExpression, caseSensitive: caseSensitive));
+        }
+
+        /// <summary>
+        /// Determines whether two SecureString objects contain the same contents
+        /// </summary>
+        /// <param name="s1">A SecureString</param>
+        /// <param name="s2">A SecureString to compare</param>
+        /// <returns>True if the SecureString objects contain the same contents</returns>
+        public static bool Matches(this SecureString s1, SecureString s2)
+        {
+            if (s1 == null)
+            {
+                throw new ArgumentNullException("s1");
+            }
+            if (s2 == null)
+            {
+                throw new ArgumentNullException("s2");
+            }
+
+            if (s1.Length != s2.Length)
+            {
+                return false;
+            }
+
+            IntPtr bstr1 = IntPtr.Zero;
+            IntPtr bstr2 = IntPtr.Zero;
+
+            RuntimeHelpers.PrepareConstrainedRegions();
+
+            try
+            {
+                bstr1 = Marshal.SecureStringToBSTR(s1);
+                bstr2 = Marshal.SecureStringToBSTR(s2);
+
+                unsafe
+                {
+                    for (Char* ptr1 = (Char*)bstr1.ToPointer(), ptr2 = (Char*)bstr2.ToPointer();
+                        *ptr1 != 0 && *ptr2 != 0;
+                         ++ptr1, ++ptr2)
+                    {
+                        if (*ptr1 != *ptr2)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            finally
+            {
+                if (bstr1 != IntPtr.Zero)
+                {
+                    Marshal.ZeroFreeBSTR(bstr1);
+                }
+
+                if (bstr2 != IntPtr.Zero)
+                {
+                    Marshal.ZeroFreeBSTR(bstr2);
+                }
+            }
+        }
+
+        /// <summary>
         /// Converts a SecureString object to a normal string expression
         /// </summary>
         /// <param name="secret">The SecureString object to be converted</param>
