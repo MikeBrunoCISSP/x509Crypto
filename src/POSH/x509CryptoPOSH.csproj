@@ -56,16 +56,16 @@
     <Compile Include="MountX509Alias.cs" />
     <Compile Include="ProtectFile.cs" />
     <Compile Include="UnprotectFile.cs" />
-    <Compile Include="UpdateAlias.cs" />
-    <Compile Include="ProtectSecret.cs" />
-    <Compile Include="NewAlias.cs" />
+    <Compile Include="UpdateX509Alias.cs" />
+    <Compile Include="ProtectX509CryptoSecret.cs" />
+    <Compile Include="NewX509Alias.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReadX509Context.cs" />
     <Compile Include="RemoveX509Alias.cs" />
     <Compile Include="DismountX509Alias.cs" />
-    <Compile Include="ReadSecret.cs" />
+    <Compile Include="ReadX509CryptoSecret.cs" />
     <Compile Include="UnprotectX509Alias.cs" />
-    <Compile Include="UpdateFileEncryption.cs" />
+    <Compile Include="UpdateX509CryptoFileEncryption.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\API\X509Crypto.csproj">

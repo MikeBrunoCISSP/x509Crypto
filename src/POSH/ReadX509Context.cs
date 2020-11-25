@@ -17,7 +17,7 @@ namespace X509CryptoPOSH
         public string Location { get; set; }
 
         [Parameter(Position = 1, HelpMessage = "If $True, certificates that are not currently assigned to an X509Alias will also be included in the output. Default select is $False")]
-        public bool All { get; set; } = false;
+        public SwitchParameter All { get; set; } = false;
 
         private List<X509AliasDescription> Result = new List<X509AliasDescription>();
 

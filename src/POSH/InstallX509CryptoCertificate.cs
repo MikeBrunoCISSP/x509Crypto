@@ -47,7 +47,7 @@ namespace X509CryptoPOSH
         public string Name { get; set; }
 
         [Parameter(HelpMessage = "If enabled and an existing X509Alias with the name indicated for \"Name\" is found, it will be overwritten. Default value is $False")]
-        public bool Overwrite { get; set; } = false;
+        public SwitchParameter Overwrite { get; set; } = false;
 
         private ContextedAlias Result;
 

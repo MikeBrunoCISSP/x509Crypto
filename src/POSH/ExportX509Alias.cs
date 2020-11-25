@@ -19,7 +19,7 @@ namespace X509CryptoPOSH
         [Alias(nameof(X509Alias))]
         public ContextedAlias Alias { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "The path to the file to encrypt")]
+        [Parameter(Mandatory = true, HelpMessage = "The path of the file to encrypt")]
         public string Path
         {
             get
@@ -35,15 +35,19 @@ namespace X509CryptoPOSH
                 else
                 {
                     path = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentFileSystemLocation.Path, value)).FullName;
+                    if (!System.IO.Path.GetExtension(path).Matches(FileExtensions.X509Alias))
+                    {
+                        path = $"{path}{FileExtensions.X509Alias}";
+                    }
                 }
             }
         }
 
         [Parameter(HelpMessage = "If enabled and a file already exists in the indicated location for \"Path\" it will be overwritten. Default value is $False")]
-        public bool Overwrite { get; set; } = false;
+        public SwitchParameter Overwrite { get; set; } = false;
 
-        [Parameter(HelpMessage = "If disabled, and a file already exists in the indicated location for \"Path\" it will be overwritten. Only applicable if \"Overwrite\" = $True. Default value is $True ")]
-        public bool Confirm { get; set; } = true;
+        [Parameter(HelpMessage = "If enabled, and a file already exists in the indicated location for \"Path\" it will be overwritten. Only applicable if \"Overwrite\" = $True. Default value is $False ")]
+        public SwitchParameter Quiet { get; set; } = false;
 
         private FileInfo Result;
 
@@ -61,9 +65,22 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            if (File.Exists(Path) && (!(Overwrite && (!Confirm || Util.WarnConfirm($"A file already exists at the path {Path.InQuotes()}. Is it OK to overwrite it?", Constants.Affirm)))))
+            if (File.Exists(Path))
             {
-                throw new X509CryptoException($"A file already exists at the path {Path.InQuotes()}. Set {nameof(Overwrite)} = {PoshSyntax.True} in order to enable overwriting.");
+                bool overWriteApproved = false;
+
+                if (Overwrite)
+                {
+                    if (Quiet || Util.WarnConfirm($"A file already exists at the path {Path.InQuotes()}. Is it OK to overwrite it?", Constants.Affirm))
+                    {
+                        overWriteApproved = true;
+                    }
+                }
+
+                if (!overWriteApproved)
+                {
+                    throw new X509CryptoException($"A file already exists at the path {Path.InQuotes()}. Set {nameof(Overwrite)} = {PoshSyntax.True} in order to enable overwriting.");
+                }
             }
 
             Alias.Alias.Export(ref path, Overwrite);

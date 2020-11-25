@@ -41,6 +41,16 @@ namespace Org.X509Crypto
         {
             return Encoding.ASCII.GetString(Convert.FromBase64String(expression));
         }
+
+        internal static string GetString(this byte[] bytes)
+        {
+            return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+        }
+
+        internal static byte[] ToByteArray(this string expression)
+        {
+            return Encoding.UTF8.GetBytes(expression);
+        }
     }
 
     /// <summary>

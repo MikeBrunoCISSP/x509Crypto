@@ -892,6 +892,25 @@ namespace Org.X509Crypto
             Util.VerifyFileExists(pfxPath);
         }
 
+        public static string ExportCertKeyBase64(string thumbprint, X509Context Context, string password)
+        {
+            X509Certificate2 Cert = GetCertByThumbprint(thumbprint, Context);
+            byte[] certBytes = Cert.Export(X509ContentType.Pkcs12, password);
+            return certBytes.GetString();
+        }
+
+        public static void ImportCertKeyBase64(string base64Cert, X509Context Context, string password)
+        {
+            byte[] certBytes = base64Cert.ToByteArray();
+            var certObj = new X509Certificate2();
+            certObj.Import(certBytes, password, X509KeyStorageFlags.Exportable);
+            using (var Store = new X509Store(Context.Location))
+            {
+                Store.Open(OpenFlags.MaxAllowed);
+                Store.Add(certObj);
+            }
+        }
+
         private static X509Certificate2 GetCertByThumbprint(string thumbprint, X509Context Context)
         {
             thumbprint = thumbprint.RemoveNonHexChars();

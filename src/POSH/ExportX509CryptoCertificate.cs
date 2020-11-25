@@ -80,12 +80,16 @@ namespace X509CryptoPOSH
                 else
                 {
                     path = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentFileSystemLocation.Path, value)).FullName;
+                    if (!System.IO.Path.GetExtension(path).Matches(FileExtensions.Pfx))
+                    {
+                        path = $"{path}{FileExtensions.Pfx}";
+                    }
                 }
             }
         }
 
         [Parameter(HelpMessage = "If enabled & an existing file is found in the path specified for \"Path\", it will be deleted without a warning.")]
-        public bool Force { get; set; } = false;
+        public SwitchParameter Force { get; set; } = false;
 
         FileInfo Result = null;
 

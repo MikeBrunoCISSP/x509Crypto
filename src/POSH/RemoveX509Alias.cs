@@ -12,8 +12,8 @@ namespace X509CryptoPOSH
         [Alias(nameof(ContextedAlias))]
         public ContextedAlias Alias { get; set; }
 
-        [Parameter(HelpMessage = "If disabled, no confirmation message will be displayed before X509Alias deletion. Default selection is $False")]
-        public bool Confirm { get; set; } = true;
+        [Parameter(HelpMessage = "If enabled, no confirmation message will be displayed before X509Alias deletion. Default selection is $False")]
+        public SwitchParameter Quiet { get; set; } = false;
 
         private bool Result = false;
 
@@ -34,7 +34,7 @@ namespace X509CryptoPOSH
             var name = Alias.Alias.Name;
             var Context = Alias.Context;
 
-            if (!Util.WarnConfirm($"The {nameof(X509Alias)} {name.InQuotes()} will be removed from the {Context.Name.InQuotes()} {nameof(X509Context)}. Any secrets contained in this {nameof(X509Alias)} will be unrecoverable.", Constants.Affirm))
+            if (!Quiet && !Util.WarnConfirm($"The {nameof(X509Alias)} {name.InQuotes()} will be removed from the {Context.Name.InQuotes()} {nameof(X509Context)}. Any secrets contained in this {nameof(X509Alias)} will be unrecoverable.", Constants.Affirm))
             {
                 return;
             }

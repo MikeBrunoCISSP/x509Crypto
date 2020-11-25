@@ -78,6 +78,9 @@ namespace Org.X509Crypto
             }
         }
 
+        [DataMember]
+        internal string CertificateBlob { get; set; }
+
         private X509Alias(X509Context Context)
         {
             this.Context = Context;
@@ -96,7 +99,7 @@ namespace Org.X509Crypto
                         Store.Open(OpenFlags.ReadOnly);
                         foreach (var Cert in Store.Certificates)
                         {
-                            if (Cert.Thumbprint.Matches(Thumbprint))
+                            if (Cert.Thumbprint.Matches(Thumbprint) && Cert.HasPrivateKey)
                             {
                                 certificateFound = true;
                                 certificate = Cert;

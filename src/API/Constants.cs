@@ -12,7 +12,6 @@ namespace Org.X509Crypto
         public const string X509Alias = @".xca";
         public const string Csv = @".csv";
         public const string Json = @".json";
-        public const string ExportAlias = @".json";
         public const string Ciphertext = @".ctx";
         public const string Plaintext = @".ptx";
         public const string Txt = @".txt";

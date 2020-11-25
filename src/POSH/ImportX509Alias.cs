@@ -46,7 +46,7 @@ namespace X509CryptoPOSH
         private ContextedAlias Result;
 
         [Parameter(HelpMessage = "If $True, if an existing X509Alias with the same name already exists in the X509Context specified for \"Location\", it will be overwritten. Default selection is $False")]
-        public bool Overwrite { get; set; } = false;
+        public SwitchParameter Overwrite { get; set; } = false;
 
         protected override void BeginProcessing()
         {

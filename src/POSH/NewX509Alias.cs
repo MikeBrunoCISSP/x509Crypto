@@ -12,7 +12,7 @@ namespace X509CryptoPOSH
     #region New-X509Alias
 
     [Cmdlet(VerbsCommon.New, nameof(X509Alias))]
-    public class NewAlias : Cmdlet
+    public class NewX509Alias : Cmdlet
     {
         [Parameter(Mandatory = true, HelpMessage = "The desired name for the X509Alias")]
         [Alias("Alias", nameof(X509Alias))]
@@ -22,7 +22,7 @@ namespace X509CryptoPOSH
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
-        [Parameter(HelpMessage = "The thumbprint of the encryption certificate. If not specified, a new encryption certificate will be automatically generated within the specified X509Context.")]
+        [Parameter(HelpMessage = "The thumbprint of the encryption certificate. If not specified, a new self-signed encryption certificate will be automatically generated within the specified X509Context.")]
         public string Thumbprint { get; set; } = string.Empty;
 
         private X509Context context;

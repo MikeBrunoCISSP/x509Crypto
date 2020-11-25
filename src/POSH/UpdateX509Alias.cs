@@ -6,7 +6,7 @@ namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsData.Update, nameof(X509Alias))]
     [OutputType(typeof(ContextedAlias))]
-    public class UpdateAlias : Cmdlet
+    public class UpdateX509Alias : Cmdlet
     {
         private string context = string.Empty;
         private bool contextSet = false;

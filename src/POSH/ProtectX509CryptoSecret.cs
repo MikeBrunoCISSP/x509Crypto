@@ -10,9 +10,9 @@ using System.Security.Policy;
 namespace X509CryptoPOSH
 {
 
-    [Cmdlet(VerbsSecurity.Protect, "Secret")]
+    [Cmdlet(VerbsSecurity.Protect, "X509CryptoSecret")]
     [OutputType(typeof(bool))]
-    public class ProtectSecret : Cmdlet
+    public class ProtectX509CryptoSecret : Cmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
         [Alias(nameof(X509Alias))]
@@ -23,7 +23,7 @@ namespace X509CryptoPOSH
         public string Input { get; set; } = string.Empty;
 
         [Parameter(HelpMessage = "Set to true if you'd like to allow overwriting an existing secret in the X509Alias.")]
-        public bool Overwrite { get; set; } = false;
+        public SwitchParameter Overwrite { get; set; } = false;
 
         [Parameter(Mandatory = true, HelpMessage = "The identifier under which to store the encrypted secret (used for retrieval)")]
         [Alias("Secret", "SecretName", "Identifier")]
@@ -45,7 +45,7 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            Alias.Alias.AddSecret(Id, Input, false);
+            Alias.Alias.AddSecret(Id, Input, Overwrite);
             Alias.Alias.Commit();
             Console.WriteLine($"Secret {Id.InQuotes()} added to {nameof(X509Alias)} {Alias.Alias.Name.InQuotes()} in the {Alias.Context.Name} {nameof(X509Context)}");
             Result = true;

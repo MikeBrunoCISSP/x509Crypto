@@ -3,7 +3,8 @@ using System.Management.Automation;
 
 namespace X509CryptoPOSH
 {
-    [Cmdlet(VerbsCommunications.Read, @"Secret")]
+    [Cmdlet(VerbsCommunications.Read, @"X509CryptoSecret")]
+    [OutputType(typeof(string))]
     public class UnprotectText : Cmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]

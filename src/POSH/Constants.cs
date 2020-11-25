@@ -16,7 +16,7 @@ namespace X509CryptoPOSH
 
     static class PoshSyntax
     {
-        internal const string True = @"$True";
+        internal const string True = "$True";
     }
 
     static class PrivilegeLevel

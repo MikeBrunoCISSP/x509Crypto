@@ -35,6 +35,11 @@ namespace X509CryptoPOSH
                 {
                     path = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentLocation.Path, value)).FullName;
                 }
+
+                if (!File.Exists(path))
+                {
+                    throw new FileNotFoundException($"The file path indicated for the {nameof(Path).InQuotes()} parameter ({Path}) does not exist");
+                }
             }
         }
 
@@ -59,14 +64,14 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "If $True, the ciphertext file specified for \"Path\" will be wiped from disk. Default selection is $False.")]
-        public bool Delete { get; set; } = false;
+        [Parameter(HelpMessage = "If included, the ciphertext file specified for \"Path\" will be wiped from disk.")]
+        public SwitchParameter Wipe { get; set; } = false;
 
-        [Parameter(HelpMessage = "If $False, no warning will be displayed before the ciphertext file specified for \"Path\" is wiped from disk. Not appliable if \"-Delete\" is $False")]
-        public bool Confirm { get; set; } = true;
+        [Parameter(HelpMessage = "If included, no warning will be displayed before the ciphertext file specified for \"Path\" is wiped from disk. Not appliable if \"-Delete\" is not included")]
+        public SwitchParameter Quiet { get; set; } = false;
 
-        [Parameter(HelpMessage = "If $True, should a file already exist under the same path as specified/inferred for \"Output\", it will be replaced. Default selection is $False.")]
-        public bool Overwrite { get; set; } = false;
+        [Parameter(HelpMessage = "If included, should a file already exist under the same path as specified/inferred for \"Output\", it will be replaced.")]
+        public SwitchParameter Overwrite { get; set; } = false;
 
         private FileInfo Result = null;
 
@@ -85,10 +90,6 @@ namespace X509CryptoPOSH
         private void DoWork()
         {
             int wipeTimesToWrite = 0;
-            if (!File.Exists(Path))
-            {
-                throw new FileNotFoundException($"The file path indicated for the {nameof(Path).InQuotes()} parameter ({Path}) does not exist");
-            }
 
             if (!outputSet)
             {
@@ -96,22 +97,22 @@ namespace X509CryptoPOSH
             }
             Util.CheckForExistingFile(Output, Overwrite, nameof(Overwrite), PoshSyntax.True);
 
-            if (Delete)
+            if (Wipe)
             {
-                if (!Confirm || Util.WarnConfirm($"You have set the {nameof(Delete).InQuotes()} argument to $True. This will permanently delete the file {Path.InQuotes()} from disk.", Constants.Affirm))
+                if (!Quiet || Util.WarnConfirm($"You have set the {nameof(Wipe).InQuotes()} argument to $True. This will permanently delete the file {Path.InQuotes()} from disk.", Constants.Affirm))
                 {
                     wipeTimesToWrite = Constants.WipeRepititions;
                 }
             }
             else
             {
-                Delete = false;
+                Wipe = false;
             }
 
 
             Alias.Alias.DecryptFile(Path, Output, wipeTimesToWrite);
             StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully decrypted. The recovered file name is {Output.InQuotes()}");
-            if (Delete)
+            if (Wipe)
             {
                 Expression.Append($"\r\nThe ciphertext file has also been erased from disk");
             }

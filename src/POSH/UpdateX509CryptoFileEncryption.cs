@@ -6,9 +6,9 @@ using System.Text;
 
 namespace X509CryptoPOSH
 {
-    [Cmdlet(VerbsData.Update, @"FileEncryption")]
+    [Cmdlet(VerbsData.Update, @"X509CryptoFileEncryption")]
     [OutputType(typeof(FileInfo))]
-    public class UpdateFileEncryption : PSCmdlet
+    public class UpdateX509CryptoFileEncryption : PSCmdlet
     {
         private string path = string.Empty;
 
