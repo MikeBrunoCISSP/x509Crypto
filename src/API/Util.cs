@@ -13,6 +13,7 @@ namespace Org.X509Crypto
     public static class Util
     {
         internal static bool IsAdministrator = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+        internal static Regex OnlyMatchHexidecimal = new Regex(RegexPattern.OnlyMatchHexidecimal);
 
         internal static void VerifyFileExists(string filePath)
         {
@@ -96,6 +97,11 @@ namespace Org.X509Crypto
             return secretAdded;
         }
 
+        public static bool IsCertThumbprint(string expression)
+        {
+            return OnlyMatchHexidecimal.IsMatch(expression);
+        }
+
         public static SecureString GetPassword(string prompt, bool confirmMatch = false)
         {
             SecureString Secret = new SecureString();
@@ -158,7 +164,7 @@ namespace Org.X509Crypto
             }
             else
             {
-                Console.WriteLine("\r\nNo action was taken.\r\n");
+                Console.WriteLine("\r\nThe action will not be taken.\r\n");
                 return false;
             }
         }

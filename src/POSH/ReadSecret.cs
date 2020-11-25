@@ -7,6 +7,7 @@ namespace X509CryptoPOSH
     public class UnprotectText : Cmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
+        [Alias(nameof(X509Alias))]
         public ContextedAlias Alias { get; set; }
 
         [Parameter(HelpMessage = "The text expression to be encrypted. May not be combined with \"-Secret\"")]
@@ -14,8 +15,8 @@ namespace X509CryptoPOSH
         public string Input { get; set; } = string.Empty;
 
         [Parameter(HelpMessage = "The identifier under which the encrypted secret is stored within the X509Alias. May not be combined with \"-Expression\"")]
-        [Alias("Secret", "Identifier")]
-        public string Property { get; set; } = string.Empty;
+        [Alias("Secret", "SecretName", "Identifier")]
+        public string Id { get; set; } = string.Empty;
 
         private string Result = string.Empty;
 
@@ -33,12 +34,12 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            if (string.IsNullOrEmpty(Input) ^ string.IsNullOrEmpty(Property))
+            if (string.IsNullOrEmpty(Input) ^ string.IsNullOrEmpty(Id))
             {
 
-                if (!string.IsNullOrEmpty(Property))
+                if (!string.IsNullOrEmpty(Id))
                 {
-                    Result = Alias.Alias.RecoverSecret(Property);
+                    Result = Alias.Alias.RecoverSecret(Id);
                 }
                 else
                 {

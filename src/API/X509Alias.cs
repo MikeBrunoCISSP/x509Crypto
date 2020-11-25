@@ -522,6 +522,10 @@ namespace Org.X509Crypto
 
         private Dictionary<string, string> DumpSecretsDict(bool reveal)
         {
+            if (null == Secrets)
+            {
+                throw new X509CryptoException($"{nameof(X509Alias)} {Name.InQuotes()} currently contains no secrets.");
+            }
             var Result = new Dictionary<string, string>();
             for (int x = 0; x<Secrets.Length; x++)
             {

@@ -13,7 +13,7 @@ namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsLifecycle.Install, @"X509CryptoCertificate")]
     [OutputType(typeof(ContextedAlias))]
-    class InstallX509CryptoCertificate : PSCmdlet
+    public class InstallX509CryptoCertificate : PSCmdlet
     {
         private string path = string.Empty;
 
@@ -39,11 +39,11 @@ namespace X509CryptoPOSH
         }
 
         [Parameter(Mandatory = true, HelpMessage = "The X509Context in which to install the encryption certificate. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The name of a new X509Alias in which to associate this encryption certificate")]
-        [Alias(@"Alias", @"X509Alias")]
+        [Alias(@"Alias", nameof(X509Alias))]
         public string Name { get; set; }
 
         [Parameter(HelpMessage = "If enabled and an existing X509Alias with the name indicated for \"Name\" is found, it will be overwritten. Default value is $False")]
@@ -65,6 +65,7 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
+            Console.WriteLine($"Path: {Path}");
             var Context = X509Context.Select(Location, true);
             var Alias = Context.GetAliases(true).FirstOrDefault(p => p.Name.Matches(Name));
             if (null != Alias)
@@ -82,7 +83,7 @@ namespace X509CryptoPOSH
             if (null != Alias && Alias.HasCert(Context))
             {
                 Alias.ReEncrypt(thumbprint, Context);
-                Expression.AppendLine($"All secrets contained in the existing {nameof(X509Alias)} {Alias.Name.InQuotes()} have been re-encrypted using the new certificate.");
+                Expression.AppendLine($"\r\nAll secrets contained in the existing {nameof(X509Alias)} {Alias.Name.InQuotes()} have been re-encrypted using the new certificate.");
             }
             else
             {
@@ -91,6 +92,7 @@ namespace X509CryptoPOSH
                 Expression.Append($"\r\n             {nameof(X509Alias)}: {Name}");
             }
 
+            Util.ConsoleMessage(Expression.ToString());
             Result = new ContextedAlias(Alias, Context);
         }
     }

@@ -11,11 +11,12 @@ namespace X509CryptoPOSH
 {
 
     [Cmdlet(VerbsSecurity.Protect, "Secret")]
+    [OutputType(typeof(bool))]
     public class ProtectSecret : Cmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
-        [Alias(@"Alias", @"X509Alias")]
-        public ContextedAlias Name { get; set; }
+        [Alias(nameof(X509Alias))]
+        public ContextedAlias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The text expression to be encrypted")]
         [Alias("Text", "Expression")]
@@ -24,11 +25,11 @@ namespace X509CryptoPOSH
         [Parameter(HelpMessage = "Set to true if you'd like to allow overwriting an existing secret in the X509Alias.")]
         public bool Overwrite { get; set; } = false;
 
-        [Parameter(HelpMessage = "The identifier under which to store the encrypted secret (used for retrieval)")]
+        [Parameter(Mandatory = true, HelpMessage = "The identifier under which to store the encrypted secret (used for retrieval)")]
         [Alias("Secret", "SecretName", "Identifier")]
         public string Id { get; set; } = string.Empty;
 
-        private string Result = string.Empty;
+        private bool Result = false;
 
         protected override void BeginProcessing()
         {
@@ -44,18 +45,10 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-
-            if (!string.IsNullOrEmpty(Id))
-            {
-                Name.Alias.AddSecret(Id, Input, false);
-                Name.Alias.Commit();
-                Console.WriteLine($"Secret {Id.InQuotes()} added to {nameof(X509Alias)} {Name.Alias.Name.InQuotes()} in the {Name.Context.Name} {nameof(X509Context)}");
-                Result = Name.Alias.GetSecret(Id);
-            }
-            else
-            {
-                Result = Name.Alias.EncryptText(Input);
-            }
+            Alias.Alias.AddSecret(Id, Input, false);
+            Alias.Alias.Commit();
+            Console.WriteLine($"Secret {Id.InQuotes()} added to {nameof(X509Alias)} {Alias.Alias.Name.InQuotes()} in the {Alias.Context.Name} {nameof(X509Context)}");
+            Result = true;
         }
     }
 }

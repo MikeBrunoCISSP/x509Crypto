@@ -5,12 +5,14 @@ using System.Management.Automation;
 namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsData.Dismount, nameof(X509Alias))]
-    [OutputType(typeof(ContextedAlias))]
+    [OutputType(typeof(bool))]
     public class DismountX509Alias : Cmdlet
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context to dismount")]
-        [Alias("Alias", @"X509Alias")]
-        public ContextedAlias Name;
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Alias to dismount")]
+        [Alias(nameof(X509Alias))]
+        public ContextedAlias Alias;
+
+        private bool Result = false;
 
         protected override void BeginProcessing()
         {
@@ -21,15 +23,16 @@ namespace X509CryptoPOSH
         {
             base.ProcessRecord();
             DoWork();
-            WriteObject(Name);
+            WriteObject(Result);
         }
 
         private void DoWork()
         {
-            string name = Name.Alias.Name;
-            Name.Alias.Dispose();
-            Name = null;
+            string name = Alias.Alias.Name;
+            Alias.Alias.Dispose();
+            Alias = null;
             Console.WriteLine($"{nameof(X509Alias)} {name.InQuotes()} has been dismounted.");
+            Result = true;
         }
     }
 }

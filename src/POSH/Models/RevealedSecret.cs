@@ -7,12 +7,12 @@ using Org.X509Crypto;
 
 namespace X509CryptoPOSH
 {
-    public class ProtectedSecret
+    public class RevealedSecret
     {
         public string Identifier { get; set; }
         public string Value { get; set; }
 
-        public ProtectedSecret(KeyValuePair<string,string> Secret)
+        public RevealedSecret(KeyValuePair<string,string> Secret)
         {
             Identifier = Secret.Key;
             Value = Secret.Value;

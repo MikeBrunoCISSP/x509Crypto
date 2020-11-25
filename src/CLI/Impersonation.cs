@@ -114,7 +114,7 @@ namespace X509CryptoExe
                 ImpDomain = Environment.UserDomainName;
             }
 
-            ImpSecret = GetSecret($"Enter the password for {FullyQualifiedImpUser}");
+            ImpSecret = Util.GetPassword($"Enter the password for {FullyQualifiedImpUser}");
 
             if (TryImpersonate())
             {
@@ -205,55 +205,6 @@ namespace X509CryptoExe
             {
                 throw new LoadUserProfileFailedException(FullyQualifiedImpUser, ex);
             }
-        }
-
-        private static SecureString GetSecret(string prompt, bool confirmMatch = false)
-        {
-            SecureString Secret = new SecureString();
-            SecureString Confirm = new SecureString();
-
-            Console.Write($"\r\n{prompt}: ");
-            Secret = GetSecretWorker();
-
-            if (confirmMatch)
-            {
-                Console.Write($"Confirm: ");
-                Confirm = GetSecretWorker();
-                if (!Secret.Matches(Confirm))
-                {
-                    Console.WriteLine($"Entries do not match. Please try again.\r\n");
-                    return GetSecret(prompt, confirmMatch);
-                }
-            }
-
-            return Secret;
-        }
-
-        private static SecureString GetSecretWorker()
-        {
-            SecureString Secret = new SecureString();
-            ConsoleKeyInfo key;
-
-            do
-            {
-                key = Console.ReadKey(true);
-                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
-                {
-                    Secret.AppendChar(key.KeyChar);
-                    Console.Write("*");
-                }
-                else
-                {
-                    if (key.Key == ConsoleKey.Backspace && Secret.Length != 0)
-                    {
-                        Secret.RemoveAt(Secret.Length - 1);
-                        Console.Write("\b \b");
-                    }
-                }
-            }
-            while (key.Key != ConsoleKey.Enter);
-            Console.WriteLine();
-            return Secret;
         }
     }
 }

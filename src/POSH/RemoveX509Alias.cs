@@ -9,14 +9,12 @@ namespace X509CryptoPOSH
     public class RemoveAlias : Cmdlet
     {
         [Parameter(Mandatory = true, HelpMessage = "The name for the X509Alias to remove")]
-        [Alias("N", "Alias")]
-        public string Name { get; set; }
+        [Alias(nameof(ContextedAlias))]
+        public ContextedAlias Alias { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "The X509Context where the X509Alias exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
-        public string Location { get; set; }
+        [Parameter(HelpMessage = "If disabled, no confirmation message will be displayed before X509Alias deletion. Default selection is $False")]
+        public bool Confirm { get; set; } = true;
 
-        private X509Context context;
         private bool Result = false;
 
         protected override void BeginProcessing()
@@ -33,12 +31,18 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            context = X509Context.Select(Location, true);
-            X509Alias Alias = new X509Alias(Name, context);
-            var ca = new ContextedAlias(Alias, context);
-            ca.CheckExists(mustExist: true);
-            ca.Alias.Remove();
-            Console.WriteLine($"Alias {Name.InQuotes()} has been removed from the {context.Name.InQuotes()} {nameof(X509Context)}");
+            var name = Alias.Alias.Name;
+            var Context = Alias.Context;
+
+            if (!Util.WarnConfirm($"The {nameof(X509Alias)} {name.InQuotes()} will be removed from the {Context.Name.InQuotes()} {nameof(X509Context)}. Any secrets contained in this {nameof(X509Alias)} will be unrecoverable.", Constants.Affirm))
+            {
+                return;
+            }
+
+            Alias.CheckExists(mustExist: true);
+            Alias.Alias.Remove();
+            Alias.Alias.Dispose();
+            Console.WriteLine($"Alias {name.InQuotes()} has been removed from the {Context.Name.InQuotes()} {nameof(X509Context)}");
             Result = true;
         }
     }

@@ -765,7 +765,7 @@ namespace X509CryptoExe
             {
                 infile = SelectedMode.GetString(Parameter.InInstallCert.ID);
                 Context = SelectedMode.GetContext(Parameter.InstallCertContext.ID);
-                SecureString PfxPassword = GetSecret($"Enter the password to unlock {Path.GetFileName(infile).InQuotes()}");
+                SecureString PfxPassword = Util.GetPassword($"Enter the password to unlock {Path.GetFileName(infile).InQuotes()}");
                 thumbprint = X509Utils.InstallCert(infile, PfxPassword, Context);
                 StringBuilder Expression = new StringBuilder($"Added encryption certificate to the {Context.Name} {nameof(X509Context)}. \r\nCertificate Thumbprint: {thumbprint}");
 
@@ -905,7 +905,7 @@ namespace X509CryptoExe
                     thumbprint = SelectedMode.GetString(Parameter.ThumbprintToExport.ID);
                 }
 
-                Password = GetSecret(@"Enter a strong password: ", Constants.ConfirmPasswordsMatch);
+                Password = Util.GetPassword(@"Enter a strong password: ", Constants.ConfirmPasswordsMatch);
 
                 X509CryptoAgent.ExportPFX(thumbprint, Context, outfile, Password.Plaintext());
 

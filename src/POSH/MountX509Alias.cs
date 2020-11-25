@@ -11,11 +11,11 @@ namespace X509CryptoPOSH
     {
         
         [Parameter(Mandatory = true, HelpMessage = "The name for the X509Alias to retrieve")]
-        [Alias("Alias", @"X509Alias")]
+        [Alias("Alias", nameof(X509Alias))]
         public string Name { get; set; }
 
         [Parameter(HelpMessage = "The name of X509Context where the X509Alias exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
         private X509Context context;

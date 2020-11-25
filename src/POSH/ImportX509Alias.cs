@@ -36,10 +36,11 @@ namespace X509CryptoPOSH
         }
 
         [Parameter(Position = 1, Mandatory = true, HelpMessage = "The X509Context in which to import the X509Alias. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
         [Parameter(Position = 2, HelpMessage = @"The name under which to register this X509Alias")]
+        [Alias(@"Alias", nameof(X509Alias))]
         public string Name { get; set; } = string.Empty;
 
         private ContextedAlias Result;

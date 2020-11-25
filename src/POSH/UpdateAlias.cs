@@ -10,13 +10,15 @@ namespace X509CryptoPOSH
     {
         private string context = string.Empty;
         private bool contextSet = false;
+        private string thumbprint = string.Empty;
+
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The source X509Alias from which to move all protected secrets")]
         [Alias(@"X509Alias")]
         public ContextedAlias Alias { get; set; }
 
         [Parameter(HelpMessage = "The X509Context where the new encryption certificate exists. If not specified, the X509Context of the entry for \"Alias\" will be used. Acceptable entries are \"user\" and \"system\".")]
-        [Alias(@"NewContext")]
-        public string Context
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
+        public string Location
         {
             get
             {
@@ -30,7 +32,20 @@ namespace X509CryptoPOSH
         }
 
         [Parameter(Mandatory = true, HelpMessage = "The thumbprint of the new encryption certificate")]
-        public string Thumbprint { get; set; }
+        public string Thumbprint
+        {
+            get
+            {
+                return thumbprint;
+            }
+            set
+            {
+                if (!Util.IsCertThumbprint(value))
+                {
+                    throw new FormatException($"{value.InQuotes()}: Not a valid certificate thumbprint");
+                }
+            }
+        }
 
         protected override void BeginProcessing()
         {
@@ -52,7 +67,7 @@ namespace X509CryptoPOSH
             OldContext = Alias.Context;
             if (contextSet)
             {
-                NewContext = X509Context.Select(Context, false);
+                NewContext = X509Context.Select(Location, false);
             }
             else
             {

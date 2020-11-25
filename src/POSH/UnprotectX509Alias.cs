@@ -9,37 +9,15 @@ using Org.X509Crypto;
 namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsSecurity.Unprotect, nameof(X509Alias))]
-    [OutputType(typeof(ProtectedSecret))]
+    [OutputType(typeof(RevealedSecret))]
     public class UnprotectX509Alias : Cmdlet
     {
-        private ContextedAlias calias = null;
-        private bool caliasSet = false;
 
         [Parameter(HelpMessage = "The X509Alias from which to list secrets")]
-        [Alias(@"Alias", @"X509Alias")]
-        public string Name { get; set; } = string.Empty;
+        [Alias(@"X509Alias")]
+        public ContextedAlias Alias { get; set; }
 
-        [Parameter(HelpMessage = "The X509Context in which the encryption certificate exists. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
-        public string Location { get; set; } = string.Empty;
-
-        [Parameter(ValueFromPipeline = true, HelpMessage = "An X509Alias object created using either the \"Get-X509Alias\" or the \"New-X509Alias\" cmdlet")]
-        public ContextedAlias Alias
-        {
-            get
-            {
-                return calias;
-            }
-            set
-            {
-                caliasSet = true;
-                calias = value;
-            }
-        }
-
-        private X509Alias alias;
-        private X509Context context;
-        private List<ProtectedSecret> Result = new List<ProtectedSecret>();
+        private List<RevealedSecret> Result = new List<RevealedSecret>();
 
         protected override void BeginProcessing()
         {
@@ -55,25 +33,11 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            if (!(caliasSet ^ (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Location))))
-            {
-                throw new X509CryptoException($"Either the {nameof(Alias).InQuotes()} or both the {nameof(Name).InQuotes()} and {nameof(Location).InQuotes()} must be set.");
-            }
 
-            if (caliasSet)
-            {
-                alias = calias.Alias;
-            }
-            else
-            {
-                context = X509Context.Select(Location, false);
-                alias = new X509Alias(Name, context);
-            }
-
-            Dictionary<string, string> Dict = alias.DumpSecrets(SecretDumpFormat.Dictionary, true);
+            Dictionary<string, string> Dict = Alias.Alias.DumpSecrets(SecretDumpFormat.Dictionary, true);
             foreach(KeyValuePair<string, string> Pair in Dict)
             {
-                Result.Add(new ProtectedSecret(Pair));
+                Result.Add(new RevealedSecret(Pair));
             }
         }
     }

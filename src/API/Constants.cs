@@ -91,4 +91,9 @@ namespace Org.X509Crypto
         internal const bool Yes = true;
         internal const bool No = false;
     }
+
+    internal static class RegexPattern
+    {
+        internal const string OnlyMatchHexidecimal = "^[0-9A-Fa-f]+$";
+    }
 }

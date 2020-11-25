@@ -16,8 +16,8 @@ namespace X509CryptoPOSH
         private string path = string.Empty;
 
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias to export")]
-        [Alias(@"Alias", @"X509Alias")]
-        public ContextedAlias Name { get; set; }
+        [Alias(nameof(X509Alias))]
+        public ContextedAlias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The path to the file to encrypt")]
         public string Path
@@ -66,7 +66,7 @@ namespace X509CryptoPOSH
                 throw new X509CryptoException($"A file already exists at the path {Path.InQuotes()}. Set {nameof(Overwrite)} = {PoshSyntax.True} in order to enable overwriting.");
             }
 
-            Name.Alias.Export(ref path, Overwrite);
+            Alias.Alias.Export(ref path, Overwrite);
             Util.ConsoleMessage($"{nameof(X509Alias)} aliasName was successfully exported to file {Path.InQuotes()}");
             Result = new FileInfo(Path);
         }

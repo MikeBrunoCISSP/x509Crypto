@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Org.X509Crypto
 {
     internal static class PrivateExtensions
     {
+
         internal static string LeftAlign(this string expression, int allocatedChars)
         {
             string alignedExpression = expression;

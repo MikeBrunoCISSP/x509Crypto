@@ -15,11 +15,11 @@ namespace X509CryptoPOSH
     public class NewAlias : Cmdlet
     {
         [Parameter(Mandatory = true, HelpMessage = "The desired name for the X509Alias")]
-        [Alias("N","Alias")]
+        [Alias("Alias", nameof(X509Alias))]
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The X509Context in which to create the alias. Acceptable values are \"user\" and \"system\"")]
-        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "Store")]
+        [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
         [Parameter(HelpMessage = "The thumbprint of the encryption certificate. If not specified, a new encryption certificate will be automatically generated within the specified X509Context.")]
