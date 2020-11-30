@@ -50,7 +50,6 @@
     <Compile Include="ExportX509CryptoCertificate.cs" />
     <Compile Include="ImportX509Alias.cs" />
     <Compile Include="InstallX509CryptoCertificate.cs" />
-    <Compile Include="Models\ContextedAlias.cs" />
     <Compile Include="Models\RevealedSecret.cs" />
     <Compile Include="Models\X509AliasDescription.cs" />
     <Compile Include="MountX509Alias.cs" />
