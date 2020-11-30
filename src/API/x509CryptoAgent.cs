@@ -689,6 +689,7 @@ namespace Org.X509Crypto
                 {
                     publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
                     privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
+                    //var pk = cert.GetRSAPrivateKey();
                     break;
                 }
                 valid = true;
@@ -763,7 +764,7 @@ namespace Org.X509Crypto
                 File.Delete(path);
             }
 
-            X509Certificate2 Cert = GetCertByThumbprint(thumbprint, Context);
+            X509Certificate2 Cert = Util.GetCertByThumbprint(thumbprint, Context);
             StringBuilder sb = new StringBuilder(Constants.BeginBase64Certificate);
             sb.AppendLine(Convert.ToBase64String(Cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
             sb.AppendLine(Constants.EndBase64Certificate);
@@ -885,27 +886,10 @@ namespace Org.X509Crypto
                 File.Delete(pfxPath);
             }
 
-            X509Certificate2 Cert = GetCertByThumbprint(thumbprint, Context);
+            X509Certificate2 Cert = Util.GetCertByThumbprint(thumbprint, Context);
             byte[] certBytes = Cert.Export(X509ContentType.Pkcs12, password);
             File.WriteAllBytes(pfxPath, certBytes);
             Util.VerifyFileExists(pfxPath);
-        }
-
-        private static X509Certificate2 GetCertByThumbprint(string thumbprint, X509Context Context)
-        {
-            thumbprint = thumbprint.RemoveNonHexChars();
-
-            X509Store Store = new X509Store(StoreName.My, Context.Location);
-            Store.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in Store.Certificates)
-            {
-                if (cert.Thumbprint.Matches(thumbprint))
-                {
-                    return cert;
-                }
-            }
-
-            throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
         }
 
         #endregion

@@ -10,7 +10,7 @@ namespace Org.X509Crypto
     /// <summary>
     /// Defines the CAPI store, file system location and name for an X509Cryto encryption context
     /// </summary>
-    public class X509Context
+    public partial class X509Context
     {
         private static bool systemAppDirectoryCreated = false;
 
@@ -33,6 +33,8 @@ namespace Org.X509Crypto
         /// The human-readable name of the context
         /// </summary>
         public string Name { get; private set; }
+
+        public List<string> Aliases { get; private set; }
 
         internal bool Writeable;
 
@@ -92,6 +94,7 @@ namespace Org.X509Crypto
             Index = Indexer.UserReadOnly,
             Location = StoreLocation.CurrentUser,
             Name = X509ContextName.User,
+            Aliases = new List<string>() { X509ContextName.User, X509ContextName.CurrentUser },
             Writeable = false
         };
 
@@ -103,6 +106,7 @@ namespace Org.X509Crypto
             Index = Indexer.UserFull,
             Location = StoreLocation.CurrentUser,
             Name = X509ContextName.User,
+            Aliases = new List<string>() { X509ContextName.User, X509ContextName.CurrentUser },
             Writeable = true
         };
 
@@ -114,6 +118,7 @@ namespace Org.X509Crypto
             Index = Indexer.SystemReadOnly,
             Location = StoreLocation.LocalMachine,
             Name = X509ContextName.System,
+            Aliases = new List<string>() { X509ContextName.System, X509ContextName.LocalSystem },
             Writeable = false
         };
 
@@ -125,6 +130,7 @@ namespace Org.X509Crypto
             Index = Indexer.SystemFull,
             Location = StoreLocation.LocalMachine,
             Name = X509ContextName.System,
+            Aliases = new List<string>() { X509ContextName.System, X509ContextName.LocalSystem },
             Writeable = true
         };
 
@@ -142,7 +148,8 @@ namespace Org.X509Crypto
 
             try
             {
-                SelectedContext = SupportedContexts.Where(p => p.Writeable == writeable).First(p => p.Name.Matches(name));
+                SelectedContext = SupportedContexts.Where(p => p.Writeable == writeable)
+                                                   .First(p => p.Aliases.Contains(name, false));
                 return SelectedContext;
             }
             catch
@@ -167,7 +174,11 @@ namespace Org.X509Crypto
             return AliasNames;
         }
 
-        internal List<X509Alias> GetAliases()
+        /// <summary>
+        /// Returns the collection of all <see cref="X509Alias"/>es found in this context
+        /// </summary>
+        /// <returns>the collection of all <see cref="X509Alias"/>es found in this context</returns>
+        public List<X509Alias> GetAliases(bool includeIfCertNotFound = true)
         {
             List<X509Alias> Aliases = new List<X509Alias>();
             List<string> AliasNames = GetAliasNames();
@@ -177,6 +188,10 @@ namespace Org.X509Crypto
                 try
                 {
                     X509Alias Alias = new X509Alias(name, this);
+                    if (!includeIfCertNotFound)
+                    {
+                        _ = Alias.Certificate;
+                    }
                     Aliases.Add(Alias);
                 }
                 catch

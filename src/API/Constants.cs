@@ -9,9 +9,14 @@ namespace Org.X509Crypto
 {
     public static class FileExtensions
     {
-        public static readonly string X509Alias = @".xca";
-        public static readonly string Csv = @".csv";
-        internal const string Json = @".json";
+        public const string X509Alias = @".xca";
+        public const string Csv = @".csv";
+        public const string Json = @".json";
+        public const string Ciphertext = @".ctx";
+        public const string Plaintext = @".ptx";
+        public const string Txt = @".txt";
+        public const string Pfx = @".pfx";
+        public const string Md = @".md";
     }
 
     internal static class Constants
@@ -28,6 +33,7 @@ namespace Org.X509Crypto
         internal const string BeginBase64Certificate = @"-----BEGIN CERTIFICATE-----";
         internal const string EndBase64Certificate = @"-----END CERTIFICATE-----";
         internal const string NoAliasAssigned = @"None assigned";
+        internal const string Affirm = @"YES";
     }
 
     internal static class CryptoConstants
@@ -73,6 +79,20 @@ namespace Org.X509Crypto
     internal static class X509ContextName
     {
         internal const string User = @"user";
+        internal const string CurrentUser = @"currentuser";
+
         internal const string System = @"system";
+        internal const string LocalSystem = @"localsystem";
+    }
+
+    internal static class AllowSecretOverwrite
+    {
+        internal const bool Yes = true;
+        internal const bool No = false;
+    }
+
+    internal static class RegexPattern
+    {
+        internal const string OnlyMatchHexidecimal = "^[0-9A-Fa-f]+$";
     }
 }

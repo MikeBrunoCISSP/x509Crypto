@@ -57,23 +57,6 @@ namespace X509CryptoExe
         internal const bool No = false;
     }
 
-    internal static class AllowSecretOverwrite
-    {
-        internal const bool Yes = true;
-        internal const bool No = false;
-    }
-
-    internal static class FileExtensions
-    {
-        internal const string ExportAlias = @".json";
-        internal const string Ciphertext = @".ctx";
-        internal const string Plaintext = @".ptx";
-        internal const string Csv = @".csv";
-        internal const string Txt = @".txt";
-        internal const string Pfx = @".pfx";
-        internal const string Md = @".md";
-    }
-
     internal static class CommandName
     {
         internal const string Encrypt = nameof(Encrypt);

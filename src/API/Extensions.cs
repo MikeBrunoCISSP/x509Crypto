@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Org.X509Crypto
 {
     internal static class PrivateExtensions
     {
+
         internal static string LeftAlign(this string expression, int allocatedChars)
         {
             string alignedExpression = expression;
@@ -38,6 +40,35 @@ namespace Org.X509Crypto
         internal static string Base64Decode(this string expression)
         {
             return Encoding.ASCII.GetString(Convert.FromBase64String(expression));
+        }
+
+        internal static string GetString(this byte[] bytes)
+        {
+            return Encoding.ASCII.GetString(bytes, 0, bytes.Length);
+        }
+
+        internal static byte[] ToByteArray(this string expression)
+        {
+            return Encoding.ASCII.GetBytes(expression);
+        }
+
+        internal static string ToUnsecureString(this SecureString Expression)
+        {
+            if (Expression == null)
+            {
+                return string.Empty;
+            }
+
+            IntPtr unManagedString = IntPtr.Zero;
+            try
+            {
+                unManagedString = Marshal.SecureStringToGlobalAllocUnicode(Expression);
+                return Marshal.PtrToStringUni(unManagedString);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(unManagedString);
+            }
         }
     }
 
@@ -78,6 +109,79 @@ namespace Org.X509Crypto
         }
 
         /// <summary>
+        /// Extension method which indicates whether a string expression is found in a collection of strings
+        /// </summary>
+        /// <param name="Collection">this string collection</param>
+        /// <param name="compareExpression">string expression to be compared with this string</param>
+        /// <param name="caseSensitive">Indicates whether the compare should be case sensistive or not</param>
+        /// <returns>true if any element in this collection matches the compare expression</returns>
+        public static bool Contains(this IEnumerable<string> Collection, string compareExpression, bool caseSensitive = false)
+        {
+            return Collection.Any(p => p.Matches(compareExpression, caseSensitive: caseSensitive));
+        }
+
+        /// <summary>
+        /// Determines whether two SecureString objects contain the same contents
+        /// </summary>
+        /// <param name="s1">A SecureString</param>
+        /// <param name="s2">A SecureString to compare</param>
+        /// <returns>True if the SecureString objects contain the same contents</returns>
+        public static bool Matches(this SecureString s1, SecureString s2)
+        {
+            if (s1 == null)
+            {
+                throw new ArgumentNullException("s1");
+            }
+            if (s2 == null)
+            {
+                throw new ArgumentNullException("s2");
+            }
+
+            if (s1.Length != s2.Length)
+            {
+                return false;
+            }
+
+            IntPtr bstr1 = IntPtr.Zero;
+            IntPtr bstr2 = IntPtr.Zero;
+
+            RuntimeHelpers.PrepareConstrainedRegions();
+
+            try
+            {
+                bstr1 = Marshal.SecureStringToBSTR(s1);
+                bstr2 = Marshal.SecureStringToBSTR(s2);
+
+                unsafe
+                {
+                    for (Char* ptr1 = (Char*)bstr1.ToPointer(), ptr2 = (Char*)bstr2.ToPointer();
+                        *ptr1 != 0 && *ptr2 != 0;
+                         ++ptr1, ++ptr2)
+                    {
+                        if (*ptr1 != *ptr2)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            finally
+            {
+                if (bstr1 != IntPtr.Zero)
+                {
+                    Marshal.ZeroFreeBSTR(bstr1);
+                }
+
+                if (bstr2 != IntPtr.Zero)
+                {
+                    Marshal.ZeroFreeBSTR(bstr2);
+                }
+            }
+        }
+
+        /// <summary>
         /// Converts a SecureString object to a normal string expression
         /// </summary>
         /// <param name="secret">The SecureString object to be converted</param>
@@ -109,6 +213,26 @@ namespace Org.X509Crypto
         public static string InQuotes(this string expression)
         {
             return $"\"{expression}\"";
+        }
+
+        /// <summary>
+        /// Returns true if this X509Context represents a local system context
+        /// </summary>
+        /// <param name="Context">an X509Context object</param>
+        /// <returns>true if this X509Context represents a local system context</returns>
+        public static bool IsSystemContext(this X509Context Context)
+        {
+            return Context == X509Context.SystemFull || Context == X509Context.SystemReadOnly;
+        }
+
+        /// <summary>
+        /// Returns true if this X509Context represents a user context
+        /// </summary>
+        /// <param name="Context">an X509Context object</param>
+        /// <returns>true if this X509Context represents a user context</returns>
+        public static bool IsUserContext(this X509Context Context)
+        {
+            return Context == X509Context.UserFull || Context == X509Context.UserReadOnly;
         }
 
 

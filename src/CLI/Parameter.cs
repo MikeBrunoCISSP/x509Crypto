@@ -853,7 +853,7 @@ namespace X509CryptoExe
                 Description = $"The file path to write the exported X509Alias.",
                 IsPath = true,
                 ControlsOutput = true,
-                FileExtension = FileExtensions.ExportAlias
+                FileExtension = FileExtensions.X509Alias
             };
             Collection.Add(OutExportAlias);
 

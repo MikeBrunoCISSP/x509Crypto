@@ -5,9 +5,21 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.ComponentModel;
 
 namespace Org.X509Crypto
 {
+
+    /// <summary>
+    /// Specifies a format in which to output the decrypted secrets from a <see cref="X509Alias"/>
+    /// </summary>
+    public enum SecretDumpFormat
+    {
+        Text = 0,
+        CommaSeparated = 1,
+        Dictionary = 2
+    }
+
     /// <summary>
     /// Represents an X509Context, a certificate/key pair and 0 or more secrets encrypted by the certificate/key pair
     /// </summary>
@@ -66,9 +78,49 @@ namespace Org.X509Crypto
             }
         }
 
+        [DataMember]
+        internal byte[] CertificateBlob { get; set; } = null;
+
         private X509Alias(X509Context Context)
         {
             this.Context = Context;
+        }
+
+        private bool certificateFound = false;
+        private X509Certificate2 certificate = null;
+        public X509Certificate2 Certificate
+        {
+            get
+            {
+                if (!certificateFound)
+                {
+                    BindCertificate();
+
+                    if (!certificateFound)
+                    {
+                        throw new X509CryptoException($"The certificate associated with {nameof(X509Alias)} name {FullName.InQuotes()} ({Thumbprint}) was not found.");
+                    }
+                }
+                return certificate;
+            }
+        }
+
+        private X509KeyStorageFlags StorageFlags
+        {
+            get
+            {
+                var flags = X509KeyStorageFlags.Exportable;
+                if (Context.IsSystemContext())
+                {
+                    flags |= X509KeyStorageFlags.MachineKeySet;
+                }
+                else
+                {
+                    flags |= X509KeyStorageFlags.UserKeySet;
+                }
+
+                return flags;
+            }
         }
 
         /// <summary>
@@ -117,6 +169,24 @@ namespace Org.X509Crypto
             thumbprint = null;
             Context = null;
             Secrets = null;
+        }
+
+        public bool HasCert(X509Context Context)
+        {
+            bool found = false;
+            using (var Store = new X509Store(Context.Location))
+            {
+                Store.Open(OpenFlags.ReadOnly);
+                foreach(var Cert in Store.Certificates)
+                {
+                    if (Cert.Thumbprint.Matches(Thumbprint))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            return found;
         }
 
         /// <summary>
@@ -351,7 +421,7 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="exportPath">The path where the export file should be written (a .json extension is added if no file extension is specified)</param>
         /// <param name="overwriteExisting">Indicates whether an existing file may be overwritten if a file should exist at the indicated export path</param>
-        public void Export(string exportPath, bool overwriteExisting = false)
+        public void Export(ref string exportPath, bool includeCert, bool overwriteExisting = false)
         {
             if (!Path.GetExtension(exportPath).Matches(FileExtensions.X509Alias))
             {
@@ -364,7 +434,7 @@ namespace Org.X509Crypto
             }
 
             File.Delete(exportPath);
-            File.WriteAllText(exportPath, Encode());
+            File.WriteAllText(exportPath, Encode(includeCert));
 
             if (!File.Exists(exportPath))
             {
@@ -382,19 +452,100 @@ namespace Org.X509Crypto
                 Directory.CreateDirectory(Context.StorageDirectory);
             }
 
-            Export(StoragePath, true);
+            var tmp = StoragePath;
+            Export(ref tmp, includeCert: false, overwriteExisting: true);
         }
 
         /// <summary>
         /// Removes this X509Alias from the file system
         /// </summary>
-        public void Remove()
+        public void Remove(bool deleteCert = false)
         {
-            X509Utils.DeleteFile(StoragePath);
-
-            if (AliasExists(this))
+            try
             {
-                throw new X509CryptoException($"The X509Crypto alias \"{Name}\" could not be removed from the {Context.Name} context");
+                X509Utils.DeleteFile(StoragePath, complainIfNotFound: true, confirmDelete: true);
+
+                if (deleteCert)
+                {
+                    bool certDeleted = false;
+                    using (var Store = new X509Store(Context.Location))
+                    {
+                        Store.Open(OpenFlags.MaxAllowed);
+                        foreach(var Cert in Store.Certificates)
+                        {
+                            if (Cert.Thumbprint.Matches(Thumbprint))
+                            {
+                                Store.Remove(Cert);
+                                certDeleted = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!certDeleted)
+                    {
+                        throw new X509CryptoCertificateNotFoundException(Thumbprint, Context);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new X509CryptoException($"The X509Crypto alias \"{Name}\" could not be removed from the {Context.Name} context", ex);
+            }
+        }
+
+        /// <summary>
+        /// Generates a data structure, in the selected format of all secret names and values contained within the <see cref="X509Alias"/>
+        /// </summary>
+        /// <param name="selectedFormat">The desired fromat in which to return the data</param>
+        /// <param name="reveal">indicates whether the encrypted value for each secret should be decrypted and included with the output.</param>
+        public dynamic DumpSecrets(SecretDumpFormat selectedFormat, bool reveal)
+        {
+            switch(selectedFormat)
+            {
+                case SecretDumpFormat.Text:
+                    return DumpSecretsText(reveal);
+                case SecretDumpFormat.CommaSeparated:
+                    return DumpSecretsCSV(reveal);
+                case SecretDumpFormat.Dictionary:
+                    return DumpSecretsDict(reveal);
+                default:
+                    throw new X509CryptoException($"Unsupported {nameof(SecretDumpFormat)}: {(int)selectedFormat}");
+            }
+        }
+
+        private byte[] ExportCertKeyBase64()
+        {
+            var Password = Util.GetPassword(@"Enter a strong password to protect the X509Alias file", true);
+            X509Certificate2 Cert = Util.GetCertByThumbprint(Thumbprint, Context);
+            return Cert.Export(X509ContentType.Pkcs12, Password.ToUnsecureString());
+        }
+
+        private void ImportCertKeyBase64(byte[] certBlob)
+        {
+            var Password = Util.GetPassword(@"Enter the password to unlock this X509Alias file");
+            var certObj = new X509Certificate2();
+            certObj.Import(certBlob, Password.ToUnsecureString(), StorageFlags);
+
+            var verified = false;
+            using (var Store = new X509Store(Context.Location))
+            {
+                Store.Open(OpenFlags.MaxAllowed);
+                Store.Add(certObj);
+
+                foreach (var cert in Store.Certificates)
+                {
+                    if (cert.Thumbprint.Matches(certObj.Thumbprint))
+                    {
+                        verified = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!verified)
+            {
+                throw new X509CryptoException($"Unable to import the certificate encryption certificate associated with this alias into the {Context.Name} Context");
             }
         }
 
@@ -403,7 +554,7 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="reveal">Indicates whether the plaintext values of each X509Secret should be revealed in the output</param>
         /// <returns>A text report listing all X509Secrets contained within this X509Alias</returns>
-        public string DumpSecrets(bool reveal)
+        private string DumpSecretsText(bool reveal)
         {
             if (Secrets.Length == 0)
             {
@@ -426,7 +577,7 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="reveal">Indicates whether the plaintext values of each X509Secret should be revealed in the output</param>
         /// <returns>A comma-separated report listing all X509Secrets contained within this X509Alias</returns>
-        public string DumpSecretsCSV(bool reveal)
+        private string DumpSecretsCSV(bool reveal)
         {
             StringBuilder Output = new StringBuilder(string.Empty);
             Output.AppendLine(reveal ? CSVHeader.WithSecrets : CSVHeader.WithoutSecrets);
@@ -435,6 +586,29 @@ namespace Org.X509Crypto
                 Output.AppendLine(reveal ? Secrets[x].DumpCSV(x, this) : Secrets[x].DumpCSV(x));
             }
             return Output.ToString();
+        }
+
+        private Dictionary<string, string> DumpSecretsDict(bool reveal)
+        {
+            if (null == Secrets)
+            {
+                throw new X509CryptoException($"{nameof(X509Alias)} {Name.InQuotes()} currently contains no secrets.");
+            }
+            var Result = new Dictionary<string, string>();
+            for (int x = 0; x<Secrets.Length; x++)
+            {
+                Result.Add(Secrets[x].Key, reveal ? Secrets[x].Reveal(this) : string.Empty);
+            }
+            return Result;
+        }
+
+        /// <summary>
+        /// Indicates whether the X509Alias already exists on the local system (meaning committed to storage)
+        /// </summary>
+        /// <returns>True if the X509Alias already exists on the local system</returns>
+        public bool Exists()
+        {
+            return File.Exists(StoragePath);
         }
 
         private bool LoadIfExists(bool complainIfExists)
@@ -497,11 +671,16 @@ namespace Org.X509Crypto
             }
         }
 
-        private string Encode()
+        private string Encode(bool includeCert)
         {
             var Serializer = new DataContractJsonSerializer(typeof(X509Alias));
             string json,
                    encoded;
+
+            if (includeCert && BindCertificate())
+            {
+                CertificateBlob = ExportCertKeyBase64();
+            }
 
             try
             {
@@ -524,7 +703,7 @@ namespace Org.X509Crypto
             }
         }
 
-        private void DecodeFromFile(string importPath = "")
+        private void DecodeFromFile(string importPath = "", string newName = "")
         {
             string fileToDecode = string.IsNullOrEmpty(importPath) ? StoragePath : importPath;
 
@@ -539,13 +718,41 @@ namespace Org.X509Crypto
                     MemStream.Close();
                 }
 
+                Name = string.IsNullOrEmpty(newName) ? tmp.Name : newName;
                 Thumbprint = tmp.Thumbprint;
                 Secrets = tmp.Secrets;
+
+                if (null != tmp.CertificateBlob)
+                {
+                    ImportCertKeyBase64(tmp.CertificateBlob);
+                }
             }
             catch (Exception ex)
             {
                 throw new X509CryptoException($"Unable to load X509Alias from path \"{fileToDecode}\"", ex);
             }
+        }
+
+        private bool BindCertificate()
+        {
+            certificateFound = false;
+
+            using (X509Store Store = new X509Store(Context.Location))
+            {
+                Store.Open(OpenFlags.ReadOnly);
+                foreach (var Cert in Store.Certificates)
+                {
+                    if (Cert.Thumbprint.Matches(Thumbprint) && Cert.HasPrivateKey)
+                    {
+                        certificateFound = true;
+                        certificate = Cert;
+                        break;
+                    }
+                }
+                Store.Close();
+            }
+
+            return certificateFound;
         }
 
         /// <summary>
@@ -566,12 +773,7 @@ namespace Org.X509Crypto
             try
             {
                 X509Alias Alias = new X509Alias(Context);
-                Alias.DecodeFromFile(importPath);
-
-                if (!string.IsNullOrEmpty(newName))
-                {
-                    Alias.Name = newName;
-                }
+                Alias.DecodeFromFile(importPath, newName);
                 return Alias;
             }
             catch (Exception ex)
