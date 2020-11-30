@@ -384,7 +384,7 @@ namespace X509CryptoExe
                     throw new X509AliasAlreadyExistsException(AliasToImport);
                 }
                 AliasToImport.Commit();
-                ConsoleMessage($"{nameof(X509Alias)} {aliasName.InQuotes()} has been successfully imported into the {Context.Name} {nameof(X509Context)} from the file {inFile.InQuotes()}");
+                ConsoleMessage($"{nameof(X509Alias)} {AliasToImport.Name.InQuotes()} has been successfully imported into the {Context.Name} {nameof(X509Context)} from the file {inFile.InQuotes()}");
 
                 if (!X509CryptoAgent.CertificateExists(AliasToImport))
                 {
@@ -417,7 +417,7 @@ namespace X509CryptoExe
                 X509Context Context = SelectedMode.GetContext(Parameter.Context.ID);
 
                 X509Alias Alias = new X509Alias(aliasName, Context);
-                Alias.Export(ref outfile, overwriteExisting);
+                Alias.Export(ref outfile, includeCert: true, overwriteExisting);
                 ConsoleMessage($"{nameof(X509Alias)} aliasName was successfully exported to file {outfile.InQuotes()}");
             }
             catch (FileNotFoundException)

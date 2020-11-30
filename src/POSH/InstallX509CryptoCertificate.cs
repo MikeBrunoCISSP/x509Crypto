@@ -12,7 +12,7 @@ using System.Security;
 namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsLifecycle.Install, @"X509CryptoCertificate")]
-    [OutputType(typeof(ContextedAlias))]
+    [OutputType(typeof(X509Alias))]
     public class InstallX509CryptoCertificate : PSCmdlet
     {
         private string path = string.Empty;
@@ -49,7 +49,7 @@ namespace X509CryptoPOSH
         [Parameter(HelpMessage = "If enabled and an existing X509Alias with the name indicated for \"Name\" is found, it will be overwritten. Default value is $False")]
         public SwitchParameter Overwrite { get; set; } = false;
 
-        private ContextedAlias Result;
+        private X509Alias Result;
 
         protected override void BeginProcessing()
         {
@@ -93,7 +93,7 @@ namespace X509CryptoPOSH
             }
 
             Util.ConsoleMessage(Expression.ToString());
-            Result = new ContextedAlias(Alias, Context);
+            Result = Alias;
         }
     }
 }

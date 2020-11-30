@@ -44,12 +44,31 @@ namespace Org.X509Crypto
 
         internal static string GetString(this byte[] bytes)
         {
-            return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+            return Encoding.ASCII.GetString(bytes, 0, bytes.Length);
         }
 
         internal static byte[] ToByteArray(this string expression)
         {
-            return Encoding.UTF8.GetBytes(expression);
+            return Encoding.ASCII.GetBytes(expression);
+        }
+
+        internal static string ToUnsecureString(this SecureString Expression)
+        {
+            if (Expression == null)
+            {
+                return string.Empty;
+            }
+
+            IntPtr unManagedString = IntPtr.Zero;
+            try
+            {
+                unManagedString = Marshal.SecureStringToGlobalAllocUnicode(Expression);
+                return Marshal.PtrToStringUni(unManagedString);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(unManagedString);
+            }
         }
     }
 
@@ -194,6 +213,26 @@ namespace Org.X509Crypto
         public static string InQuotes(this string expression)
         {
             return $"\"{expression}\"";
+        }
+
+        /// <summary>
+        /// Returns true if this X509Context represents a local system context
+        /// </summary>
+        /// <param name="Context">an X509Context object</param>
+        /// <returns>true if this X509Context represents a local system context</returns>
+        public static bool IsSystemContext(this X509Context Context)
+        {
+            return Context == X509Context.SystemFull || Context == X509Context.SystemReadOnly;
+        }
+
+        /// <summary>
+        /// Returns true if this X509Context represents a user context
+        /// </summary>
+        /// <param name="Context">an X509Context object</param>
+        /// <returns>true if this X509Context represents a user context</returns>
+        public static bool IsUserContext(this X509Context Context)
+        {
+            return Context == X509Context.UserFull || Context == X509Context.UserReadOnly;
         }
 
 

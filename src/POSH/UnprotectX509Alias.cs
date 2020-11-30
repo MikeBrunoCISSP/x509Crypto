@@ -15,7 +15,7 @@ namespace X509CryptoPOSH
 
         [Parameter(ValueFromPipeline = true, HelpMessage = "The X509Alias from which to list secrets")]
         [Alias(@"X509Alias")]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         private List<RevealedSecret> Result = new List<RevealedSecret>();
 
@@ -34,7 +34,7 @@ namespace X509CryptoPOSH
         private void DoWork()
         {
 
-            Dictionary<string, string> Dict = Alias.Alias.DumpSecrets(SecretDumpFormat.Dictionary, true);
+            Dictionary<string, string> Dict = Alias.DumpSecrets(SecretDumpFormat.Dictionary, true);
             foreach(KeyValuePair<string, string> Pair in Dict)
             {
                 Result.Add(new RevealedSecret(Pair));

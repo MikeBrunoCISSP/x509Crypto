@@ -8,33 +8,33 @@ using System.Threading.Tasks;
 
 namespace X509CryptoPOSH
 {
-    public class ContextedAlias
-    {
-        public X509Alias Alias;
-        public X509Context Context;
+    //public class ContextedAlias
+    //{
+    //    public X509Alias Alias;
+    //    public X509Context Context;
 
-        internal ContextedAlias(X509Alias Alias, X509Context Context)
-        {
-            this.Alias = Alias;
-            this.Context = Context;
-        }
+    //    internal ContextedAlias(X509Alias Alias, X509Context Context)
+    //    {
+    //        this.Alias = Alias;
+    //        this.Context = Context;
+    //    }
 
-        internal void CheckExists(bool mustExist = false, bool mustNotExist = false)
-        {
-            if (Alias.Exists())
-            {
-                if (mustNotExist)
-                {
-                    throw new X509AliasAlreadyExistsException(Alias);
-                }
-            }
-            else
-            {
-                if (mustExist)
-                {
-                    throw new X509AliasNotFoundException(Alias);
-                }
-            }
-        }
-    }
+    //    internal void CheckExists(bool mustExist = false, bool mustNotExist = false)
+    //    {
+    //        if (Alias.Exists())
+    //        {
+    //            if (mustNotExist)
+    //            {
+    //                throw new X509AliasAlreadyExistsException(Alias);
+    //            }
+    //        }
+    //        else
+    //        {
+    //            if (mustExist)
+    //            {
+    //                throw new X509AliasNotFoundException(Alias);
+    //            }
+    //        }
+    //    }
+    //}
 }

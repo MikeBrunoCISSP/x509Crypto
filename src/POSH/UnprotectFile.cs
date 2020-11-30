@@ -16,7 +16,7 @@ namespace X509CryptoPOSH
 
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias that was used to encrypt the file")]
         [Alias(@"X509Alias")]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The path to the file to decrypt")]
         public string Path
@@ -110,7 +110,7 @@ namespace X509CryptoPOSH
             }
 
 
-            Alias.Alias.DecryptFile(Path, Output, wipeTimesToWrite);
+            Alias.DecryptFile(Path, Output, wipeTimesToWrite);
             StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully decrypted. The recovered file name is {Output.InQuotes()}");
             if (Wipe)
             {

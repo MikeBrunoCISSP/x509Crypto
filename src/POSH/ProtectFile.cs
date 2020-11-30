@@ -16,7 +16,7 @@ namespace X509CryptoPOSH
 
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias to use for encryption")]
         [Alias(nameof(X509Alias))]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The path of the file to encrypt")]
         public string Path
@@ -110,7 +110,7 @@ namespace X509CryptoPOSH
             }
 
 
-            Alias.Alias.EncryptFile(Path, Output, wipeTimesToWrite);
+            Alias.EncryptFile(Path, Output, wipeTimesToWrite);
             StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully encrypted. The ciphertext file name is {Output.InQuotes()}");
             if (Wipe)
             {

@@ -10,7 +10,7 @@ using Org.X509Crypto;
 namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsData.Import, nameof(X509Alias))]
-    [OutputType(typeof(ContextedAlias))]
+    [OutputType(typeof(X509Alias))]
     public class ImportX509Alias : PSCmdlet
     {
         private string path;
@@ -43,7 +43,7 @@ namespace X509CryptoPOSH
         [Alias(@"Alias", nameof(X509Alias))]
         public string Name { get; set; } = string.Empty;
 
-        private ContextedAlias Result;
+        private X509Alias Result;
 
         [Parameter(HelpMessage = "If $True, if an existing X509Alias with the same name already exists in the X509Context specified for \"Location\", it will be overwritten. Default selection is $False")]
         public SwitchParameter Overwrite { get; set; } = false;
@@ -78,7 +78,7 @@ namespace X509CryptoPOSH
                 Util.ConsoleWarning($"An encryption certificate with thumbprint {AliasToImport.Thumbprint.InQuotes()} could not be found in the {Context.Name} {nameof(X509Context)}. Ensure this certificate is installed on the system before using this alias.");
             }
 
-            Result = new ContextedAlias(AliasToImport, Context);
+            Result = AliasToImport;
         }
     }
 }

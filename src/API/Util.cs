@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Org.X509Crypto
 {
@@ -177,6 +178,23 @@ namespace Org.X509Crypto
         public static void ConsoleWarning(string message)
         {
             Console.WriteLine($"\r\n{message}\r\n", ConsoleColor.Yellow);
+        }
+
+        public static X509Certificate2 GetCertByThumbprint(string thumbprint, X509Context Context)
+        {
+            thumbprint = thumbprint.RemoveNonHexChars();
+
+            X509Store Store = new X509Store(StoreName.My, Context.Location);
+            Store.Open(OpenFlags.ReadOnly);
+            foreach (X509Certificate2 cert in Store.Certificates)
+            {
+                if (cert.Thumbprint.Matches(thumbprint))
+                {
+                    return cert;
+                }
+            }
+
+            throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
         }
     }
 }

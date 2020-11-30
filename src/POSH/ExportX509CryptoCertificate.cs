@@ -9,7 +9,7 @@ namespace X509CryptoPOSH
     [OutputType(typeof(FileInfo))]
     public class ExportX509CryptoCertificate : PSCmdlet
     {
-        private ContextedAlias alias = null;
+        private X509Alias alias = null;
         private bool aliasSet = false;
 
         private X509Context Context = null;
@@ -22,7 +22,7 @@ namespace X509CryptoPOSH
 
         [Parameter(ValueFromPipeline = true, HelpMessage = "The source X509Alias from which to export the encryption certificate. Not to be used with the \"Location\" and \"Thumbprint\" parameters")]
         [Alias(@"X509Alias")]
-        public ContextedAlias Alias
+        public X509Alias Alias
         {
             get
             {
@@ -126,8 +126,7 @@ namespace X509CryptoPOSH
 
             if (!aliasSet)
             {
-                var tmp = new X509Alias(string.Empty, Thumbprint, Context, false);
-                Alias = new ContextedAlias(tmp, Context);
+                Alias = new X509Alias(string.Empty, Thumbprint, Context, false);
             }
 
             if (!System.IO.Path.GetExtension(Path).Matches(FileExtensions.Pfx))
@@ -148,8 +147,8 @@ namespace X509CryptoPOSH
             }
 
             var Password = Util.GetPassword(@"Enter a strong password (needed to unlock the .pfx file)", true);
-            X509CryptoAgent.ExportPFX(Alias.Alias.Thumbprint, Alias.Context, Path, Password.Plaintext());
-            Util.ConsoleMessage($"Encryption certificate with thumbprint {Alias.Alias.Thumbprint} from the {Alias.Context.Name} {nameof(X509Context)} has been exported to the file {Path.InQuotes()}");
+            X509CryptoAgent.ExportPFX(Alias.Thumbprint, Alias.Context, Path, Password.Plaintext());
+            Util.ConsoleMessage($"Encryption certificate with thumbprint {Alias.Thumbprint} from the {Alias.Context.Name} {nameof(X509Context)} has been exported to the file {Path.InQuotes()}");
             Result = new FileInfo(Path);
         }
     }

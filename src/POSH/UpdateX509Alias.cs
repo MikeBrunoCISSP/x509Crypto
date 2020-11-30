@@ -5,7 +5,7 @@ using System.Management.Automation;
 namespace X509CryptoPOSH
 {
     [Cmdlet(VerbsData.Update, nameof(X509Alias))]
-    [OutputType(typeof(ContextedAlias))]
+    [OutputType(typeof(X509Alias))]
     public class UpdateX509Alias : Cmdlet
     {
         private string context = string.Empty;
@@ -14,7 +14,7 @@ namespace X509CryptoPOSH
 
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The source X509Alias from which to move all protected secrets")]
         [Alias(@"X509Alias")]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         [Parameter(HelpMessage = "The X509Context where the new encryption certificate exists. If not specified, the X509Context of the entry for \"Alias\" will be used. Acceptable entries are \"user\" and \"system\".")]
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
@@ -78,9 +78,9 @@ namespace X509CryptoPOSH
             {
                 throw new X509CryptoCertificateNotFoundException(Thumbprint, NewContext);
             }
-            Alias.Alias.ReEncrypt(Thumbprint, NewContext);
-            Alias.Alias.Commit();
-            Console.WriteLine($"{nameof(X509Alias)} {Alias.Alias.Name} successfully updated. Now using encryption certificate with thumbprint {Thumbprint} from the {NewContext.Name} {nameof(X509Context)}");
+            Alias.ReEncrypt(Thumbprint, NewContext);
+            Alias.Commit();
+            Console.WriteLine($"{nameof(X509Alias)} {Alias.Name} successfully updated. Now using encryption certificate with thumbprint {Thumbprint} from the {NewContext.Name} {nameof(X509Context)}");
         }
     }
 }

@@ -16,7 +16,7 @@ namespace X509CryptoPOSH
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
         [Alias(nameof(X509Alias))]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The text expression to be encrypted")]
         [Alias("Text", "Expression")]
@@ -45,9 +45,9 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            Alias.Alias.AddSecret(Id, Input, Overwrite);
-            Alias.Alias.Commit();
-            Console.WriteLine($"Secret {Id.InQuotes()} added to {nameof(X509Alias)} {Alias.Alias.Name.InQuotes()} in the {Alias.Context.Name} {nameof(X509Context)}");
+            Alias.AddSecret(Id, Input, Overwrite);
+            Alias.Commit();
+            Console.WriteLine($"Secret {Id.InQuotes()} added to {nameof(X509Alias)} {Alias.Name.InQuotes()} in the {Alias.Context.Name} {nameof(X509Context)}");
             Result = true;
         }
     }

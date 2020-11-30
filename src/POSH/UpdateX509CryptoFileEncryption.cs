@@ -14,11 +14,11 @@ namespace X509CryptoPOSH
 
         [Parameter(Mandatory = true, HelpMessage = "The X509Alias that was previously used to encrypt the file")]
         [Alias(@"OldAlias", @"OldX509Alias", @"CurrentX509Alias")]
-        public ContextedAlias CurrentAlias { get; set; }
+        public X509Alias CurrentAlias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The X509Alias that will re-encrypt the file")]
         [Alias(@"NewAlias", @"NewX509Alias", @"TargetX509Alias")]
-        public ContextedAlias TargetAlias { get; set; }
+        public X509Alias TargetAlias { get; set; }
 
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The path of the encrytped file which needs to be re-encrypted using a different X509Alias")]
         public string Path
@@ -56,8 +56,8 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            X509Utils.ReEncryptFile(CurrentAlias.Alias, TargetAlias.Alias, Path);
-            Console.WriteLine($"\r\nThe file {Path} was successfully re-encrypted using the X509Crypto alias {TargetAlias.Alias.Name} located in the {TargetAlias.Context.Name.InQuotes()} {nameof(X509Context)}");
+            X509Utils.ReEncryptFile(CurrentAlias, TargetAlias, Path);
+            Console.WriteLine($"\r\nThe file {Path} was successfully re-encrypted using the X509Crypto alias {TargetAlias.Name} located in the {TargetAlias.Context.Name.InQuotes()} {nameof(X509Context)}");
             Result = new FileInfo(Path);
         }
     }

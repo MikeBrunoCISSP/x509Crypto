@@ -12,6 +12,7 @@ namespace X509CryptoPOSH
     #region New-X509Alias
 
     [Cmdlet(VerbsCommon.New, nameof(X509Alias))]
+    [OutputType(typeof(X509Alias))]
     public class NewX509Alias : Cmdlet
     {
         [Parameter(Mandatory = true, HelpMessage = "The desired name for the X509Alias")]
@@ -27,7 +28,7 @@ namespace X509CryptoPOSH
 
         private X509Context context;
 
-        private ContextedAlias Result;
+        private X509Alias Result;
 
         protected override void BeginProcessing()
         {
@@ -50,9 +51,8 @@ namespace X509CryptoPOSH
             }
 
             X509Alias Alias = new X509Alias(Name, Thumbprint, context, true);
-            Result = new ContextedAlias(Alias, context);
-            Result.CheckExists(mustNotExist: true);
             Alias.Commit();
+            Result = Alias;
             Console.WriteLine($"New alias {Name.InQuotes()} committed to {context.Name.InQuotes()} {nameof(X509Context)}\r\nThumbprint: {Alias.Thumbprint}");
         }
 

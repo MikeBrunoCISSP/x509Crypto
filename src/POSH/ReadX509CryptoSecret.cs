@@ -9,7 +9,7 @@ namespace X509CryptoPOSH
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
         [Alias(nameof(X509Alias))]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         [Parameter(HelpMessage = "The text expression to be encrypted. May not be combined with \"-Secret\"")]
         [Alias("Ciphertext", "Expression")]
@@ -40,11 +40,11 @@ namespace X509CryptoPOSH
 
                 if (!string.IsNullOrEmpty(Id))
                 {
-                    Result = Alias.Alias.RecoverSecret(Id);
+                    Result = Alias.RecoverSecret(Id);
                 }
                 else
                 {
-                    Result = Alias.Alias.DecryptText(Input);
+                    Result = Alias.DecryptText(Input);
                 }
             }
             else

@@ -6,7 +6,7 @@ namespace X509CryptoPOSH
 {
 
     [Cmdlet(VerbsData.Mount, nameof(X509Alias))]
-    [OutputType(typeof(ContextedAlias))]
+    [OutputType(typeof(X509Alias))]
     public class MountX509Alias : Cmdlet
     {
         
@@ -19,7 +19,7 @@ namespace X509CryptoPOSH
         public string Location { get; set; }
 
         private X509Context context;
-        private ContextedAlias Result;
+        private X509Alias Result;
 
         protected override void BeginProcessing()
         {
@@ -38,8 +38,7 @@ namespace X509CryptoPOSH
 
             context = X509Context.Select(Location, true);
             X509Alias Alias = new X509Alias(Name, context);
-            Result = new ContextedAlias(Alias, context);
-            Result.CheckExists(mustExist: true);
+            Result = Alias;
             Console.WriteLine($"Alias {Name.InQuotes()} has been loaded from the {context.Name.InQuotes()} {nameof(X509Context)}");
         }
     }

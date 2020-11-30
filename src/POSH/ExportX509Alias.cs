@@ -17,7 +17,7 @@ namespace X509CryptoPOSH
 
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias to export")]
         [Alias(nameof(X509Alias))]
-        public ContextedAlias Alias { get; set; }
+        public X509Alias Alias { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The path of the file to encrypt")]
         public string Path
@@ -83,7 +83,7 @@ namespace X509CryptoPOSH
                 }
             }
 
-            Alias.Alias.Export(ref path, Overwrite);
+            Alias.Export(ref path, includeCert: true, Overwrite);
             Util.ConsoleMessage($"{nameof(X509Alias)} aliasName was successfully exported to file {Path.InQuotes()}");
             Result = new FileInfo(Path);
         }

@@ -10,7 +10,7 @@ namespace X509CryptoPOSH
     {
         [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Alias to dismount")]
         [Alias(nameof(X509Alias))]
-        public ContextedAlias Alias;
+        public X509Alias Alias;
 
         private bool Result = false;
 
@@ -28,8 +28,8 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            string name = Alias.Alias.Name;
-            Alias.Alias.Dispose();
+            string name = Alias.Name;
+            Alias.Dispose();
             Alias = null;
             Console.WriteLine($"{nameof(X509Alias)} {name.InQuotes()} has been dismounted.");
             Result = true;
