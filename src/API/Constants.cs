@@ -34,6 +34,7 @@ namespace Org.X509Crypto
         internal const string EndBase64Certificate = @"-----END CERTIFICATE-----";
         internal const string NoAliasAssigned = @"None assigned";
         internal const string Affirm = @"YES";
+        internal const int MinimumPasswordLength = 8;
     }
 
     internal static class CryptoConstants

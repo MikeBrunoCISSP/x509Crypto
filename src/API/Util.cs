@@ -103,7 +103,7 @@ namespace Org.X509Crypto
             return OnlyMatchHexidecimal.IsMatch(expression);
         }
 
-        public static SecureString GetPassword(string prompt, bool confirmMatch = false)
+        public static SecureString GetPassword(string prompt, int minLength, bool confirmMatch = false)
         {
             SecureString Secret = new SecureString();
             SecureString Confirm = new SecureString();
@@ -113,12 +113,17 @@ namespace Org.X509Crypto
 
             if (confirmMatch)
             {
+                if (Secret.Length < minLength)
+                {
+                    Console.WriteLine($"Password must be at least {minLength} characters.\r\n");
+                    return GetPassword(prompt, minLength, confirmMatch);
+                }
                 Console.Write($"Confirm: ");
                 Confirm = GetPasswordWorker();
                 if (!Secret.Matches(Confirm))
                 {
                     Console.WriteLine($"Entries do not match. Please try again.\r\n");
-                    return GetPassword(prompt, confirmMatch);
+                    return GetPassword(prompt, minLength, confirmMatch);
                 }
             }
 

@@ -516,14 +516,14 @@ namespace Org.X509Crypto
 
         private byte[] ExportCertKeyBase64()
         {
-            var Password = Util.GetPassword(@"Enter a strong password to protect the X509Alias file", true);
+            var Password = Util.GetPassword(@"Enter a strong password to protect the X509Alias file", Constants.MinimumPasswordLength, true);
             X509Certificate2 Cert = Util.GetCertByThumbprint(Thumbprint, Context);
             return Cert.Export(X509ContentType.Pkcs12, Password.ToUnsecureString());
         }
 
         private void ImportCertKeyBase64(byte[] certBlob)
         {
-            var Password = Util.GetPassword(@"Enter the password to unlock this X509Alias file");
+            var Password = Util.GetPassword(@"Enter the password to unlock this X509Alias file", 0);
             var certObj = new X509Certificate2();
             certObj.Import(certBlob, Password.ToUnsecureString(), StorageFlags);
 

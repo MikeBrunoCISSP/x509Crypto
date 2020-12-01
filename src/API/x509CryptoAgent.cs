@@ -21,8 +21,8 @@ namespace Org.X509Crypto
 
         #region Member Fields
 
-        private RSACryptoServiceProvider publicKey,
-                                         privateKey;
+        private RSA publicKey,
+                    privateKey;
 
         /// <summary>
         /// The thumbprint of the certificate used for cryptographic operations
@@ -109,8 +109,7 @@ namespace Org.X509Crypto
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
-                    RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
-                    byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
+                    byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
@@ -205,8 +204,7 @@ namespace Org.X509Crypto
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
-                    RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
-                    byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
+                    byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
@@ -290,8 +288,7 @@ namespace Org.X509Crypto
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
-                    RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
-                    byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
+                    byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
@@ -405,7 +402,7 @@ namespace Org.X509Crypto
                     inStream.Seek(CryptoConstants.AESWords + keyLength, SeekOrigin.Begin);
                     inStream.Read(IV, 0, IVLength);
 
-                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
+                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
                     using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
                     {
@@ -498,7 +495,7 @@ namespace Org.X509Crypto
                     inFS.Seek(CryptoConstants.AESWords + keyLength, SeekOrigin.Begin);
                     inFS.Read(IV, 0, IVLength);
 
-                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
+                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
                     using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
                     {
@@ -594,7 +591,7 @@ namespace Org.X509Crypto
                     inFS.Seek(CryptoConstants.AESWords + keyLength, SeekOrigin.Begin);
                     inFS.Read(IV, 0, IVLength);
 
-                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
+                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
                     using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
                     {
@@ -687,9 +684,8 @@ namespace Org.X509Crypto
             {
                 foreach (X509Certificate2 cert in colletion)
                 {
-                    publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
-                    privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
-                    //var pk = cert.GetRSAPrivateKey();
+                    publicKey = cert.GetRSAPublicKey();
+                    privateKey = cert.GetRSAPrivateKey();
                     break;
                 }
                 valid = true;

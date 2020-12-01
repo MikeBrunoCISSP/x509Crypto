@@ -308,7 +308,9 @@ namespace Org.X509Crypto
                 }
 
                 if (!File.Exists(ciphertextFilePath))
-                    throw new FileNotFoundException(string.Format("\"{0}\": File not found after cryptographic operation. Restoring original", ciphertextFilePath));
+                {
+                    throw new FileNotFoundException($"\"{ciphertextFilePath}\": File not found after cryptographic operation. Restoring original");
+                }
             }
             catch (Exception ex)
             {

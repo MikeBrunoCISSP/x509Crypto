@@ -56,12 +56,12 @@
     <Compile Include="Util.cs" />
     <Compile Include="X509Alias.cs" />
     <Compile Include="X509Context.cs" />
-    <Compile Include="x509CryptoAgent.cs" />
+    <Compile Include="X509CryptoAgent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="x509CryptoLog.cs" />
     <Compile Include="X509Directory.cs" />
     <Compile Include="X509Secret.cs" />
-    <Compile Include="x509Utils.cs" />
+    <Compile Include="X509Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="LICENSE.txt">

@@ -114,7 +114,7 @@ namespace X509CryptoExe
                 ImpDomain = Environment.UserDomainName;
             }
 
-            ImpSecret = Util.GetPassword($"Enter the password for {FullyQualifiedImpUser}");
+            ImpSecret = Util.GetPassword($"Enter the password for {FullyQualifiedImpUser}", 0);
 
             if (TryImpersonate())
             {

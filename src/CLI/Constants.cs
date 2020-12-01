@@ -18,6 +18,7 @@ namespace X509CryptoExe
         internal const int BaseIndent = 3;
         internal const int DefaultKeyLength = 2048;
         internal const int DefaultYearsValid = 10;
+        internal const int MinimumPasswordLength = 8;
         internal const bool ConfirmPasswordsMatch = true;
     }
 
