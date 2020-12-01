@@ -89,7 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\API\X509Crypto.csproj">
-      <Project>{4c9f14c2-8b7f-49b5-9167-8a065e01cb57}</Project>
+      <Project>{576c3769-cd6b-480c-ac32-007ec43ad8fc}</Project>
       <Name>X509Crypto</Name>
     </ProjectReference>
   </ItemGroup>

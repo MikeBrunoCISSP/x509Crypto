@@ -7,11 +7,11 @@ namespace X509CryptoPOSH
     [OutputType(typeof(string))]
     public class UnprotectText : Cmdlet
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Alias with which to protect the text.")]
         [Alias(nameof(X509Alias))]
         public X509Alias Alias { get; set; }
 
-        [Parameter(HelpMessage = "The text expression to be encrypted. May not be combined with \"-Secret\"")]
+        [Parameter(HelpMessage = "The ciphertext expression to be decrypted. May not be combined with \"-Id\"")]
         [Alias("Ciphertext", "Expression")]
         public string Input { get; set; } = string.Empty;
 

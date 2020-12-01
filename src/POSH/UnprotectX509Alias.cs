@@ -13,7 +13,7 @@ namespace X509CryptoPOSH
     public class UnprotectX509Alias : Cmdlet
     {
 
-        [Parameter(ValueFromPipeline = true, HelpMessage = "The X509Alias from which to list secrets")]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias from which to list secrets")]
         [Alias(@"X509Alias")]
         public X509Alias Alias { get; set; }
 

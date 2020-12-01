@@ -18,15 +18,9 @@ namespace Org.X509Crypto
 
         internal static void VerifyFileExists(string filePath)
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
-                X509CryptoLog.Info($"File \"{filePath}\" exists.");
-            }
-            else
-            {
-                FileNotFoundException ex = new FileNotFoundException(@"The expected file was not created", filePath);
-                X509CryptoLog.Exception(ex, Criticality.CRITICAL);
-                throw ex;
+                throw new FileNotFoundException(@"The expected file was not created", filePath);
             }
         }
 

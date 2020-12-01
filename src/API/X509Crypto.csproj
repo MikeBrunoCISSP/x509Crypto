@@ -1,85 +1,56 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4C9F14C2-8B7F-49B5-9167-8A065E01CB57}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Org.X509Crypto</RootNamespace>
+    <TargetFrameworks>netcoreapp3.1;net4.6.2;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputPath>..\..\bin\API</OutputPath>
+    <Description>Lets you easily and securely encrypt and recover text expressions and files in your .NET programs using X509 digital certificates and private keys. No prior experience with certificates required!</Description>
+    <Copyright>2020 X509Crypto.org</Copyright>
+    <Version>1.3.0</Version>
+    <PackageVersion>1.3.0</PackageVersion>
+    <Authors>Mike Bruno</Authors>
+    <Company>X509Crypto.org</Company>
+    <RepositoryUrl>https://github.com/MikeBrunoCISSP/x509Crypto</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>encryption privacy crypto pki certificate confidentiality</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyName>Org.X509Crypto</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <RootNamespace>Org.X509Crypto</RootNamespace>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo_small.png</PackageIcon>
+    <!--<PackageIconUrl>http://x509crypto.org/images/logo_small.png</PackageIconUrl>-->
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <ItemGroup>
+    <None Include="Images\logo_small.png" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp3.1|AnyCPU'">
+    <DocumentationFile>..\..\bin\API\netcoreapp3.1\Org.X509Crypto.xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\API\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net4.6.2|AnyCPU'">
+    <DocumentationFile>..\..\bin\API\net4.6.2\Org.X509Crypto.xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!--<DocumentationFile>..\..\..\doc\Org.X509Crypto\Org.X509CryptoLib.xml</DocumentationFile>-->
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+    <DocumentationFile>..\..\bin\API\netstandard2.0\Org.X509Crypto.xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp3.1|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net4.6.2|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BouncyCastle.Crypto, Version=1.8.6.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
-      <HintPath>..\..\packages\BouncyCastle.1.8.6.1\lib\BouncyCastle.Crypto.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.DirectoryServices" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <PackageReference Include="BouncyCastle" Version="1.8.6.1" />
+    <PackageReference Include="System.DirectoryServices" Version="5.0.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Constants.cs" />
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="MakeCert.cs" />
-    <Compile Include="Util.cs" />
-    <Compile Include="X509Alias.cs" />
-    <Compile Include="X509Context.cs" />
-    <Compile Include="X509CryptoAgent.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="x509CryptoLog.cs" />
-    <Compile Include="X509Directory.cs" />
-    <Compile Include="X509Secret.cs" />
-    <Compile Include="X509Utils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="LICENSE.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>Powershell.exe -ExecutionPolicy ByPass $(ProjectDir)\makezip.ps1 $(outdir)</PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

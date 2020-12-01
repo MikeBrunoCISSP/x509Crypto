@@ -14,7 +14,7 @@ namespace X509CryptoPOSH
     [OutputType(typeof(bool))]
     public class ProtectX509CryptoSecret : Cmdlet
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Context-bound X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = @"The X509Alias with which to protect the text. Use New-Alias or Get-Alias cmdlet to create.")]
         [Alias(nameof(X509Alias))]
         public X509Alias Alias { get; set; }
 
@@ -22,7 +22,7 @@ namespace X509CryptoPOSH
         [Alias("Text", "Expression")]
         public string Input { get; set; } = string.Empty;
 
-        [Parameter(HelpMessage = "Set to true if you'd like to allow overwriting an existing secret in the X509Alias.")]
+        [Parameter(HelpMessage = "If enabled and there is already a secret contained in the specified X509Alias stored under the name specified for \"-Id\" the existing secret will be overwritten.")]
         public SwitchParameter Overwrite { get; set; } = false;
 
         [Parameter(Mandatory = true, HelpMessage = "The identifier under which to store the encrypted secret (used for retrieval)")]

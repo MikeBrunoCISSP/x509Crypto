@@ -5,7 +5,6 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using System.ComponentModel;
 
 namespace Org.X509Crypto
 {
@@ -223,6 +222,16 @@ namespace Org.X509Crypto
             {
                 X509Utils.WipeFile(inFile, wipeTimesToWrite);
             }
+        }
+
+        /// <summary>
+        /// Re-encrypts the specified file using this X509Alias
+        /// </summary>
+        /// <param name="inFile">The path to the ciphertext file to re-encrypt</param>
+        /// <param name="OldAlias">The X509Alias which was previously used to encrypt the file</param>
+        public void ReEncryptFile(string inFile, X509Alias OldAlias)
+        {
+            X509Utils.ReEncryptFile(OldAlias, this, inFile);
         }
 
         /// <summary>

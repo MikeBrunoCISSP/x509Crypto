@@ -12,6 +12,7 @@ namespace X509CryptoPOSH
         internal const bool DoNotIncludeIfCertNotFound = false;
         internal const string Affirm = @"YES";
         internal const int WipeRepititions = 5;
+        internal const int MinimumPasswordLength = 8;
     }
 
     static class PoshSyntax

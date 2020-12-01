@@ -19,7 +19,7 @@ namespace X509CryptoPOSH
         [Alias(nameof(X509Alias))]
         public X509Alias Alias { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "The path of the file to encrypt")]
+        [Parameter(Mandatory = true, HelpMessage = "The path in which to write the exported X509Alias file")]
         public string Path
         {
             get
@@ -43,10 +43,10 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "If enabled and a file already exists in the indicated location for \"Path\" it will be overwritten. Default value is $False")]
+        [Parameter(HelpMessage = "If enabled and a file already exists in the indicated location for \"Path\" it will be overwritten.")]
         public SwitchParameter Overwrite { get; set; } = false;
 
-        [Parameter(HelpMessage = "If enabled, and a file already exists in the indicated location for \"Path\" it will be overwritten. Only applicable if \"Overwrite\" = $True. Default value is $False ")]
+        [Parameter(HelpMessage = "If enabled, and a file already exists in the indicated location for \"Path\" it will be overwritten. Only applicable if \"Overwrite\" switch is enabled.")]
         public SwitchParameter Quiet { get; set; } = false;
 
         private FileInfo Result;
