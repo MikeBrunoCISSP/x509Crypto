@@ -62,7 +62,6 @@ namespace Org.X509Crypto
             if (!File.Exists(path))
             {
                 string message = string.Format(@"Path does not exist: {0}", path);
-                X509CryptoLog.Error(message, MethodName(), true, true);
                 throw new FileNotFoundException(message);
             }
 
@@ -94,9 +93,7 @@ namespace Org.X509Crypto
         /// </example>
         public static string FormatThumbprint(string thumbprint, bool verbose = false)
         {
-            X509CryptoLog.Massive(string.Format(@" Original Thumbprint: {0}", thumbprint), MethodName(), verbose, verbose);
             string formattedThumbprint = Regex.Replace(thumbprint, allowedThumbprintCharsPattern, "").ToUpper();
-            X509CryptoLog.Massive(string.Format(@"Formatted Thumbprint: {0}", formattedThumbprint), MethodName(), verbose, verbose);
             return formattedThumbprint;
         }
 
@@ -308,7 +305,9 @@ namespace Org.X509Crypto
                 }
 
                 if (!File.Exists(ciphertextFilePath))
-                    throw new FileNotFoundException(string.Format("\"{0}\": File not found after cryptographic operation. Restoring original", ciphertextFilePath));
+                {
+                    throw new FileNotFoundException($"\"{ciphertextFilePath}\": File not found after cryptographic operation. Restoring original");
+                }
             }
             catch (Exception ex)
             {
@@ -487,8 +486,7 @@ namespace Org.X509Crypto
                     }
                     catch (CryptographicException ex)
                     {
-                        X509CryptoLog.Exception(ex, Criticality.ERROR, string.Format("Certificate with thumbprint {0} was exported to path \"{1}\" but the file seems to be corrupt and unusable", certThumbprint, exportPath));
-                        throw ex;
+                        throw new X509CryptoException($"Certificate with thumbprint {certThumbprint} was exported to path \"{exportPath}\" but the file seems to be corrupt and unusable", ex);
                     }
 
                     return exportPath;

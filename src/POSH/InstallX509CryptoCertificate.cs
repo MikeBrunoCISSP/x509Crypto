@@ -46,7 +46,7 @@ namespace X509CryptoPOSH
         [Alias(@"Alias", nameof(X509Alias))]
         public string Name { get; set; }
 
-        [Parameter(HelpMessage = "If enabled and an existing X509Alias with the name indicated for \"Name\" is found, it will be overwritten. Default value is $False")]
+        [Parameter(HelpMessage = "If enabled and an existing X509Alias with the name indicated for \"-Name\" is found, it will be overwritten")]
         public SwitchParameter Overwrite { get; set; } = false;
 
         private X509Alias Result;
@@ -76,7 +76,7 @@ namespace X509CryptoPOSH
                 }
             }
 
-            var PfxPassword = Util.GetPassword($"Enter the password to unlock {System.IO.Path.GetFileName(Path).InQuotes()}");
+            var PfxPassword = Util.GetPassword($"Enter the password to unlock {System.IO.Path.GetFileName(Path).InQuotes()}", 0);
             var thumbprint = X509Utils.InstallCert(Path, PfxPassword, Context);
             StringBuilder Expression = new StringBuilder($"Added encryption certificate to the {Context.Name} {nameof(X509Context)}. \r\nCertificate Thumbprint: {thumbprint}");
 

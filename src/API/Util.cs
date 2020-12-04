@@ -18,15 +18,9 @@ namespace Org.X509Crypto
 
         internal static void VerifyFileExists(string filePath)
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
-                X509CryptoLog.Info($"File \"{filePath}\" exists.");
-            }
-            else
-            {
-                FileNotFoundException ex = new FileNotFoundException(@"The expected file was not created", filePath);
-                X509CryptoLog.Exception(ex, Criticality.CRITICAL);
-                throw ex;
+                throw new FileNotFoundException(@"The expected file was not created", filePath);
             }
         }
 
@@ -103,7 +97,7 @@ namespace Org.X509Crypto
             return OnlyMatchHexidecimal.IsMatch(expression);
         }
 
-        public static SecureString GetPassword(string prompt, bool confirmMatch = false)
+        public static SecureString GetPassword(string prompt, int minLength, bool confirmMatch = false)
         {
             SecureString Secret = new SecureString();
             SecureString Confirm = new SecureString();
@@ -113,12 +107,17 @@ namespace Org.X509Crypto
 
             if (confirmMatch)
             {
+                if (Secret.Length < minLength)
+                {
+                    Console.WriteLine($"Password must be at least {minLength} characters.\r\n");
+                    return GetPassword(prompt, minLength, confirmMatch);
+                }
                 Console.Write($"Confirm: ");
                 Confirm = GetPasswordWorker();
                 if (!Secret.Matches(Confirm))
                 {
                     Console.WriteLine($"Entries do not match. Please try again.\r\n");
-                    return GetPassword(prompt, confirmMatch);
+                    return GetPassword(prompt, minLength, confirmMatch);
                 }
             }
 

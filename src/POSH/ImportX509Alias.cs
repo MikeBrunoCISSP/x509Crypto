@@ -39,13 +39,13 @@ namespace X509CryptoPOSH
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
-        [Parameter(Position = 2, HelpMessage = @"The name under which to register this X509Alias")]
+        [Parameter(Position = 2, HelpMessage = @"The name under which to register this X509Alias (if not specified, the X509Alias name found in the import file will be used)")]
         [Alias(@"Alias", nameof(X509Alias))]
         public string Name { get; set; } = string.Empty;
 
         private X509Alias Result;
 
-        [Parameter(HelpMessage = "If $True, if an existing X509Alias with the same name already exists in the X509Context specified for \"Location\", it will be overwritten. Default selection is $False")]
+        [Parameter(HelpMessage = "If enabled and an existing X509Alias with the same name already exists in the X509Context specified for \"Location\", it will be overwritten")]
         public SwitchParameter Overwrite { get; set; } = false;
 
         protected override void BeginProcessing()

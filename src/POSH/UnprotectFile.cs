@@ -18,7 +18,7 @@ namespace X509CryptoPOSH
         [Alias(@"X509Alias")]
         public X509Alias Alias { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "The path to the file to decrypt")]
+        [Parameter(Mandatory = true, HelpMessage = "The path of the file to decrypt")]
         public string Path
         {
             get
@@ -43,7 +43,7 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "The path to which to write the decrypted file. If not specified, the original plaintext file name will be restored, or will be appended with a \".ptx\" file extension")]
+        [Parameter(HelpMessage = "The path to which to write the decrypted file. If not specified, the original plaintext file name will be restored")]
         public string Output
         {
             get
@@ -64,8 +64,9 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "If included, the ciphertext file specified for \"Path\" will be wiped from disk.")]
-        public SwitchParameter Wipe { get; set; } = false;
+        [Parameter(HelpMessage = "The number of times to write over the disk sectors where the ciphertext file exists. If not specified, the ciphertext file will not be deleted or erased.")]
+        [Alias(@"Wipe")]
+        public int Erase { get; set; } = 0;
 
         [Parameter(HelpMessage = "If included, no warning will be displayed before the ciphertext file specified for \"Path\" is wiped from disk. Not appliable if \"-Delete\" is not included")]
         public SwitchParameter Quiet { get; set; } = false;
@@ -97,22 +98,17 @@ namespace X509CryptoPOSH
             }
             Util.CheckForExistingFile(Output, Overwrite, nameof(Overwrite), PoshSyntax.True);
 
-            if (Wipe)
+            if (Erase > 0)
             {
-                if (!Quiet || Util.WarnConfirm($"You have set the {nameof(Wipe).InQuotes()} argument to $True. This will permanently delete the file {Path.InQuotes()} from disk.", Constants.Affirm))
+                if (!Quiet || Util.WarnConfirm($"You have set the {nameof(Erase).InQuotes()} argument to $True. This will permanently delete the file {Path.InQuotes()} from disk.", Constants.Affirm))
                 {
-                    wipeTimesToWrite = Constants.WipeRepititions;
+                    wipeTimesToWrite = Erase;
                 }
             }
-            else
-            {
-                Wipe = false;
-            }
-
 
             Alias.DecryptFile(Path, Output, wipeTimesToWrite);
             StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully decrypted. The recovered file name is {Output.InQuotes()}");
-            if (Wipe)
+            if (wipeTimesToWrite > 0)
             {
                 Expression.Append($"\r\nThe ciphertext file has also been erased from disk");
             }

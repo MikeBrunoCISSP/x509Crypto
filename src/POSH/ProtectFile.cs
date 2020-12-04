@@ -43,7 +43,7 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "The path to which to write the encrypted file. If not specified, the name of the file indicated for \"\" will be appended with a \".ctx\" extension")]
+        [Parameter(HelpMessage = "The path to which to write the encrypted file. If not specified, the name of the file indicated for \"-Path\" will be appended with a \".ctx\" extension")]
         public string Output
         {
             get
@@ -64,13 +64,14 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "If $True, the plaintext file specified for \"Path\" will be wiped from disk. Default selection is $False.")]
-        public SwitchParameter Wipe { get; set; } = false;
+        [Parameter(HelpMessage = "The number of times to write over the disk sectors where the plaintext file exists. If not specified, the plaintext file will not be deleted or erased.")]
+        [Alias(@"Wipe")]
+        public int Erase { get; set; } = 0;
 
-        [Parameter(HelpMessage = "If enabled, no warning will be displayed before the plaintext file specified for \"Path\" is wiped from disk. Not appliable if \"-Delete\" is $False")]
+        [Parameter(HelpMessage = "If enabled, no warning will be displayed before the plaintext file specified for \"-Path\" is wiped from disk. Not appliable if \"-Erase\" is not defined")]
         public SwitchParameter Quiet { get; set; } = false;
 
-        [Parameter(HelpMessage = "If $True, should a file already exist under the same path as specified/inferred for \"Output\", it will be replaced. Default selection is $False.")]
+        [Parameter(HelpMessage = "If enabled, should a file already exist under the same path as specified/inferred for \"Output\", it will be replaced.")]
         public SwitchParameter Overwrite { get; set; } = false;
 
         private FileInfo Result = null;
@@ -97,22 +98,17 @@ namespace X509CryptoPOSH
             }
             Util.CheckForExistingFile(Output, Overwrite, nameof(Overwrite), PoshSyntax.True);
 
-            if (Wipe)
+            if (Erase > 0)
             {
-                if (Quiet || Util.WarnConfirm($"You have set the {nameof(Wipe).InQuotes()} argument to $True. This will permanently delete the file {Path.InQuotes()} from disk.", Constants.Affirm))
+                if (Quiet || Util.WarnConfirm($"You have included the {nameof(Erase).InQuotes()} argument. This will permanently delete the file {Path.InQuotes()} from disk.", Constants.Affirm))
                 {
-                    wipeTimesToWrite = Constants.WipeRepititions;
+                    wipeTimesToWrite = Erase;
                 }
             }
-            else
-            {
-                Wipe = false;
-            }
-
 
             Alias.EncryptFile(Path, Output, wipeTimesToWrite);
             StringBuilder Expression = new StringBuilder($"The file {Path.InQuotes()} was successfully encrypted. The ciphertext file name is {Output.InQuotes()}");
-            if (Wipe)
+            if (wipeTimesToWrite > 0)
             {
                 Expression.Append($"\r\nThe plaintext file has also been erased from disk");
             }

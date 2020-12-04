@@ -2,9 +2,7 @@
 using System.Text;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
 using System.IO;
-using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,8 +19,8 @@ namespace Org.X509Crypto
 
         #region Member Fields
 
-        private RSACryptoServiceProvider publicKey,
-                                         privateKey;
+        private RSA publicKey,
+                    privateKey;
 
         /// <summary>
         /// The thumbprint of the certificate used for cryptographic operations
@@ -109,8 +107,7 @@ namespace Org.X509Crypto
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
-                    RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
-                    byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
+                    byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
@@ -205,8 +202,7 @@ namespace Org.X509Crypto
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
-                    RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
-                    byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
+                    byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
@@ -290,8 +286,7 @@ namespace Org.X509Crypto
 
                 using (ICryptoTransform transform = aesManaged.CreateEncryptor())
                 {
-                    RSAPKCS1KeyExchangeFormatter keyFormatter = new RSAPKCS1KeyExchangeFormatter(publicKey);
-                    byte[] keyEncrypted = keyFormatter.CreateKeyExchange(aesManaged.Key, aesManaged.GetType());
+                    byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
@@ -405,7 +400,7 @@ namespace Org.X509Crypto
                     inStream.Seek(CryptoConstants.AESWords + keyLength, SeekOrigin.Begin);
                     inStream.Read(IV, 0, IVLength);
 
-                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
+                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
                     using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
                     {
@@ -498,7 +493,7 @@ namespace Org.X509Crypto
                     inFS.Seek(CryptoConstants.AESWords + keyLength, SeekOrigin.Begin);
                     inFS.Read(IV, 0, IVLength);
 
-                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
+                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
                     using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
                     {
@@ -594,7 +589,7 @@ namespace Org.X509Crypto
                     inFS.Seek(CryptoConstants.AESWords + keyLength, SeekOrigin.Begin);
                     inFS.Read(IV, 0, IVLength);
 
-                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, false);
+                    byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
                     using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
                     {
@@ -687,9 +682,8 @@ namespace Org.X509Crypto
             {
                 foreach (X509Certificate2 cert in colletion)
                 {
-                    publicKey = (RSACryptoServiceProvider)cert.PublicKey.Key;
-                    privateKey = (RSACryptoServiceProvider)cert.PrivateKey;
-                    //var pk = cert.GetRSAPrivateKey();
+                    publicKey = cert.GetRSAPublicKey();
+                    privateKey = cert.GetRSAPrivateKey();
                     break;
                 }
                 valid = true;
@@ -774,12 +768,10 @@ namespace Org.X509Crypto
             try
             {
                 X509Certificate2 test = new X509Certificate2(path);
-                X509CryptoLog.Info($"Public certificate with thumbprint {thumbprint} successfully exported to file path \"{path}\"");
             }
             catch (CryptographicException ex)
             {
-                X509CryptoLog.Exception(ex, Criticality.ERROR, text: $"Public certificate with thumbprint {thumbprint} was exported to file path \"{path}\" but the file contents are not usable");
-                throw ex;
+                throw new X509CryptoException($"Public certificate with thumbprint {thumbprint} was exported to file path \"{path}\" but the file contents are not usable", ex);
             }
         }
 

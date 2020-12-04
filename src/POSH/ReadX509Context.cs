@@ -12,11 +12,11 @@ namespace X509CryptoPOSH
     {
         private X509Context Context;
 
-        [Parameter(Position = 0, HelpMessage = "The X509Context from which to list existing X509Aliases and/or encryption certificates. Acceptable values are \"user\" and \"system\"")]
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The X509Context from which to list existing X509Aliases and/or encryption certificates. Acceptable values are \"user\" and \"system\"")]
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
-        [Parameter(Position = 1, HelpMessage = "If $True, certificates that are not currently assigned to an X509Alias will also be included in the output. Default select is $False")]
+        [Parameter(Position = 1, HelpMessage = "If enabled, certificates that are not currently assigned to an X509Alias will also be included in the output.")]
         public SwitchParameter All { get; set; } = false;
 
         private List<X509AliasDescription> Result = new List<X509AliasDescription>();

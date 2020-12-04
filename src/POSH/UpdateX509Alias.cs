@@ -44,6 +44,7 @@ namespace X509CryptoPOSH
                 {
                     throw new FormatException($"{value.InQuotes()}: Not a valid certificate thumbprint");
                 }
+                thumbprint = value;
             }
         }
 

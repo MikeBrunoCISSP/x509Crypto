@@ -56,7 +56,8 @@ namespace X509CryptoPOSH
 
         private void DoWork()
         {
-            X509Utils.ReEncryptFile(CurrentAlias, TargetAlias, Path);
+            TargetAlias.ReEncryptFile(Path, CurrentAlias);
+            //X509Utils.ReEncryptFile(CurrentAlias, TargetAlias, Path);
             Console.WriteLine($"\r\nThe file {Path} was successfully re-encrypted using the X509Crypto alias {TargetAlias.Name} located in the {TargetAlias.Context.Name.InQuotes()} {nameof(X509Context)}");
             Result = new FileInfo(Path);
         }

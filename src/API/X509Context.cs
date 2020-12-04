@@ -229,7 +229,7 @@ namespace Org.X509Crypto
             }
             catch
             {
-                X509CryptoLog.Warning($"Unable to assign access rights for the IIS IUSRS group to {X509Directory.System}");
+                //Gave it a college try
             }
         }
 

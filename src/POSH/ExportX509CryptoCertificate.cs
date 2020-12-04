@@ -20,7 +20,7 @@ namespace X509CryptoPOSH
 
         private string path = string.Empty;
 
-        [Parameter(ValueFromPipeline = true, HelpMessage = "The source X509Alias from which to export the encryption certificate. Not to be used with the \"Location\" and \"Thumbprint\" parameters")]
+        [Parameter(ValueFromPipeline = true, HelpMessage = "The source X509Alias from which to export the encryption certificate. Not to be used with the \"-Location\" and \"-Thumbprint\" parameters")]
         [Alias(@"X509Alias")]
         public X509Alias Alias
         {
@@ -35,7 +35,7 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "The X509Context from which to export the certificate. Acceptable values are \"user\" and \"system\". Not to be used with the \"Alias\" parameter")]
+        [Parameter(HelpMessage = "The X509Context from which to export the certificate. Acceptable values are \"user\" and \"system\". Must be paired with the \"-Thumbprint\" parameter. Not to be used with the \"-Alias\" parameter")]
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location
         {
@@ -50,7 +50,7 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "The thumbprint of the encryption certificate to export. Not to be used with the \"Alias\" parameter ")]
+        [Parameter(HelpMessage = "The thumbprint of the encryption certificate to export. Must be paired with the \"-Location\" parameter. Not to be used with the \"Alias\" parameter")]
         public string Thumbprint
         {
             get
@@ -88,8 +88,8 @@ namespace X509CryptoPOSH
             }
         }
 
-        [Parameter(HelpMessage = "If enabled & an existing file is found in the path specified for \"Path\", it will be deleted without a warning.")]
-        public SwitchParameter Force { get; set; } = false;
+        [Parameter(HelpMessage = "If enabled & an existing file is found in the path specified for \"-Path\", it will be deleted without a warning.")]
+        public SwitchParameter Overwrite { get; set; } = false;
 
         FileInfo Result = null;
 
@@ -136,7 +136,7 @@ namespace X509CryptoPOSH
 
             if (File.Exists(Path))
             {
-                if (Force || Util.WarnConfirm($"The specified file {Path.InQuotes()} already exists. Do you wish to overwrite it?", Constants.Affirm))
+                if (Overwrite || Util.WarnConfirm($"The specified file {Path.InQuotes()} already exists. Do you wish to overwrite it?", Constants.Affirm))
                 {
                     X509Utils.DeleteFile(Path, confirmDelete: true);
                 }
@@ -146,7 +146,7 @@ namespace X509CryptoPOSH
                 }
             }
 
-            var Password = Util.GetPassword(@"Enter a strong password (needed to unlock the .pfx file)", true);
+            var Password = Util.GetPassword(@"Enter a strong password (needed to unlock the .pfx file)", Constants.MinimumPasswordLength, true);
             X509CryptoAgent.ExportPFX(Alias.Thumbprint, Alias.Context, Path, Password.Plaintext());
             Util.ConsoleMessage($"Encryption certificate with thumbprint {Alias.Thumbprint} from the {Alias.Context.Name} {nameof(X509Context)} has been exported to the file {Path.InQuotes()}");
             Result = new FileInfo(Path);

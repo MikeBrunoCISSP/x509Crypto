@@ -8,11 +8,11 @@ namespace X509CryptoPOSH
     [OutputType(typeof(bool))]
     public class RemoveAlias : Cmdlet
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The name for the X509Alias to remove")]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, HelpMessage = "The X509Alias to remove from the system")]
         [Alias(nameof(X509Alias))]
         public X509Alias Alias { get; set; }
 
-        [Parameter(HelpMessage = "If enabled, no confirmation message will be displayed before X509Alias deletion. Default selection is $False")]
+        [Parameter(HelpMessage = "If enabled, no confirmation message will be displayed before X509Alias deletion.")]
         public SwitchParameter Quiet { get; set; } = false;
 
         [Parameter(HelpMessage = "If enabled, the X509Crypto encryption certificate associated with this X509Alias will also be deleted from the X509Context where it presently exists")]

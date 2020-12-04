@@ -1,5 +1,4 @@
 ﻿using Org.BouncyCastle.Asn1.Pkcs;
-using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
@@ -10,14 +9,10 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.X509;
-using Org.X509Crypto;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Org.X509Crypto
 {
@@ -25,6 +20,13 @@ namespace Org.X509Crypto
     {
         private static SecureRandom secureRandom = new SecureRandom();
 
+        /// <summary>
+        /// Generates a self-signed encryption certificate
+        /// </summary>
+        /// <param name="name">The certificate subject</param>
+        /// <param name="keyLength">The desired public key length (multiples of 1024)</param>
+        /// <param name="yearsValid">The number of years after which the certificate should be considered expired</param>
+        /// <param name="thumbprint">reference string which will contain the thumbprint of the generated certificate</param>
         public void MakeCertWorker(string name, int keyLength, int yearsValid, out string thumbprint)
         {
             X509Certificate2 dotNetCert = null;
@@ -55,7 +57,7 @@ namespace Org.X509Crypto
             certGenerator.SetNotBefore(DateTime.UtcNow);
             certGenerator.SetPublicKey(keyPair.Public);
             certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyEncipherment));
-            Org.BouncyCastle.X509.X509Certificate cert = certGenerator.Generate(signatureFactory);
+            BouncyCastle.X509.X509Certificate cert = certGenerator.Generate(signatureFactory);
 
             var bouncyStore = new Pkcs12Store();
             var certEntry = new X509CertificateEntry(cert);
