@@ -16,7 +16,7 @@ $ModuleSettings =
 	Description = 'Lets you easily and securely encrypt and recover text expressions and files in your .NET programs using X509 digital certificates and private keys. No prior experience with certificates required!'
 	DotNetFrameworkVersion = '4.6.2'
 	RequiredAssemblies = $(Get-ChildItem '..\..\bin\PSModule' | Where-Object {$_.Extension -like ".dll"} | % {$_.Name})
-	CmdletsToExport = "`'$([System.string]::Join("`',`'",$(Get-Command -module X509Crypto | Select -ExpandProperty Name)))`'"
+	CmdletsToExport = '*'
 }
 
 New-ModuleManifest @ModuleSettings

@@ -20,11 +20,13 @@
     <RootNamespace>Org.X509Crypto</RootNamespace>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo_small.png</PackageIcon>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>false</DelaySign>
     <!--<PackageIconUrl>http://x509crypto.org/images/logo_small.png</PackageIconUrl>-->
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Images\logo_small.png" Pack="true" PackagePath=""/>
+    <None Include="Images\logo_small.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp3.1|AnyCPU'">
