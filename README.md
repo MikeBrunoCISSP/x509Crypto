@@ -61,7 +61,6 @@ namespace SampleApp
 }
 ```
 
-<br>
 
 Note that anything that can be done using the X509Crypto PowerShell module or the [X509Crypto commandline utility](https://x509crypto.org/articles/cli.html) can also be accomplished directly in the API.
 
