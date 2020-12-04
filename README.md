@@ -1,60 +1,42 @@
-X509Crypto allows you to encrypt and recover text expressions and files using X509 digital certificates and key pairs. The latest release eliminates the need to include any secrets (even in an encrypted form) in your source code, configuration files or database tables.
+## Introducing the X509Crypto Data Encryption API
+X509Crypto obfuscates most of the complexity involved with protecting data in .NET applications using encryption. It allows you to encrypt and recover text expressions and files using X509 digital certificates and key pairs. The latest release utilizes CNG and features an all-new companion PowerShell module! X509Crypto eliminates the need to include any secrets (even in an encrypted form) in your source code, configuration files or database tables.
 
-## Encrypting a secret using X509Crypto
+## API Documentation
+The full X509Crypto API documentation can be found [here](https://x509crypto.org/api/Org.X509Crypto.html)
 
+## X509Crypto makes it easy to encrypt and recover text expressions in your .NET projects:
 
-### Use the [X509Crypto Commandline Interface](https://github.com/MikeBrunoCISSP/x509Crypto/tree/master/zip) (CLI) to generate a new encryption certificate and key pair 
-Note: Certification Authority-issued certificates are supported as well as long as they include the *Key Encipherment* key usage extension
-
-```
->x509crypto.exe
-X509Crypto> makecert -context user -keysize medium -alias myvault
-
-Certificate with thumbprint B31FE7E7AE5229F8186782742CF579197FA859FD was added to the user X509Context
-
-X509Crypto>
-```
-
-The **context** argument can be either *user* or *system* depending on the context in which the application which will need to recover the secret runs in.
-
-The **keyzise** argument can be *small*, *medium*, or *large*. The larger the key pair, the higher the security, but performance will be slower.
-
-
-### Use the **AddAlias** command in the CLI to bind your newly-created certificate to an *X509Alias*. 
-For demonstration purposes, we will create an *X509Alias* called "myvault".
+#### 1. Install the [X509Crypto PowerShell module](https://www.powershellgallery.com/packages/X509Crypto/1.1.0): 
+The X509Crypto PowerShell module can be installed from the PowerShell Gallery.
 
 ```
-X509Crypto> addalias -name myvault -context user -thumb B31FE7E7AE5229F8186782742CF579197FA859FD
+> Install-Module X509Crypto
 
-New X509Alias "myvault" was created in the user X509Context using certificate with thumbprint "B31FE7E7AE5229F8186782742CF579197FA859FD"
-
-X509Crypto>
+# ...Or if you are not an admin:
+> Install-Module X509Crypto -Scope CurrentUser
 ```
 
-
-### Use the **Encrypt** CLI command to add a secret to your new *X509Alias*
+#### 2. Use the **New-X509Alias** cmdlet: 
+This cmdlet instantiates a new X509Crypto Alias (which stores encrypted secrets). In this example, we don't have a previously-existing certificate and key pair, so we'll execute the cmdlet without the *-Thumbprint* parameter, which will trigger the creation of a new certificate that will be automatically associated with this X509Alias.
 
 ```
-X509Crypto> encrypt -text -alias myvault -context user -secret apikey -in "80EAF03248965AC2B78090"
+> $Alias = New-X509Alias -Name myvault -Location user
 
-Secret apikey has been added to X509Alias myvault in the user X509Context
-
-X509Crypto>
+New alias "myvault" committed to "user" X509Context
+Thumbprint: B31FE7E7AE5229F8186782742CF579197FA859FD
 ```
 
-The **-text** argument indicates that we're encrypting a text expression (as opposed to a file)
+#### 3. Use the **Protect-X509CryptoSecret** PowerShell cmdlet to encrypt a secret
+In this example, we'll be storing an API authentication key in the X509Alias "myvault".  Secrets are stored in X509Aliases as key/value pairs, so we'll assign the identifier "apikey" to this new secret.
+```
+> $Alias | Protect-X509CryptoSecret -Id apkikey -Input '80EAF03248965AC2B78090'
 
-The **-alias** and **-context** arguments point to the *X509Alias* that we created in step 2.
+Secret "apkikey" added to X509Alias "myvault4" in the user X509Context
+```
 
-The **-secret** argument assigns an identifier to the secret we're about to encrypt so that it can be recovered from the *X509Alias* later. In this example, we've established a secret named "apikey"
+#### 3. Reference the secret in your program
 
-The **-in** argument indicates the text expression to be encrypted.
-
-
-
-### Reference the secret in your program
-
-Once you have an *X509Alias* established with your secret(s) added, it is trivial to retreive them in your program with the Org.X509Crypto nuget package installed:
+Once you have an *X509Alias* established with your secret(s) added, it is trivial to retreive them in your program with the [Org.X509Crypto nuget package](https://www.nuget.org/packages/Org.X509Crypto/1.3.0) installed:
 
 ```
 using Org.X509Crypto;
@@ -65,9 +47,22 @@ namespace SampleApp
     {
         static void Main(string[] args)
         {
-            var Alias = new X509Alias(@"myvault", X509Context.UserReadOnly);
-            var apiKey = Alias.RecoverSecret(@"apikey");
+            // Instantiate the X509Alias object, referencing the "myvault" alias in the CurrentUser context
+            using (var Alias = new X509Alias(@"myvault", X509Context.UserReadOnly))
+            {
+                // Recover the plaintext secret "apikey" as plaintext in a string variable
+                string apiKey = Alias.RecoverSecret(@"apikey");
+
+                // Use the secret before leaving the "using" block so that it will be garbage-collected promptly
+                MyApi.Connect(apiKey);
+            }
         }
     }
 }
 ```
+
+<br>
+
+Note that anything that can be done using the X509Crypto PowerShell module or the [X509Crypto commandline utility](https://x509crypto.org/articles/cli.html) can also be accomplished directly in the API.
+
+Reach out to the project Owner: [Mike Bruno](mailto:mikebrunocissp@gmail.com) with any questions or comments.
