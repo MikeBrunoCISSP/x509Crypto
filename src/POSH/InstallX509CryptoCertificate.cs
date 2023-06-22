@@ -33,7 +33,9 @@ namespace X509CryptoPOSH
                 else
                 {
                     path = new FileInfo(System.IO.Path.Combine(SessionState.Path.CurrentFileSystemLocation.Path, value)).FullName;
-                    if (!File.Exists(path)) throw new FileNotFoundException($"File does not exist: {path}");
+                    if (!File.Exists(path)) {
+                        throw new FileNotFoundException($"File does not exist: {path}");
+                    }
                 }
             }
         }

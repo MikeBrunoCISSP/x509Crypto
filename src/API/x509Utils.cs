@@ -1,27 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using System.ComponentModel;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Security.Cryptography.X509Certificates;
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Security.Principal;
 using System.Diagnostics;
 using System.DirectoryServices;
+using System.IO;
+using System.Linq;
 using System.Security;
 using System.Security.AccessControl;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
+using System.Text;
+using System.Text.RegularExpressions;
 
-namespace Org.X509Crypto
-{
+namespace Org.X509Crypto {
     /// <summary>
     /// A static class which provides access to X509Crypto namespace functionality without instantiating a X509CryptoAgent object.
     /// </summary>
-    public static class X509Utils
-    {
+    public static class X509Utils {
         #region Constants and Static Fields
 
         private static bool iisGroupChecked = false;
@@ -55,20 +49,16 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="path">The fully-qualified path to the file from which contents are being loaded</param>
         /// <returns>The contents of the specified text file as a string expression</returns>
-        public static string LoadTextFromFile(string path)
-        {
+        public static string LoadTextFromFile(string path) {
             string contents;
 
-            if (!File.Exists(path))
-            {
+            if (!File.Exists(path)) {
                 string message = string.Format(@"Path does not exist: {0}", path);
                 throw new FileNotFoundException(message);
             }
 
-            using (FileStream inStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            {
-                using (TextReader streamReader = new StreamReader(inStream))
-                {
+            using (FileStream inStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+                using (TextReader streamReader = new StreamReader(inStream)) {
                     contents = streamReader.ReadToEnd();
                     streamReader.Close();
                 }
@@ -91,8 +81,7 @@ namespace Org.X509Crypto
         /// //formattedThumb = @"ccdc673c40ebb2a433300c0c8a2ba6f443da5688"
         /// </code>
         /// </example>
-        public static string FormatThumbprint(string thumbprint, bool verbose = false)
-        {
+        public static string FormatThumbprint(string thumbprint, bool verbose = false) {
             string formattedThumbprint = Regex.Replace(thumbprint, allowedThumbprintCharsPattern, "").ToUpper();
             return formattedThumbprint;
         }
@@ -113,10 +102,8 @@ namespace Org.X509Crypto
         /// string plaintext = <see cref="X509Utils"/>.DecryptText(thumbprint, ciphertext, Context);
         /// </code>
         /// </example>
-        public static string DecryptText(string thumbprint, string ciphertext, X509Context Context, bool verbose = false)
-        {
-            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context))
-            {
+        public static string DecryptText(string thumbprint, string ciphertext, X509Context Context, bool verbose = false) {
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context)) {
                 return cryptoAgent.DecryptText(ciphertext);
             }
         }
@@ -138,14 +125,12 @@ namespace Org.X509Crypto
         /// bool success = <see cref="X509Utils"/>.DecryptFile(thumbprint, encryptedFilePath, certStore);
         /// </code>
         /// </example>
-        public static bool DecryptFile(string thumbprint, string ciphertextFilePath, string plaintextFilePath, X509Context Context, bool verbose = false)
-        {
+        public static bool DecryptFile(string thumbprint, string ciphertextFilePath, string plaintextFilePath, X509Context Context, bool verbose = false) {
             CheckForFile(ciphertextFilePath);
 
             File.Delete(plaintextFilePath);
 
-            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context))
-            {
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context)) {
                 cryptoAgent.DecryptFile(ciphertextFilePath, plaintextFilePath);
             }
 
@@ -168,10 +153,8 @@ namespace Org.X509Crypto
         /// string ciphertext = <see cref="X509Utils"/>.EncryptText(thumbprint, plaintext, certStore);
         /// </code>
         /// </example>
-        public static string EncryptText(string thumbprint, string plaintext, X509Context Context, bool verbose = false)
-        {
-            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context))
-            {
+        public static string EncryptText(string thumbprint, string plaintext, X509Context Context, bool verbose = false) {
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context)) {
                 return cryptoAgent.EncryptText(plaintext);
             }
         }
@@ -194,19 +177,20 @@ namespace Org.X509Crypto
         /// bool success = <see cref="X509Utils"/>.EncryptFile(thumbprint, plaintextFilePath, certStore);
         /// </code>
         /// </example>
-        public static bool EncryptFile(string thumbprint, string plaintextFilePath, X509Context Context = null, string ciphertextFilePath = "", bool verbose = false)
-        {
+        public static bool EncryptFile(string thumbprint, string plaintextFilePath, X509Context Context = null, string ciphertextFilePath = "", bool verbose = false) {
             CheckForFile(plaintextFilePath);
 
-            if (Context == null)
+            if (Context is null) {
                 Context = X509Context.UserReadOnly;
+            }
 
-            if (string.IsNullOrEmpty(ciphertextFilePath))
+            if (string.IsNullOrEmpty(ciphertextFilePath)) {
                 ciphertextFilePath = plaintextFilePath + CRYPTO_ENCRYPTED_FILE_EXT;
+            }
+
             File.Delete(ciphertextFilePath);
 
-            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context))
-            {
+            using (X509CryptoAgent cryptoAgent = new X509CryptoAgent(FormatThumbprint(thumbprint), Context)) {
                 cryptoAgent.EncryptFile(plaintextFilePath, ciphertextFilePath);
             }
 
@@ -232,17 +216,17 @@ namespace Org.X509Crypto
         /// File.WriteAllText(@"C:\data\connectionString.txt", updatedCiphertext);
         /// </code>
         /// </example>
-        public static string ReEncryptText(string oldThumbprint, string newThumbprint, string ciphertext, X509Context OldContext = null, X509Context NewContext = null, bool verbose = false)
-        {
-            if (OldContext == null)
+        public static string ReEncryptText(string oldThumbprint, string newThumbprint, string ciphertext, X509Context OldContext = null, X509Context NewContext = null, bool verbose = false) {
+            if (OldContext == null) {
                 OldContext = X509Context.UserReadOnly;
-            if (NewContext == null)
-                NewContext = X509Context.UserReadOnly;
+            }
 
-            using (X509CryptoAgent oldAgent = new X509CryptoAgent(FormatThumbprint(oldThumbprint), OldContext))
-            {
-                using (X509CryptoAgent newAgent = new X509CryptoAgent(FormatThumbprint(newThumbprint), NewContext))
-                {
+            if (NewContext == null) {
+                NewContext = X509Context.UserReadOnly;
+            }
+
+            using (X509CryptoAgent oldAgent = new X509CryptoAgent(FormatThumbprint(oldThumbprint), OldContext)) {
+                using (X509CryptoAgent newAgent = new X509CryptoAgent(FormatThumbprint(newThumbprint), NewContext)) {
                     return newAgent.EncryptText(oldAgent.DecryptText(ciphertext));
                 }
             }
@@ -265,14 +249,16 @@ namespace Org.X509Crypto
         /// <see cref="X509Utils"/>.ReEncryptFile"(oldThumbprint, newThumbprint, encryptedFilePath);
         /// </code>
         /// </example>
-        public static void ReEncryptFile(string oldThumbprint, string newThumbprint, string ciphertextFilePath, X509Context OldContext = null, X509Context NewContext = null, bool verbose = false)
-        {
+        public static void ReEncryptFile(string oldThumbprint, string newThumbprint, string ciphertextFilePath, X509Context OldContext = null, X509Context NewContext = null, bool verbose = false) {
             CheckForFile(ciphertextFilePath);
 
-            if (OldContext == null)
+            if (OldContext == null) {
                 OldContext = X509Context.UserReadOnly;
-            if (NewContext == null)
+            }
+
+            if (NewContext == null) {
                 NewContext = X509Context.UserReadOnly;
+            }
 
             byte[] hashOrig,
                    hashCopy;
@@ -284,43 +270,34 @@ namespace Org.X509Crypto
             File.Copy(ciphertextFilePath, tmpCopy);
             hashCopy = Hash(tmpCopy);
 
-            if (hashOrig.SequenceEqual(hashCopy))
+            if (hashOrig.SequenceEqual(hashCopy)) {
                 File.Delete(ciphertextFilePath);
-            else
-            {
+            } else {
                 try { File.Delete(tmpCopy); } catch { }
                 throw new Exception(string.Format("Could not back up original file \"{0}\"", ciphertextFilePath));
             }
 
-            try
-            {
-                using (X509CryptoAgent oldAgent = new X509CryptoAgent(oldThumbprint.RemoveNonHexChars(), OldContext))
-                {
+            try {
+                using (X509CryptoAgent oldAgent = new X509CryptoAgent(oldThumbprint.RemoveNonHexChars(), OldContext)) {
                     byte[] data = oldAgent.DecryptFileToByteArray(tmpCopy);
 
-                    using (X509CryptoAgent newAgent = new X509CryptoAgent(newThumbprint.RemoveNonHexChars(), NewContext))
-                    {
+                    using (X509CryptoAgent newAgent = new X509CryptoAgent(newThumbprint.RemoveNonHexChars(), NewContext)) {
                         newAgent.EncryptFileFromByteArray(data, ciphertextFilePath);
                     }
                 }
 
-                if (!File.Exists(ciphertextFilePath))
-                {
+                if (!File.Exists(ciphertextFilePath)) {
                     throw new FileNotFoundException($"\"{ciphertextFilePath}\": File not found after cryptographic operation. Restoring original");
                 }
-            }
-            catch (Exception ex)
-            {
-                if (File.Exists(ciphertextFilePath))
-                {
-                    if (!Hash(ciphertextFilePath).SequenceEqual(hashCopy))
-                    {
+            } catch (Exception ex) {
+                if (File.Exists(ciphertextFilePath)) {
+                    if (!Hash(ciphertextFilePath).SequenceEqual(hashCopy)) {
                         File.Delete(ciphertextFilePath);
                         File.Copy(tmpCopy, ciphertextFilePath);
                     }
-                }
-                else
+                } else {
                     File.Copy(tmpCopy, ciphertextFilePath);
+                }
 
                 throw ex;
             }
@@ -332,8 +309,7 @@ namespace Org.X509Crypto
         /// <param name="OldAlias">The old X509Alias that was originally used to encrypt the file</param>
         /// <param name="NewAlias">The new X509Alias that will be used to re-encrypt the file</param>
         /// <param name="ciphertextFilePath">The path to the ciphertext file to be re-encrypted</param>
-        public static void ReEncryptFile(X509Alias OldAlias, X509Alias NewAlias, string ciphertextFilePath)
-        {
+        public static void ReEncryptFile(X509Alias OldAlias, X509Alias NewAlias, string ciphertextFilePath) {
             ReEncryptFile(OldAlias.Thumbprint, NewAlias.Thumbprint, ciphertextFilePath, OldAlias.Context, NewAlias.Context);
         }
 
@@ -344,26 +320,21 @@ namespace Org.X509Crypto
         /// <param name="PfxPassword">The password to unlock the PKCS#12 file</param>
         /// <param name="Context">The X509Context in which to place the certificate and key pair</param>
         /// <returns></returns>
-        public static string InstallCert(string infile, SecureString PfxPassword, X509Context Context)
-        {
+        public static string InstallCert(string infile, SecureString PfxPassword, X509Context Context) {
             bool certInstalled = false;
             X509Certificate2Collection certCol = new X509Certificate2Collection();
             X509Store keyChain;
             string thumbprint = string.Empty;
 
-            try
-            {
-                certCol.Import(infile, PfxPassword.Plaintext(), X509KeyStorageFlags.PersistKeySet);
+            try {
+                certCol.Import(infile, PfxPassword.ToUnSecureString(), X509KeyStorageFlags.PersistKeySet);
                 keyChain = new X509Store(StoreName.My, Context.Location);
                 keyChain.Open(OpenFlags.ReadWrite);
 
-                foreach(X509Certificate2 cert in certCol)
-                {
-                    if (X509CryptoAgent.IsUsable(cert, Constants.ProbeMode))
-                    {
+                foreach (X509Certificate2 cert in certCol) {
+                    if (X509CryptoAgent.IsUsable(cert, Constants.ProbeMode)) {
                         keyChain.Add(cert);
-                        if (Context.Index == X509Context.Indexer.SystemFull || Context.Index == X509Context.Indexer.SystemReadOnly)
-                        {
+                        if (Context.Index == X509Context.Indexer.SystemFull || Context.Index == X509Context.Indexer.SystemReadOnly) {
                             AddIISKeyAccess(cert.Thumbprint);
                         }
                         certInstalled = true;
@@ -371,17 +342,12 @@ namespace Org.X509Crypto
                         break;
                     }
                 }
-                if (!certInstalled)
-                {
-                    throw new X509CryptoException($"The PKCS#12 file {Path.GetFileName(infile).InQuotes()} did not contain a valid encryption certificate");
-                }
-                else
-                {
+                if (!certInstalled) {
+                    throw new X509CryptoException($"The PKCS#12 file '{Path.GetFileName(infile)}' did not contain a valid encryption certificate");
+                } else {
                     return thumbprint;
                 }
-            }
-            finally
-            {
+            } finally {
                 certCol = null;
                 keyChain = null;
             }
@@ -406,25 +372,25 @@ namespace Org.X509Crypto
         /// //finalExportPath is @"C:\data\bundle.pfx"
         /// </code>
         /// </example>
-        public static string ExportPFX(string certThumbprint, string exportPath, string password, X509Context Context = null, bool verbose = false)
-        {
-            if (Context == null)
+        public static string ExportPFX(string certThumbprint, string exportPath, string password, X509Context Context = null, bool verbose = false) {
+            if (Context == null) {
                 Context = X509Context.UserReadOnly;
+            }
 
-            if (!Path.HasExtension(exportPath))
+            if (!Path.HasExtension(exportPath)) {
                 exportPath += @".pfx";
+            }
 
-            if (File.Exists(exportPath))
+            if (File.Exists(exportPath)) {
                 File.Delete(exportPath);
+            }
 
             certThumbprint = FormatThumbprint(certThumbprint, verbose);
 
             X509Store store = new X509Store(StoreName.My, Context.Location);
             store.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in store.Certificates)
-            {
-                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase))
-                {
+            foreach (X509Certificate2 cert in store.Certificates) {
+                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase)) {
                     byte[] certBytes = cert.Export(X509ContentType.Pkcs12, password);
                     File.WriteAllBytes(exportPath, certBytes);
                     X509Utils.VerifyFile(exportPath);
@@ -452,25 +418,25 @@ namespace Org.X509Crypto
         /// //finalExportPath is @"C:\data\cert.cer"
         /// </code>
         /// </example>
-        public static string ExportCert(string certThumbprint, string exportPath, X509Context Context = null, bool verbose = false)
-        {
-            if (Context == null)
+        public static string ExportCert(string certThumbprint, string exportPath, X509Context Context = null, bool verbose = false) {
+            if (Context == null) {
                 Context = X509Context.UserReadOnly;
+            }
 
-            if (!Path.HasExtension(exportPath))
+            if (!Path.HasExtension(exportPath)) {
                 exportPath += @".cer";
+            }
 
-            if (!File.Exists(exportPath))
+            if (!File.Exists(exportPath)) {
                 File.Delete(exportPath);
+            }
 
             certThumbprint = FormatThumbprint(certThumbprint, verbose);
             X509Store store = new X509Store(StoreName.My, Context.Location);
             store.Open(OpenFlags.ReadOnly);
 
-            foreach (X509Certificate2 cert in store.Certificates)
-            {
-                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase))
-                {
+            foreach (X509Certificate2 cert in store.Certificates) {
+                if (string.Equals(certThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase)) {
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine(@"-----BEGIN CERTIFICATE-----");
                     sb.AppendLine(Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
@@ -480,12 +446,9 @@ namespace Org.X509Crypto
 
                     VerifyFile(exportPath);
 
-                    try
-                    {
+                    try {
                         X509Certificate2 test = new X509Certificate2(exportPath);
-                    }
-                    catch (CryptographicException ex)
-                    {
+                    } catch (CryptographicException ex) {
                         throw new X509CryptoException($"Certificate with thumbprint {certThumbprint} was exported to path \"{exportPath}\" but the file seems to be corrupt and unusable", ex);
                     }
 
@@ -508,21 +471,17 @@ namespace Org.X509Crypto
         /// <see cref="X509Utils"/>.<see cref="WipeFile"/>(path, timesToWrite);
         /// </code>
         /// </example>
-        public static void WipeFile(string filePath, int timesToWrite)
-        {
-            if (File.Exists(filePath))
-            {
+        public static void WipeFile(string filePath, int timesToWrite) {
+            if (File.Exists(filePath)) {
                 File.SetAttributes(filePath, FileAttributes.Normal);
                 double sectors = Math.Ceiling(new FileInfo(filePath).Length / 512.0);
                 byte[] dummyBuffer = new byte[512];
                 RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
 
                 FileStream inputStream = new FileStream(filePath, FileMode.Open);
-                for (int currentPass = 0; currentPass < timesToWrite; currentPass++)
-                {
+                for (int currentPass = 0; currentPass < timesToWrite; currentPass++) {
                     inputStream.Position = 0;
-                    for (int sectorsWritten = 0; sectorsWritten < sectors; sectorsWritten++)
-                    {
+                    for (int sectorsWritten = 0; sectorsWritten < sectors; sectorsWritten++) {
                         rng.GetBytes(dummyBuffer);
                         inputStream.Write(dummyBuffer, 0, dummyBuffer.Length);
                     }
@@ -541,10 +500,9 @@ namespace Org.X509Crypto
                 File.SetLastWriteTimeUtc(filePath, dt);
 
                 File.Delete(filePath);
-            }
-
-            else
+            } else {
                 throw new FileNotFoundException("The file could not be wiped because the specified path could not be found", filePath);
+            }
         }
 
         /// <summary>
@@ -558,20 +516,18 @@ namespace Org.X509Crypto
         /// string availableCerts = <see cref="X509Utils"/>.<see cref="ListCerts"/>(<see cref="X509Context.UserReadOnly"/>);
         /// </code>
         /// </example>
-        public static string ListCerts(X509Context Context = null, bool allowExpired = false)
-        {
-            if (Context == null)
+        public static string ListCerts(X509Context Context = null, bool allowExpired = false) {
+            if (Context == null) {
                 Context = X509Context.UserReadOnly;
+            }
 
             string output = "Key Encipherment Certificates found:\r\n\r\n";
             bool firstAdded = false;
 
             X509Store store = new X509Store(Context.Location);
             store.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in store.Certificates)
-            {
-                if (X509CryptoAgent.IsUsable(cert, allowExpired))
-                {
+            foreach (X509Certificate2 cert in store.Certificates) {
+                if (X509CryptoAgent.IsUsable(cert, allowExpired)) {
                     firstAdded = true;
                     output += cert.Subject + "\t" +
                               string.Format("Expires {0}", cert.NotAfter.ToShortDateString()) + "\t" +
@@ -579,8 +535,9 @@ namespace Org.X509Crypto
                 }
             }
 
-            if (!firstAdded)
+            if (!firstAdded) {
                 output += "None.\r\n";
+            }
 
             return output;
         }
@@ -591,18 +548,15 @@ namespace Org.X509Crypto
         /// <param name="filePath">The path of the file to be deleted</param>
         /// <param name="complainIfNotFound">If true, an exception is thrown if the file does not currently exist</param>
         /// <param name="confirmDelete">If true, the file will be confirmed to no longer exist. If it still exists, an exception is thrown</param>
-        public static void DeleteFile(string filePath, bool complainIfNotFound = false, bool confirmDelete = false)
-        {
-            if (!File.Exists(filePath) && complainIfNotFound)
-            {
+        public static void DeleteFile(string filePath, bool complainIfNotFound = false, bool confirmDelete = false) {
+            if (!File.Exists(filePath) && complainIfNotFound) {
                 throw new FileNotFoundException(filePath);
             }
 
             File.Delete(filePath);
 
-            if (confirmDelete && File.Exists(filePath))
-            {
-                throw new IOException($"The file {filePath.InQuotes()} could not be deleted");
+            if (confirmDelete && File.Exists(filePath)) {
+                throw new IOException($"The file '{filePath}' could not be deleted");
             }
         }
 
@@ -610,8 +564,7 @@ namespace Org.X509Crypto
         /// Gets the name of the calling method
         /// </summary>
         /// <returns>The name of the calling method</returns>
-        public static string MethodName()
-        {
+        public static string MethodName() {
             return new StackTrace(1).GetFrame(0).GetMethod().Name;
         }
 
@@ -620,24 +573,18 @@ namespace Org.X509Crypto
         #region Internal Methods
 
 
-        internal static string cleanThumbprint(string certThumbprint)
-        {
+        internal static string cleanThumbprint(string certThumbprint) {
             throw new NotImplementedException();
         }
 
-        internal static void VerifyFile(string pfxPath)
-        {
+        internal static void VerifyFile(string pfxPath) {
             throw new NotImplementedException();
         }
 
-        internal static bool IISGroupExists()
-        {
-            if (iisGroupChecked)
-            {
+        internal static bool IISGroupExists() {
+            if (iisGroupChecked) {
                 return iisGroupExists;
-            }
-            else
-            {
+            } else {
                 var machine = Environment.MachineName;
                 var server = new DirectoryEntry($"WinNT://{machine},Computer");
                 iisGroupExists = server.Children.Cast<DirectoryEntry>().Any(d => d.SchemaClassName.Equals(Constants.Group) && d.Name.Equals(Constants.IISGroup));
@@ -650,35 +597,29 @@ namespace Org.X509Crypto
 
         #region Private Methods
 
-        private static void CheckForFile(string path)
-        {
-            if (!File.Exists(path))
+        private static void CheckForFile(string path) {
+            if (!File.Exists(path)) {
                 throw new FileNotFoundException(string.Format("\"{0}\": File not found", path));
+            }
         }
 
-        private static string Rnd(int length)
-        {
+        private static string Rnd(int length) {
             Random random = new Random();
             string charSet = @"abcdefghijklmopqrstuvwxyz0123456789";
             return new string(Enumerable.Repeat(charSet, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        private static byte[] Hash(string path)
-        {
-            using (var md5 = MD5.Create())
-            {
-                using (var stream = File.OpenRead(path))
-                {
+        private static byte[] Hash(string path) {
+            using (var md5 = MD5.Create()) {
+                using (var stream = File.OpenRead(path)) {
                     return md5.ComputeHash(stream);
                 }
             }
         }
 
-        private static void AddIISKeyAccess(string thumbprint)
-        {
-            if (!IISGroupExists())
-            {
+        private static void AddIISKeyAccess(string thumbprint) {
+            if (!IISGroupExists()) {
                 return;
             }
 
@@ -687,25 +628,21 @@ namespace Org.X509Crypto
 
             X509Store Store = new X509Store(StoreLocation.LocalMachine);
             Store.Open(OpenFlags.ReadWrite);
-            foreach(X509Certificate2 machineCert in Store.Certificates)
-            {
-                if (machineCert.Thumbprint.Matches(thumbprint) && machineCert.HasPrivateKey)
-                {
+            foreach (X509Certificate2 machineCert in Store.Certificates) {
+                if (machineCert.Thumbprint.Matches(thumbprint) && machineCert.HasPrivateKey) {
                     cert = machineCert;
                     certFound = true;
                     break;
                 }
             }
 
-            if (!certFound)
-            {
+            if (!certFound) {
                 throw new X509CryptoException($"The certificate was not found in the {X509Context.SystemReadOnly.Name} {nameof(X509Context)}");
             }
 
             RSACryptoServiceProvider Rsa = cert.PrivateKey as RSACryptoServiceProvider;
 
-            if (Rsa != null)
-            {
+            if (Rsa != null) {
                 string keyFilePath = FindKeyLocation(Rsa.CspKeyContainerInfo.UniqueKeyContainerName);
                 FileInfo file = new FileInfo(keyFilePath);
                 FileSecurity FileSec = file.GetAccessControl();
@@ -714,15 +651,11 @@ namespace Org.X509Crypto
             }
         }
 
-        private static string FindKeyLocation(string containerName)
-        {
+        private static string FindKeyLocation(string containerName) {
             string keyPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), Constants.MachineKeyPath, containerName);
-            if (File.Exists(keyPath))
-            {
+            if (File.Exists(keyPath)) {
                 return keyPath;
-            }
-            else
-            {
+            } else {
                 throw new FileNotFoundException(@"The indicated path where the machine private key material should be located does not exist");
             }
         }

@@ -909,7 +909,7 @@ namespace X509CryptoExe
                                             Constants.MinimumPasswordLength,
                                             Constants.ConfirmPasswordsMatch);
 
-                X509CryptoAgent.ExportPFX(thumbprint, Context, outfile, Password.Plaintext());
+                X509CryptoAgent.ExportPFX(thumbprint, Context, outfile, Password.ToUnSecureString());
 
                 ConsoleMessage($"Encryption certificate with thumbprint {thumbprint} from the {Context.Name} {nameof(X509Context)} has been exported to the file {outfile.InQuotes()}");
 

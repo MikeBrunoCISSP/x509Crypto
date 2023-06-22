@@ -250,8 +250,9 @@ namespace Org.X509Crypto
                         outFS.Close();
                     }
                 }
-                if (!File.Exists(cipherText))
+                if (!File.Exists(cipherText)) {
                     throw new FileNotFoundException(string.Format("\"{0}\": Ciphertext file not created", cipherText));
+                }
             }
         }
 
@@ -335,8 +336,9 @@ namespace Org.X509Crypto
                     }
                 }
 
-                if (!File.Exists(cipherText))
+                if (!File.Exists(cipherText)) {
                     throw new FileNotFoundException(string.Format("\"{0}\": Ciphertext file not created", cipherText));
+                }
             }
         }
 
@@ -427,8 +429,9 @@ namespace Org.X509Crypto
                                 outStream.Flush();
                                 outStream.Position = 0;
 
-                                using (StreamReader reader = new StreamReader(outStream))
+                                using (StreamReader reader = new StreamReader(outStream)) {
                                     plainText = reader.ReadToEnd();
+                                }
 
                                 cryptoStream.Close();
                             }
@@ -524,8 +527,9 @@ namespace Org.X509Crypto
                     }
                 }
             }
-            if (!File.Exists(plainText))
+            if (!File.Exists(plainText)) {
                 throw new FileNotFoundException(string.Format("\"{0}\": plaintext file not created.", plainText));
+            }
         }
 
         /// <summary>
@@ -644,8 +648,9 @@ namespace Org.X509Crypto
         /// </example>
         public string DecryptTextFromFile(string path)
         {
-            if (!File.Exists(path))
+            if (!File.Exists(path)) {
                 throw new FileNotFoundException(path);
+            }
 
             string cipherText;
             using (FileStream inStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -670,13 +675,15 @@ namespace Org.X509Crypto
             {
                 if (cert.Thumbprint.Matches(thumbprint))
                 {
-                    if (cert.HasPrivateKey & IsUsable(cert, false))
+                    if (cert.HasPrivateKey & IsUsable(cert, false)) {
                         colletion.Add(cert);
+                    }
                 }
             }
 
-            if (colletion.Count != 1)
+            if (colletion.Count != 1) {
                 throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
+            }
 
             try
             {
@@ -846,8 +853,9 @@ namespace Org.X509Crypto
 
         internal static bool IsUsable(X509Certificate2 cert, bool allowExpired)
         {
-            if (!cert.HasPrivateKey)
+            if (!cert.HasPrivateKey) {
                 return false;
+            }
 
             foreach (X509Extension extension in cert.Extensions)
             {

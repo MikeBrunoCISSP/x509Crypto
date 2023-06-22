@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30225.117
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "x509CryptoExe", "src\CLI\x509CryptoExe.csproj", "{FDC69484-5A1E-4168-AEB4-23EEF207861A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "X509CryptoPOSH", "src\POSH\X509CryptoPOSH.csproj", "{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "X509Crypto", "src\API\X509Crypto.csproj", "{576C3769-CD6B-480C-AC32-007EC43AD8FC}"
@@ -17,10 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FDC69484-5A1E-4168-AEB4-23EEF207861A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5FC498F0-CD7D-4FBA-84FA-A4C106FE78E5}.Release|Any CPU.ActiveCfg = Release|Any CPU

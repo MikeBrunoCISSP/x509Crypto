@@ -1,20 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Org.X509Crypto;
 using System.Management.Automation;
-using System.ComponentModel;
+using Org.X509Crypto;
 
-namespace X509CryptoPOSH
-{
+namespace X509CryptoPOSH {
     #region New-X509Alias
 
     [Cmdlet(VerbsCommon.New, nameof(X509Alias))]
     [OutputType(typeof(X509Alias))]
-    public class NewX509Alias : Cmdlet
-    {
+    public class NewX509Alias : Cmdlet {
         [Parameter(Mandatory = true, HelpMessage = "The desired name for the X509Alias")]
         [Alias("Alias", nameof(X509Alias))]
         public string Name { get; set; }
@@ -30,46 +23,39 @@ namespace X509CryptoPOSH
 
         private X509Alias Result;
 
-        protected override void BeginProcessing()
-        {
+        protected override void BeginProcessing() {
             base.BeginProcessing();
         }
 
-        protected override void ProcessRecord()
-        {
+        protected override void ProcessRecord() {
             base.ProcessRecord();
             DoWork();
             WriteObject(Result);
         }
 
-        private void DoWork()
-        {
+        private void DoWork() {
             context = X509Context.Select(Location, true);
-            if (string.IsNullOrEmpty(Thumbprint))
-            {
+            if (string.IsNullOrEmpty(Thumbprint)) {
                 Thumbprint = MakeCert();
             }
 
             X509Alias Alias = new X509Alias(Name, Thumbprint, context, true);
             Alias.Commit();
             Result = Alias;
-            Console.WriteLine($"New alias {Name.InQuotes()} committed to {context.Name.InQuotes()} {nameof(X509Context)}\r\nThumbprint: {Alias.Thumbprint}");
+            Console.WriteLine($@"New alias '{Name}' committed to '{context.Name}' {nameof(X509Context)}
+  Thumbprint: {Alias.Thumbprint}");
         }
 
-        private string MakeCert()
-        {
+        private string MakeCert() {
             string commonName = string.Empty;
             string thumbprint = string.Empty;
-            if (context == X509Context.UserFull)
-            {
+            if (context == X509Context.UserFull) {
                 commonName = Environment.UserName;
-            }
-            else
-            {
+            } else {
                 commonName = Environment.MachineName;
             }
 
-            context.MakeCertWorker(commonName, 2048, 10, out thumbprint);
+            context.MakeCert(commonName, 2048, 10, out thumbprint);
             return thumbprint;
         }
     }

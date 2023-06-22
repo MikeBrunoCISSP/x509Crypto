@@ -147,7 +147,7 @@ namespace X509CryptoPOSH
             }
 
             var Password = Util.GetPassword(@"Enter a strong password (needed to unlock the .pfx file)", Constants.MinimumPasswordLength, true);
-            X509CryptoAgent.ExportPFX(Alias.Thumbprint, Alias.Context, Path, Password.Plaintext());
+            X509CryptoAgent.ExportPFX(Alias.Thumbprint, Alias.Context, Path, Password.ToUnSecureString());
             Util.ConsoleMessage($"Encryption certificate with thumbprint {Alias.Thumbprint} from the {Alias.Context.Name} {nameof(X509Context)} has been exported to the file {Path.InQuotes()}");
             Result = new FileInfo(Path);
         }

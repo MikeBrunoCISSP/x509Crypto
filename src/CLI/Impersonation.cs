@@ -60,7 +60,7 @@ namespace X509CryptoExe
                 #region Load User Profile
 
                 //Get a token for the impersonated user
-                LogonUser(ImpUser, ImpDomain, ImpSecret.Plaintext(), LoginType.LOGON32_LOGON_BATCH, Constants.LOGON32_PROVIDER_DEFAULT, ref Token);
+                LogonUser(ImpUser, ImpDomain, ImpSecret.ToUnSecureString(), LoginType.LOGON32_LOGON_BATCH, Constants.LOGON32_PROVIDER_DEFAULT, ref Token);
 
                 //Load the impersonated user profile
                 ProfileInfo profileInfo = new ProfileInfo();
