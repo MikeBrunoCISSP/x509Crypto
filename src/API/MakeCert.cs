@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Org.BouncyCastle.Security;
 
 namespace Org.X509Crypto {
     public partial class X509Context {
-        private static SecureRandom secureRandom = new SecureRandom();
-
         public void MakeCert(string name, int keyLength, int yearsValid, out string thumbprint) {
             try {
                 using var rsa = RSA.Create(keyLength);
