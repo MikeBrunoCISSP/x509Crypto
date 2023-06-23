@@ -274,7 +274,7 @@ namespace Org.X509Crypto {
                 File.Delete(ciphertextFilePath);
             } else {
                 try { File.Delete(tmpCopy); } catch { }
-                throw new Exception(string.Format("Could not back up original file \"{0}\"", ciphertextFilePath));
+                throw new Exception(string.Format("Could not back up original file '{0}'", ciphertextFilePath));
             }
 
             try {
@@ -287,7 +287,7 @@ namespace Org.X509Crypto {
                 }
 
                 if (!File.Exists(ciphertextFilePath)) {
-                    throw new FileNotFoundException($"\"{ciphertextFilePath}\": File not found after cryptographic operation. Restoring original");
+                    throw new FileNotFoundException($"'{ciphertextFilePath}': File not found after cryptographic operation. Restoring original");
                 }
             } catch (Exception ex) {
                 if (File.Exists(ciphertextFilePath)) {
@@ -334,7 +334,7 @@ namespace Org.X509Crypto {
                 foreach (X509Certificate2 cert in certCol) {
                     if (X509CryptoAgent.IsUsable(cert, Constants.ProbeMode)) {
                         keyChain.Add(cert);
-                        if (Context.Index == X509Context.Indexer.SystemFull || Context.Index == X509Context.Indexer.SystemReadOnly) {
+                        if (Context.ContextType == X509ContextType.SystemFull || Context.ContextType == X509ContextType.SystemReadOnly) {
                             AddIISKeyAccess(cert.Thumbprint);
                         }
                         certInstalled = true;
@@ -449,7 +449,7 @@ namespace Org.X509Crypto {
                     try {
                         X509Certificate2 test = new X509Certificate2(exportPath);
                     } catch (CryptographicException ex) {
-                        throw new X509CryptoException($"Certificate with thumbprint {certThumbprint} was exported to path \"{exportPath}\" but the file seems to be corrupt and unusable", ex);
+                        throw new X509CryptoException($"Certificate with thumbprint {certThumbprint} was exported to path '{exportPath}' but the file seems to be corrupt and unusable", ex);
                     }
 
                     return exportPath;
@@ -599,7 +599,7 @@ namespace Org.X509Crypto {
 
         private static void CheckForFile(string path) {
             if (!File.Exists(path)) {
-                throw new FileNotFoundException(string.Format("\"{0}\": File not found", path));
+                throw new FileNotFoundException(string.Format("'{0}': File not found", path));
             }
         }
 

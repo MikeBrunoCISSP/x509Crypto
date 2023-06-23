@@ -21,15 +21,15 @@ namespace Org.X509Crypto {
         /// </summary>
         /// <param name="Alias">The X509Alias that already exists</param>
         public X509AliasAlreadyExistsException(X509Alias Alias)
-            : base($"An X509Alias named \"{Alias.Name}\" already exists in the {Alias.Context.Name} context.") { }
+            : base($"An X509Alias named '{Alias.Name}' already exists in the {Alias.Context.Name} context.") { }
     }
 
     /// <summary>
     /// Thrown if an X509Secret is attempted to be added to an X509Alias, and the alias already contains a secret with the same name.
     /// </summary>
     public class X509SecretAlreadyExistsException : Exception {
-        internal X509SecretAlreadyExistsException(X509Alias Alias, X509Secret Secret)
-            : base($"An X509Secret with identifier \"{Secret.Key}\" already exists in the \"{Alias.Name}\" alias.") { }
+        internal X509SecretAlreadyExistsException(X509Alias Alias, string identifier)
+            : base($"An X509Secret with identifier '{identifier}' already exists in the '{Alias.Name}' alias.") { }
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ namespace Org.X509Crypto {
         /// <param name="thumbprint">The thumbprint of the certificate which could not be located in the specified X509Context</param>
         /// <param name="Context">The X509Context which was checked for the encryption certificate</param>
         public X509CryptoCertificateNotFoundException(string thumbprint, X509Context Context)
-            : base($"A certificate with thumbprint \"{thumbprint}\" was not found in the \"{Context.Name}\" context.") { }
+            : base($"A certificate with thumbprint '{thumbprint}' was not found in the '{Context.Name}' context.") { }
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ namespace Org.X509Crypto {
     /// </summary>
     public class X509ContextNotSupported : Exception {
         internal X509ContextNotSupported(string contextName)
-            : base($"\"{contextName}\": Unsupported X509Context name. Valid entries are \"{X509ContextName.User}\" and \"{X509ContextName.System}\".") { }
+            : base($"'{contextName}': Unsupported X509Context name. Valid entries are '{X509ContextName.User}' and '{X509ContextName.System}'.") { }
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ namespace Org.X509Crypto {
     /// </summary>
     public class X509AliasAttributeNotFoundException : Exception {
         internal X509AliasAttributeNotFoundException(string identifier, string aliasName)
-            : base($"Attribute \"{identifier}\" not found in alias \"{aliasName}\"") { }
+            : base($"Attribute '{identifier}' not found in alias '{aliasName}'") { }
     }
 
     /// <summary>

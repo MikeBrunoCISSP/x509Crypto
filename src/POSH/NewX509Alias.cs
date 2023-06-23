@@ -12,7 +12,7 @@ namespace X509CryptoPOSH {
         [Alias("Alias", nameof(X509Alias))]
         public string Name { get; set; }
 
-        [Parameter(Mandatory = true, HelpMessage = "The X509Context in which to create the alias. Acceptable values are \"user\" and \"system\"")]
+        [Parameter(Mandatory = true, HelpMessage = "The X509Context in which to create the alias. Acceptable values are 'user' and 'system'")]
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
@@ -34,7 +34,7 @@ namespace X509CryptoPOSH {
         }
 
         private void DoWork() {
-            context = X509Context.Select(Location, true);
+            context = X509Context.Select(Location);
             if (string.IsNullOrEmpty(Thumbprint)) {
                 Thumbprint = MakeCert();
             }

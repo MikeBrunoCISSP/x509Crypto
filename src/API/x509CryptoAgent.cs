@@ -1,21 +1,19 @@
 ﻿using System;
-using System.Text;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text;
 
-namespace Org.X509Crypto
-{
+namespace Org.X509Crypto {
     /// <summary>
     /// Instantiatable class which can be used to perform cryptographic operations on string expressions and files. 
     /// </summary>
     /// <remarks>
     /// It is advisable to leverage an instance of this class in your method/module if you need to perform several cryptographic operations within the stack frame.
     /// </remarks>
-    public class X509CryptoAgent : IDisposable
-    {
+    public class X509CryptoAgent : IDisposable {
 
         #region Member Fields
 
@@ -51,23 +49,20 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="thumbprint">The thumbprint of the encryption certificate.  The certificate must be present in the CURRENTUSER store location</param>
         /// <param name="context">The X509Context where the encryption certificate can be accessed</param>  
-        public X509CryptoAgent(string thumbprint, X509Context context)
-        {
+        public X509CryptoAgent(string thumbprint, X509Context context) {
             Thumbprint = thumbprint.RemoveNonHexChars();
             Context = context;
             GetRSAKeys(Thumbprint);
         }
 
         internal X509CryptoAgent(X509Alias Alias)
-            : this(Alias.Thumbprint, Alias.Context)
-        { }
+            : this(Alias.Thumbprint, Alias.Context) { }
 
 
         /// <summary>
         /// X509CryptoAgent Destructor
         /// </summary>
-        public void Dispose()
-        {
+        public void Dispose() {
             publicKey = null;
             privateKey = null;
         }
@@ -94,19 +89,16 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public string EncryptText(string plainText)
-        {
+        public string EncryptText(string plainText) {
             byte[] cipherTextBytes;
             byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
 
-            using (AesManaged aesManaged = new AesManaged())
-            {
+            using (AesManaged aesManaged = new AesManaged()) {
                 aesManaged.KeySize = CryptoConstants.AESKeySize;
                 aesManaged.BlockSize = CryptoConstants.AESBlockSize;
                 aesManaged.Mode = CipherMode.CBC;
 
-                using (ICryptoTransform transform = aesManaged.CreateEncryptor())
-                {
+                using (ICryptoTransform transform = aesManaged.CreateEncryptor()) {
                     byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
@@ -120,8 +112,7 @@ namespace Org.X509Crypto
                     int IVLength = aesManaged.IV.Length;
                     IVLengthIndicator = BitConverter.GetBytes(IVLength);
 
-                    using (MemoryStream memStream = new MemoryStream())
-                    {
+                    using (MemoryStream memStream = new MemoryStream()) {
                         memStream.Write(KeyLengthIndicator, 0, CryptoConstants.AESBytes);
                         memStream.Write(IVLengthIndicator, 0, CryptoConstants.AESBytes);
 
@@ -129,8 +120,7 @@ namespace Org.X509Crypto
                         memStream.Write(aesManaged.IV, 0, IVLength);
 
                         //Write the ciphertext using a CryptoStream
-                        using (CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write))
-                        {
+                        using (CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write)) {
                             int count = 0;
                             int offset = 0;
                             int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
@@ -138,10 +128,8 @@ namespace Org.X509Crypto
                             byte[] data = new byte[blockSizeInBytes];
                             int bytesRead = 0;
 
-                            using (MemoryStream inStream = new MemoryStream(plainTextBytes, false))
-                            {
-                                do
-                                {
+                            using (MemoryStream inStream = new MemoryStream(plainTextBytes, false)) {
+                                do {
                                     count = inStream.Read(data, 0, blockSizeInBytes);
                                     offset += count;
                                     cryptoStream.Write(data, 0, count);
@@ -169,8 +157,7 @@ namespace Org.X509Crypto
         /// <param name="ciphertext">the ciphertext expression to be re-encrypted</param>
         /// <param name="newAgent">the X509CryptoAgent to be used to perform re-encryption</param>
         /// <returns></returns>
-        public string ReEncryptText(string ciphertext, X509CryptoAgent newAgent)
-        {
+        public string ReEncryptText(string ciphertext, X509CryptoAgent newAgent) {
             return newAgent.EncryptText(DecryptText(ciphertext));
         }
 
@@ -192,39 +179,34 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public void EncryptFile(string plainText, string cipherText)
-        {
-            using (AesManaged aesManaged = new AesManaged())
-            {
+        public void EncryptFile(string plainText, string cipherText) {
+            using (AesManaged aesManaged = new AesManaged()) {
                 aesManaged.KeySize = CryptoConstants.AESKeySize;
                 aesManaged.BlockSize = CryptoConstants.AESBlockSize;
                 aesManaged.Mode = CipherMode.CBC;
 
-                using (ICryptoTransform transform = aesManaged.CreateEncryptor())
-                {
+                using (ICryptoTransform transform = aesManaged.CreateEncryptor()) {
                     byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
                     byte[] IVLengthIndicator = new byte[CryptoConstants.AESBytes];
 
-                    
+
                     int keyLength = keyEncrypted.Length;
                     KeyLengthIndicator = BitConverter.GetBytes(keyLength);
 
                     int IVLength = aesManaged.IV.Length;
                     IVLengthIndicator = BitConverter.GetBytes(IVLength);
 
-                    using (FileStream outFS = new FileStream(cipherText, FileMode.Create))
-                    {
+                    using (FileStream outFS = new FileStream(cipherText, FileMode.Create)) {
                         outFS.Write(KeyLengthIndicator, 0, CryptoConstants.AESBytes);
                         outFS.Write(IVLengthIndicator, 0, CryptoConstants.AESBytes);
 
                         outFS.Write(keyEncrypted, 0, keyLength);
                         outFS.Write(aesManaged.IV, 0, IVLength);
 
-                        using (CryptoStream outStreamEncrypted = new CryptoStream(outFS, transform, CryptoStreamMode.Write))
-                        {
+                        using (CryptoStream outStreamEncrypted = new CryptoStream(outFS, transform, CryptoStreamMode.Write)) {
                             int count = 0;
                             int offset = 0;
                             int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
@@ -232,10 +214,8 @@ namespace Org.X509Crypto
                             byte[] data = new byte[blockSizeInBytes];
                             int bytesRead = 0;
 
-                            using (FileStream inStream = new FileStream(plainText, FileMode.Open))
-                            {
-                                do
-                                {
+                            using (FileStream inStream = new FileStream(plainText, FileMode.Open)) {
+                                do {
                                     count = inStream.Read(data, 0, blockSizeInBytes);
                                     offset += count;
                                     outStreamEncrypted.Write(data, 0, count);
@@ -251,7 +231,7 @@ namespace Org.X509Crypto
                     }
                 }
                 if (!File.Exists(cipherText)) {
-                    throw new FileNotFoundException(string.Format("\"{0}\": Ciphertext file not created", cipherText));
+                    throw new FileNotFoundException(string.Format("'{0}': Ciphertext file not created", cipherText));
                 }
             }
         }
@@ -277,39 +257,34 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public void EncryptFileFromByteArray(byte[] memBytes, string cipherText)
-        {
-            using (AesManaged aesManaged = new AesManaged())
-            {
+        public void EncryptFileFromByteArray(byte[] memBytes, string cipherText) {
+            using (AesManaged aesManaged = new AesManaged()) {
                 aesManaged.KeySize = CryptoConstants.AESKeySize;
                 aesManaged.BlockSize = CryptoConstants.AESBlockSize;
                 aesManaged.Mode = CipherMode.CBC;
 
-                using (ICryptoTransform transform = aesManaged.CreateEncryptor())
-                {
+                using (ICryptoTransform transform = aesManaged.CreateEncryptor()) {
                     byte[] keyEncrypted = publicKey.Encrypt(aesManaged.Key, RSAEncryptionPadding.OaepSHA384);
 
                     //Contain the length values of the key and IV respectively
                     byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
                     byte[] IVLengthIndicator = new byte[CryptoConstants.AESBytes];
 
-                    
+
                     int keyLength = keyEncrypted.Length;
                     KeyLengthIndicator = BitConverter.GetBytes(keyLength);
 
                     int IVLength = aesManaged.IV.Length;
                     IVLengthIndicator = BitConverter.GetBytes(IVLength);
 
-                    using (FileStream outFS = new FileStream(cipherText, FileMode.Create))
-                    {
+                    using (FileStream outFS = new FileStream(cipherText, FileMode.Create)) {
                         outFS.Write(KeyLengthIndicator, 0, CryptoConstants.AESBytes);
                         outFS.Write(IVLengthIndicator, 0, CryptoConstants.AESBytes);
 
                         outFS.Write(keyEncrypted, 0, keyLength);
                         outFS.Write(aesManaged.IV, 0, IVLength);
 
-                        using (CryptoStream outStreamEncrypted = new CryptoStream(outFS, transform, CryptoStreamMode.Write))
-                        {
+                        using (CryptoStream outStreamEncrypted = new CryptoStream(outFS, transform, CryptoStreamMode.Write)) {
                             int count = 0;
                             int offset = 0;
                             int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
@@ -317,10 +292,8 @@ namespace Org.X509Crypto
                             byte[] data = new byte[blockSizeInBytes];
                             int bytesRead = 0;
 
-                            using (MemoryStream memStream = new MemoryStream(memBytes))
-                            {
-                                do
-                                {
+                            using (MemoryStream memStream = new MemoryStream(memBytes)) {
+                                do {
                                     count = memStream.Read(data, 0, blockSizeInBytes);
                                     offset += count;
                                     outStreamEncrypted.Write(data, 0, count);
@@ -337,7 +310,7 @@ namespace Org.X509Crypto
                 }
 
                 if (!File.Exists(cipherText)) {
-                    throw new FileNotFoundException(string.Format("\"{0}\": Ciphertext file not created", cipherText));
+                    throw new FileNotFoundException(string.Format("'{0}': Ciphertext file not created", cipherText));
                 }
             }
         }
@@ -360,15 +333,13 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public string DecryptText(string cipherText)
-        {
+        public string DecryptText(string cipherText) {
             string plainText;
 
             byte[] cipherTextBytes = Convert.FromBase64String(cipherText);
             byte[] plainTextBytes = new byte[cipherTextBytes.Length];
 
-            using (AesManaged aesManaged = new AesManaged())
-            {
+            using (AesManaged aesManaged = new AesManaged()) {
                 aesManaged.KeySize = CryptoConstants.AESKeySize;
                 aesManaged.BlockSize = CryptoConstants.AESBlockSize;
                 aesManaged.Mode = CipherMode.CBC;
@@ -376,11 +347,10 @@ namespace Org.X509Crypto
                 byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
                 byte[] IVLengthIndicator = new byte[CryptoConstants.AESBytes];
 
-                using (MemoryStream inStream = new MemoryStream(cipherTextBytes))
-                {
+                using (MemoryStream inStream = new MemoryStream(cipherTextBytes)) {
                     inStream.Seek(0, SeekOrigin.Begin);
                     inStream.Seek(0, SeekOrigin.Begin);
-                    inStream.Read(KeyLengthIndicator, 0, (CryptoConstants.AESBytes-1));
+                    inStream.Read(KeyLengthIndicator, 0, (CryptoConstants.AESBytes - 1));
 
                     inStream.Seek(CryptoConstants.AESBytes, SeekOrigin.Begin);
                     inStream.Read(IVLengthIndicator, 0, (CryptoConstants.AESBytes - 1));
@@ -404,10 +374,8 @@ namespace Org.X509Crypto
 
                     byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
-                    using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
-                    {
-                        using (MemoryStream outStream = new MemoryStream())
-                        {
+                    using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV)) {
+                        using (MemoryStream outStream = new MemoryStream()) {
                             int count = 0;
                             int offset = 0;
                             int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
@@ -415,10 +383,8 @@ namespace Org.X509Crypto
                             byte[] data = new byte[blockSizeInBytes];
                             inStream.Seek(cipherTextStartingPoint, SeekOrigin.Begin);
 
-                            using (CryptoStream cryptoStream = new CryptoStream(outStream, transform, CryptoStreamMode.Write))
-                            {
-                                do
-                                {
+                            using (CryptoStream cryptoStream = new CryptoStream(outStream, transform, CryptoStreamMode.Write)) {
+                                do {
                                     count = inStream.Read(data, 0, blockSizeInBytes);
                                     offset += count;
                                     cryptoStream.Write(data, 0, count);
@@ -461,10 +427,8 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public void DecryptFile(string cipherText, string plainText)
-        {
-            using (AesManaged aesManaged = new AesManaged())
-            {
+        public void DecryptFile(string cipherText, string plainText) {
+            using (AesManaged aesManaged = new AesManaged()) {
                 aesManaged.KeySize = CryptoConstants.AESKeySize;
                 aesManaged.BlockSize = CryptoConstants.AESBlockSize;
                 aesManaged.Mode = CipherMode.CBC;
@@ -472,8 +436,7 @@ namespace Org.X509Crypto
                 byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
                 byte[] IVLengthIndicator = new byte[CryptoConstants.AESBytes];
 
-                using (FileStream inFS = new FileStream(cipherText, FileMode.Open))
-                {
+                using (FileStream inFS = new FileStream(cipherText, FileMode.Open)) {
                     inFS.Seek(0, SeekOrigin.Begin);
                     inFS.Seek(0, SeekOrigin.Begin);
                     inFS.Read(KeyLengthIndicator, 0, CryptoConstants.AESReadCount);
@@ -498,10 +461,8 @@ namespace Org.X509Crypto
 
                     byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
-                    using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
-                    {
-                        using (FileStream outFS = new FileStream(plainText, FileMode.Create))
-                        {
+                    using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV)) {
+                        using (FileStream outFS = new FileStream(plainText, FileMode.Create)) {
                             int count = 0;
                             int offset = 0;
                             int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
@@ -509,10 +470,8 @@ namespace Org.X509Crypto
                             byte[] data = new byte[blockSizeInBytes];
 
                             inFS.Seek(cipherTextStart, SeekOrigin.Begin);
-                            using (CryptoStream decryptedStream = new CryptoStream(outFS, transform, CryptoStreamMode.Write))
-                            {
-                                do
-                                {
+                            using (CryptoStream decryptedStream = new CryptoStream(outFS, transform, CryptoStreamMode.Write)) {
+                                do {
                                     count = inFS.Read(data, 0, blockSizeInBytes);
                                     offset += count;
                                     decryptedStream.Write(data, 0, count);
@@ -528,7 +487,7 @@ namespace Org.X509Crypto
                 }
             }
             if (!File.Exists(plainText)) {
-                throw new FileNotFoundException(string.Format("\"{0}\": plaintext file not created.", plainText));
+                throw new FileNotFoundException(string.Format("'{0}': plaintext file not created.", plainText));
             }
         }
 
@@ -554,14 +513,12 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public byte[] DecryptFileToByteArray(string cipherText)
-        {
+        public byte[] DecryptFileToByteArray(string cipherText) {
             MemoryStream outMs = new MemoryStream();
             CryptoStream decryptedStream = null;
             byte[] memBytes = null;
 
-            using (AesManaged aesManaged = new AesManaged())
-            {
+            using (AesManaged aesManaged = new AesManaged()) {
                 aesManaged.KeySize = CryptoConstants.AESKeySize;
                 aesManaged.BlockSize = CryptoConstants.AESBlockSize;
                 aesManaged.Mode = CipherMode.CBC;
@@ -569,8 +526,7 @@ namespace Org.X509Crypto
                 byte[] KeyLengthIndicator = new byte[CryptoConstants.AESBytes];
                 byte[] IVLengthIndicator = new byte[CryptoConstants.AESBytes];
 
-                using (FileStream inFS = new FileStream(cipherText, FileMode.Open))
-                {
+                using (FileStream inFS = new FileStream(cipherText, FileMode.Open)) {
                     inFS.Seek(0, SeekOrigin.Begin);
                     inFS.Seek(0, SeekOrigin.Begin);
                     inFS.Read(KeyLengthIndicator, 0, CryptoConstants.AESReadCount);
@@ -595,32 +551,29 @@ namespace Org.X509Crypto
 
                     byte[] keyDecrypted = privateKey.Decrypt(keyEncrypted, RSAEncryptionPadding.OaepSHA384);
 
-                    using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV))
-                    {
-                            int count = 0;
-                            int offset = 0;
-                            int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
+                    using (ICryptoTransform transform = aesManaged.CreateDecryptor(keyDecrypted, IV)) {
+                        int count = 0;
+                        int offset = 0;
+                        int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
 
-                            byte[] data = new byte[blockSizeInBytes];
+                        byte[] data = new byte[blockSizeInBytes];
 
-                            inFS.Seek(cipherTextStart, SeekOrigin.Begin);
-                            using (decryptedStream = new CryptoStream(outMs, transform, CryptoStreamMode.Write))
-                            {
-                                do
-                                {
-                                    count = inFS.Read(data, 0, blockSizeInBytes);
-                                    offset += count;
-                                    decryptedStream.Write(data, 0, count);
-                                }
-                                while (count > 0);
-
-                                decryptedStream.FlushFinalBlock();
-                                memBytes = new byte[outMs.Length];
-                                outMs.Position = 0;
-                                outMs.Read(memBytes, 0, memBytes.Length);
-                                decryptedStream.Close();
+                        inFS.Seek(cipherTextStart, SeekOrigin.Begin);
+                        using (decryptedStream = new CryptoStream(outMs, transform, CryptoStreamMode.Write)) {
+                            do {
+                                count = inFS.Read(data, 0, blockSizeInBytes);
+                                offset += count;
+                                decryptedStream.Write(data, 0, count);
                             }
-                            inFS.Close();
+                            while (count > 0);
+
+                            decryptedStream.FlushFinalBlock();
+                            memBytes = new byte[outMs.Length];
+                            outMs.Position = 0;
+                            outMs.Read(memBytes, 0, memBytes.Length);
+                            decryptedStream.Close();
+                        }
+                        inFS.Close();
                     }
                 }
             }
@@ -646,18 +599,15 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public string DecryptTextFromFile(string path)
-        {
+        public string DecryptTextFromFile(string path) {
             if (!File.Exists(path)) {
                 throw new FileNotFoundException(path);
             }
 
             string cipherText;
-            using (FileStream inStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            {
-                using (StreamReader reader = new StreamReader(inStream))
-                {
-                    cipherText = reader.ReadToEnd().Trim(new char[] { '\r', '\n', ' '});
+            using (FileStream inStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+                using (StreamReader reader = new StreamReader(inStream)) {
+                    cipherText = reader.ReadToEnd().Trim(new char[] { '\r', '\n', ' ' });
                     reader.Close();
                 }
                 inStream.Close();
@@ -666,15 +616,12 @@ namespace Org.X509Crypto
             return DecryptText(cipherText);
         }
 
-        private void GetRSAKeys(string thumbprint)
-        {
+        private void GetRSAKeys(string thumbprint) {
             X509Certificate2Collection colletion = new X509Certificate2Collection();
             X509Store keyStore = new X509Store(Context.Location);
             keyStore.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in keyStore.Certificates)
-            {
-                if (cert.Thumbprint.Matches(thumbprint))
-                {
+            foreach (X509Certificate2 cert in keyStore.Certificates) {
+                if (cert.Thumbprint.Matches(thumbprint)) {
                     if (cert.HasPrivateKey & IsUsable(cert, false)) {
                         colletion.Add(cert);
                     }
@@ -685,18 +632,14 @@ namespace Org.X509Crypto
                 throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
             }
 
-            try
-            {
-                foreach (X509Certificate2 cert in colletion)
-                {
+            try {
+                foreach (X509Certificate2 cert in colletion) {
                     publicKey = cert.GetRSAPublicKey();
                     privateKey = cert.GetRSAPrivateKey();
                     break;
                 }
                 valid = true;
-            }
-            catch (CryptographicException ex)
-            {
+            } catch (CryptographicException ex) {
                 throw new X509CryptoException($"An exception occurred while attempting to load RSA key pair associated with the encryption certificate with thumbprint {thumbprint} from the {Context.Name} context", ex);
             }
         }
@@ -725,16 +668,13 @@ namespace Org.X509Crypto
         /// }
         /// </code>
         /// </example>
-        public static bool CertificateExists(string certThumbprint, X509Context Context)
-        {
+        public static bool CertificateExists(string certThumbprint, X509Context Context) {
             certThumbprint = certThumbprint.RemoveNonHexChars();
 
             X509Store store = new X509Store(StoreName.My, Context.Location);
             store.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in store.Certificates)
-            {
-                if (cert.Thumbprint.Matches(certThumbprint) && IsUsable(cert, true))
-                {
+            foreach (X509Certificate2 cert in store.Certificates) {
+                if (cert.Thumbprint.Matches(certThumbprint) && IsUsable(cert, true)) {
                     return true;
                 }
             }
@@ -747,8 +687,7 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="Alias">The X509Alias to check for encryption certificate existence</param>
         /// <returns>true if the encryption certificate referenced in the X509Alias exists in the alias context</returns>
-        public static bool CertificateExists(X509Alias Alias)
-        {
+        public static bool CertificateExists(X509Alias Alias) {
             return CertificateExists(Alias.Thumbprint, Alias.Context);
         }
 
@@ -758,10 +697,8 @@ namespace Org.X509Crypto
         /// <param name="thumbprint">Thumbprint of the certificate to be exported</param>
         /// <param name="Context">The X509Context where the certificate to be exported exists</param>
         /// <param name="path">The storage path to where the file containing the public certificate should be written</param>
-        public static void ExportCert(string thumbprint, X509Context Context, string path)
-        {
-            if (File.Exists(path))
-            {
+        public static void ExportCert(string thumbprint, X509Context Context, string path) {
+            if (File.Exists(path)) {
                 File.Delete(path);
             }
 
@@ -772,13 +709,10 @@ namespace Org.X509Crypto
             File.WriteAllText(path, sb.ToString());
             Util.VerifyFileExists(path);
 
-            try
-            {
+            try {
                 X509Certificate2 test = new X509Certificate2(path);
-            }
-            catch (CryptographicException ex)
-            {
-                throw new X509CryptoException($"Public certificate with thumbprint {thumbprint} was exported to file path \"{path}\" but the file contents are not usable", ex);
+            } catch (CryptographicException ex) {
+                throw new X509CryptoException($"Public certificate with thumbprint {thumbprint} was exported to file path '{path}' but the file contents are not usable", ex);
             }
         }
 
@@ -788,8 +722,7 @@ namespace Org.X509Crypto
         /// <param name="Context">The X509Context from which to list certificates</param>
         /// <param name="includeExpired">If true, expired certificates will be included in the resulting list</param>
         /// <returns>Line-break-separated list of certificate details</returns>
-        public static string ListCerts(X509Context Context, bool includeExpired = false)
-        {
+        public static string ListCerts(X509Context Context, bool includeExpired = false) {
             StringBuilder expression = new StringBuilder($"Key Encipherment certificates found in {Context.Name} context:\r\n\r\n");
             bool firstAdded = false;
 
@@ -799,12 +732,9 @@ namespace Org.X509Crypto
 
             X509Store Store = new X509Store(Context.Location);
             Store.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in Store.Certificates)
-            {
-                if (IsUsable(cert, includeExpired))
-                {
-                    if (!firstAdded)
-                    {
+            foreach (X509Certificate2 cert in Store.Certificates) {
+                if (IsUsable(cert, includeExpired)) {
+                    if (!firstAdded) {
                         expression.AppendLine(ListCertFormat.HeaderRow);
                         firstAdded = true;
                     }
@@ -815,8 +745,7 @@ namespace Org.X509Crypto
                 }
             }
 
-            if (!firstAdded)
-            {
+            if (!firstAdded) {
                 expression.AppendLine(@"None.");
             }
 
@@ -828,42 +757,34 @@ namespace Org.X509Crypto
         /// </summary>
         /// <param name="Context">The X509Context from which to list existing aliases</param>
         /// <returns>Line-break-separated list of X509Alias details</returns>
-        public static string ListAliases(X509Context Context)
-        {
+        public static string ListAliases(X509Context Context) {
             StringBuilder expression = new StringBuilder($"X509Aliases found in the {Context.Name} context:\r\n\r\n");
             bool firstAdded = false;
             Dictionary<string, X509Certificate2> Aliases = X509Alias.GetAll(Context);
-            foreach(KeyValuePair<string, X509Certificate2> Alias in Aliases)
-            {
-                if (!firstAdded)
-                {
+            foreach (KeyValuePair<string, X509Certificate2> Alias in Aliases) {
+                if (!firstAdded) {
                     expression.AppendLine(ListAliasFormat.HeaderRow);
                     firstAdded = true;
                 }
                 expression.AppendLine($"{Alias.Key.LeftAlign(Padding.Alias)}   {Alias.Value.Thumbprint.LeftAlign(Padding.Thumbprint)}   {Alias.Value.NotAfter.ToString(Constants.DateFormat)}");
             }
 
-            if (!firstAdded)
-            {
+            if (!firstAdded) {
                 expression.AppendLine(@"None.");
             }
 
             return expression.ToString();
         }
 
-        internal static bool IsUsable(X509Certificate2 cert, bool allowExpired)
-        {
+        internal static bool IsUsable(X509Certificate2 cert, bool allowExpired) {
             if (!cert.HasPrivateKey) {
                 return false;
             }
 
-            foreach (X509Extension extension in cert.Extensions)
-            {
-                if (extension.Oid.FriendlyName == "Key Usage")
-                {
+            foreach (X509Extension extension in cert.Extensions) {
+                if (extension.Oid.FriendlyName == "Key Usage") {
                     X509KeyUsageExtension ext = (X509KeyUsageExtension)extension;
-                    if (ext.KeyUsages == X509KeyUsageFlags.KeyEncipherment)
-                    {
+                    if (ext.KeyUsages == X509KeyUsageFlags.KeyEncipherment) {
                         return (allowExpired | (cert.NotAfter > DateTime.Now && cert.NotBefore <= DateTime.Now));
                     }
                 }
@@ -879,10 +800,8 @@ namespace Org.X509Crypto
         /// <param name="Context">The X509Context where the certificate and corresponding key pair exist</param>
         /// <param name="pfxPath">The path to where the PKCS#12 file should be written</param>
         /// <param name="password">The password which will protect the PKCS#12 file</param>
-        public static void ExportPFX(string thumbprint, X509Context Context, string pfxPath, string password)
-        {
-            if (File.Exists(pfxPath))
-            {
+        public static void ExportPFX(string thumbprint, X509Context Context, string pfxPath, string password) {
+            if (File.Exists(pfxPath)) {
                 File.Delete(pfxPath);
             }
 

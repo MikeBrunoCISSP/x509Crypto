@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
@@ -9,11 +10,11 @@ using System.Text.RegularExpressions;
 namespace Org.X509Crypto {
     public static class Util {
         internal static bool IsAdministrator = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-        internal static Regex OnlyMatchHexidecimal = new Regex(RegexPattern.OnlyMatchHexidecimal);
+        internal static Regex OnlyMatchHexadecimal = new(RegexPattern.OnlyMatchHexidecimal);
 
         internal static void VerifyFileExists(string filePath) {
             if (!File.Exists(filePath)) {
-                throw new FileNotFoundException(@"The expected file was not created", filePath);
+                throw new FileNotFoundException("The expected file was not created", filePath);
             }
         }
 
@@ -22,14 +23,12 @@ namespace Org.X509Crypto {
 
             if (Path.HasExtension(filename) && Path.GetExtension(filename).Matches(FileExtensions.Ciphertext)) {
                 withoutCiphertextExtension = Path.GetFileNameWithoutExtension(filename);
-                if (Path.HasExtension(withoutCiphertextExtension)) {
-                    return $"{Path.GetDirectoryName(filename)}\\{withoutCiphertextExtension}";
-                } else {
-                    return $"{Path.GetDirectoryName(filename)}\\{withoutCiphertextExtension}{FileExtensions.Plaintext}";
-                }
-            } else {
-                return $"{Path.GetDirectoryName(filename)}\\{filename}{FileExtensions.Plaintext}";
+                return Path.HasExtension(withoutCiphertextExtension)
+                    ? $"{Path.GetDirectoryName(filename)}\\{withoutCiphertextExtension}"
+                    : $"{Path.GetDirectoryName(filename)}\\{withoutCiphertextExtension}{FileExtensions.Plaintext}";
             }
+
+            return $"{Path.GetDirectoryName(filename)}\\{filename}{FileExtensions.Plaintext}";
         }
 
         public static void CheckForExistingFile(string fileName, bool overwriteExisting, string overwriteArgument, string overwriteValue) {
@@ -40,7 +39,7 @@ namespace Org.X509Crypto {
                         throw new X509CryptoException($"Unable to delete existing file '{fileName}'");
                     }
                 } else {
-                    throw new X509CryptoException($"A file named '{fileName}' already exists. Set \"{overwriteArgument} = {overwriteValue}\" to allow overwrite");
+                    throw new X509CryptoException($"A file named '{fileName}' already exists. Set '{overwriteArgument} = {overwriteValue}' to allow overwrite");
                 }
             }
         }
@@ -67,7 +66,7 @@ namespace Org.X509Crypto {
         }
 
         public static bool IsCertThumbprint(string expression) {
-            return OnlyMatchHexidecimal.IsMatch(expression);
+            return OnlyMatchHexadecimal.IsMatch(expression);
         }
 
         public static SecureString GetPassword(string prompt, int minLength, bool confirmMatch = false) {
@@ -118,7 +117,7 @@ namespace Org.X509Crypto {
             string entry = string.Empty;
 
             Console.WriteLine($"\r\nWARNING! {message} Enter '{affirm}' if you wish to proceed", ConsoleColor.Yellow);
-            Console.Write(@"Your entry: ");
+            Console.Write("Your entry: ");
             entry = Console.ReadLine();
             if (entry.Matches(affirm, compareType: StringComparison.Ordinal)) {
                 return true;
@@ -148,6 +147,14 @@ namespace Org.X509Crypto {
             }
 
             throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
+        }
+
+        public static byte[] GetSecureRandom(int byteLength) {
+            using RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            byte[] payLoad = new byte[byteLength];
+            rng.GetBytes(payLoad);
+
+            return payLoad;
         }
     }
 }

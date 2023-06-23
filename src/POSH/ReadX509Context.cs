@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Org.X509Crypto;
 using System.Management.Automation;
 using System.Security.Cryptography.X509Certificates;
+using Org.X509Crypto;
+using Org.X509Crypto.Services;
 
-namespace X509CryptoPOSH
-{
+namespace X509CryptoPOSH {
     [Cmdlet(VerbsCommunications.Read, nameof(X509Context))]
     [OutputType(typeof(X509AliasDescription))]
-    public class ReadX509Context : Cmdlet
-    {
+    public class ReadX509Context : Cmdlet {
+        static readonly CertService _certService = new CertService();
         private X509Context Context;
 
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The X509Context from which to list existing X509Aliases and/or encryption certificates. Acceptable values are \"user\" and \"system\"")]
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The X509Context from which to list existing X509Aliases and/or encryption certificates. Acceptable values are 'user' and 'system'")]
         [Alias("Context", "X509Context", "StoreLocation", "CertStore", "CertStoreLocation", "Store")]
         public string Location { get; set; }
 
@@ -21,41 +21,30 @@ namespace X509CryptoPOSH
 
         private List<X509AliasDescription> Result = new List<X509AliasDescription>();
 
-        protected override void BeginProcessing()
-        {
+        protected override void BeginProcessing() {
             base.BeginProcessing();
 
         }
 
-        protected override void ProcessRecord()
-        {
+        protected override void ProcessRecord() {
             base.ProcessRecord();
             DoWork();
             WriteObject(Result);
         }
 
-        private void DoWork()
-        {
+        private void DoWork() {
 
-            Context = X509Context.Select(Location, false);
+            Context = X509Context.Select(Location);
 
             var Aliases = Context.GetAliases(Constants.DoNotIncludeIfCertNotFound);
             Aliases.ForEach(p => Result.Add(new X509AliasDescription(p)));
 
-            var AssignedThumbprints = Aliases.Select(p => p.Certificate.Thumbprint.ToUpper()).ToList();
+            var AssignedThumbprints = Aliases.Select(p => p.Thumbprint.ToUpper()).ToList();
 
-            if (All)
-            {
-                using (var Store = new X509Store(Context.Location))
-                {
-                    Store.Open(OpenFlags.ReadOnly);
-                    foreach (X509Certificate2 Cert in Store.Certificates)
-                    {
-                        if (!AssignedThumbprints.Contains(Cert.Thumbprint.ToUpper()))
-                        {
-                            Result.Add(new X509AliasDescription(Cert));
-                        }
-                    }
+            if (All) {
+                List<X509Certificate2> certs = _certService.GetAllCertificates(Context.Location);
+                foreach (var cert in certs.Where(cert => !AssignedThumbprints.Contains(cert.Thumbprint.ToUpper()))) {
+                    Result.Add(new X509AliasDescription(cert));
                 }
             }
         }

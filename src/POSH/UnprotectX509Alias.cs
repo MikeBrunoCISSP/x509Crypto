@@ -34,7 +34,7 @@ namespace X509CryptoPOSH
         private void DoWork()
         {
 
-            Dictionary<string, string> Dict = Alias.DumpSecrets(SecretDumpFormat.Dictionary, true);
+            Dictionary<string, string> Dict = Alias.PrintSecrets(SecretDumpFormat.Dictionary, true);
             foreach(KeyValuePair<string, string> Pair in Dict)
             {
                 Result.Add(new RevealedSecret(Pair));

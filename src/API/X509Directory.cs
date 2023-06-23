@@ -15,7 +15,7 @@ namespace Org.X509Crypto
             }
         }
 
-        internal static string ImpersonatedUser(string sAMAccountName)
+        internal static string GetImpersonatedUserHomeDirectory(string sAMAccountName)
         {
             return UserTemplate.Replace(Constants.UserDirectoryPlaceholder, sAMAccountName);
         }
