@@ -1,30 +1,29 @@
-﻿using Org.X509Crypto;
-using System;
-using System.Security.Cryptography.X509Certificates;
+﻿using System;
+using Org.X509Crypto;
+using Org.X509Crypto.Dto;
 
-namespace X509CryptoPOSH
-{
-    public class X509AliasDescription
-    {
+namespace X509CryptoPOSH {
+    public class X509AliasDescription {
         public string AliasName { get; set; }
         public string Thumbprint { get; set; }
         public string Subject { get; set; }
         public DateTime Expires { get; set; }
 
-        public X509AliasDescription(X509Alias Alias)
-        {
-            AliasName = Alias.Name;
-            Thumbprint = Alias.Thumbprint;
-            Subject = Alias.Certificate.Subject;
-            Expires = Alias.Certificate.NotAfter;
+        public X509AliasDescription(X509Alias alias) {
+            AliasName = alias.Name;
+            Thumbprint = alias.Thumbprint;
+            CertificateDto cert = alias.GetCertificate();
+            if (cert != null) {
+                Subject = cert.Subject;
+                Expires = cert.NotAfter;
+            }
         }
 
-        public X509AliasDescription(X509Certificate2 Certificate)
-        {
+        public X509AliasDescription(CertificateDto cert) {
             AliasName = Constants.NoAliasAssigned;
-            Thumbprint = Certificate.Thumbprint;
-            Subject = Certificate.Subject;
-            Expires = Certificate.NotAfter;
+            Thumbprint = cert.Thumbprint;
+            Subject = cert.Subject;
+            Expires = cert.NotAfter;
         }
     }
 }

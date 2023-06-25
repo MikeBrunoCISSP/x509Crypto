@@ -3,7 +3,7 @@
 /// <summary>
 /// X509ContextType
 /// </summary>
-public enum X509ContextType {
+public enum X509CryptoContextType {
     /// <summary>
     /// User read-only.
     /// </summary>

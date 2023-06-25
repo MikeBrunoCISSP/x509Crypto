@@ -752,30 +752,6 @@ namespace Org.X509Crypto {
             return expression.ToString();
         }
 
-        /// <summary>
-        /// Lists all aliases that are found in the specified X509Context
-        /// </summary>
-        /// <param name="Context">The X509Context from which to list existing aliases</param>
-        /// <returns>Line-break-separated list of X509Alias details</returns>
-        public static string ListAliases(X509Context Context) {
-            StringBuilder expression = new StringBuilder($"X509Aliases found in the {Context.Name} context:\r\n\r\n");
-            bool firstAdded = false;
-            Dictionary<string, X509Certificate2> Aliases = X509Alias.GetAll(Context);
-            foreach (KeyValuePair<string, X509Certificate2> Alias in Aliases) {
-                if (!firstAdded) {
-                    expression.AppendLine(ListAliasFormat.HeaderRow);
-                    firstAdded = true;
-                }
-                expression.AppendLine($"{Alias.Key.LeftAlign(Padding.Alias)}   {Alias.Value.Thumbprint.LeftAlign(Padding.Thumbprint)}   {Alias.Value.NotAfter.ToString(Constants.DateFormat)}");
-            }
-
-            if (!firstAdded) {
-                expression.AppendLine(@"None.");
-            }
-
-            return expression.ToString();
-        }
-
         internal static bool IsUsable(X509Certificate2 cert, bool allowExpired) {
             if (!cert.HasPrivateKey) {
                 return false;

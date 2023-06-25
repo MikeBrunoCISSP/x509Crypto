@@ -1,64 +1,99 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Org.X509Crypto.Dto;
 
 namespace Org.X509Crypto.Services;
 public class CertService {
-    public bool CertExistsInStore(string thumbprint, StoreLocation storeLocation) {
-        using X509Store store = new X509Store(storeLocation);
+    public bool CertExistsInStore(string thumbprint, X509Context context) {
+        using X509Store store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.ReadOnly);
         return store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false).Count > 0;
     }
-    public X509Certificate2 FindCertificate(string thumbprint, StoreLocation storeLocation) {
-        using X509Store store = new X509Store(storeLocation);
+    public CertificateDto FindCertificate(string thumbprint, X509Context context) {
+        using X509Store store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.ReadOnly);
         return findCertificate(thumbprint, store);
     }
-    public void RemoveCertificate(string thumbprint, StoreLocation storeLocation) {
-        using X509Store store = new X509Store(storeLocation);
+    public void RemoveCertificate(string thumbprint, X509Context context) {
+        using X509Store store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.MaxAllowed);
-        X509Certificate2 certToRemove = findCertificate(thumbprint, store);
-        if (certToRemove != null) {
-            store.Remove(certToRemove);
+        CertificateDto dto = findCertificate(thumbprint, store);
+        if (dto != null) {
+            store.Remove(dto.Certificate);
         }
     }
-    public void ImportCertificate(byte[] certBlob, SecureString password, StoreLocation storeLocation, X509KeyStorageFlags storageFlags) {
+    public void ImportCertificate(byte[] certBlob, SecureString password, X509Context context) {
         var certObj = new X509Certificate2();
-        certObj.Import(certBlob, password.ToUnsecureString(), storageFlags);
+        certObj.Import(certBlob, password.ToUnsecureString(), GetKeyStorageFlags(context));
 
-        using var Store = new X509Store(storeLocation);
+        using var Store = new X509Store(getStoreLocationFromContext(context.ContextType));
         Store.Open(OpenFlags.MaxAllowed);
         Store.Add(certObj);
     }
-    public byte[] ExportBase64UnSecure(string thumbprint, SecureString password, StoreLocation storeLocation) {
-        X509Certificate2 cert = FindCertificate(thumbprint, storeLocation);
-        if (cert is null) {
-            throw new X509CryptoCertificateNotFoundException(thumbprint, X509Context.FromStoreLocation(storeLocation));
+    public byte[] ExportBase64UnSecure(string thumbprint, SecureString password, X509Context context) {
+        CertificateDto dto = FindCertificate(thumbprint, context);
+        if (dto is null) {
+            throw new X509CryptoCertificateNotFoundException(thumbprint, context);
         }
 
-        return cert.Export(X509ContentType.Pkcs12, password.ToUnsecureString());
+        return dto.Certificate.Export(X509ContentType.Pkcs12, password.ToUnsecureString());
     }
 
-    public List<X509Certificate2> GetAllCertificates(StoreLocation storeLocation) {
-        var payLoad = new List<X509Certificate2>();
-        using var store = new X509Store(storeLocation);
+    public List<CertificateDto> GetAllCertificates(X509Context context) {
+        var payLoad = new List<CertificateDto>();
+        using var store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.ReadOnly);
         foreach (var cert in store.Certificates) {
             if (cert.HasPrivateKey) {
-                payLoad.Add(cert);
+                payLoad.Add(new CertificateDto(cert));
             }
         }
 
         return payLoad;
     }
 
-    X509Certificate2 findCertificate(string thumbprint, X509Store openStore) {
+    public CertificateDto CreateCertificateRsa(int keyLength, string name, int yearsValid, X509Context context) {
+        using var rsa = RSA.Create(keyLength);
+        var request = new CertificateRequest($"CN={name}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        X509Certificate2 cert = request.CreateSelfSigned(DateTime.Now, DateTime.Now.AddYears(yearsValid));
+        using var store = new X509Store(getStoreLocationFromContext(context.ContextType));
+        store.Add(cert);
+        return new CertificateDto(cert);
+    }
+
+    public CertificateDto CreateCertificateEcc(Oid eccCurveOid, string name, int yearsValid, X509Context context) {
+        using var ecdsa = ECDsa.Create(ECCurve.CreateFromOid(eccCurveOid));
+        var request = new CertificateRequest($"CN={name}", ecdsa, HashAlgorithmName.SHA256);
+        X509Certificate2 cert = request.CreateSelfSigned(DateTime.Now, DateTime.Now.AddYears(yearsValid));
+        using var store = new X509Store(getStoreLocationFromContext(context.ContextType));
+        store.Add(cert);
+        return new CertificateDto(cert);
+    }
+
+    public X509KeyStorageFlags GetKeyStorageFlags(X509Context context) {
+        return X509KeyStorageFlags.Exportable | (context.IsSystemContext()
+            ? X509KeyStorageFlags.MachineKeySet
+            : X509KeyStorageFlags.UserKeySet);
+    }
+
+    CertificateDto findCertificate(string thumbprint, X509Store openStore) {
         var searchResult = openStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
         if (searchResult.Count > 0 && searchResult[0].HasPrivateKey) {
-            return searchResult[0];
+            return new CertificateDto(searchResult[0]);
         }
 
         return null;
     }
 
+    StoreLocation getStoreLocationFromContext(X509CryptoContextType contextType) {
+        return contextType switch {
+            X509CryptoContextType.UserFull => StoreLocation.CurrentUser,
+            X509CryptoContextType.UserReadOnly => StoreLocation.CurrentUser,
+            X509CryptoContextType.SystemFull => StoreLocation.LocalMachine,
+            X509CryptoContextType.SystemReadOnly => StoreLocation.LocalMachine
+        };
+    }
 }

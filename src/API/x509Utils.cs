@@ -334,7 +334,7 @@ namespace Org.X509Crypto {
                 foreach (X509Certificate2 cert in certCol) {
                     if (X509CryptoAgent.IsUsable(cert, Constants.ProbeMode)) {
                         keyChain.Add(cert);
-                        if (Context.ContextType == X509ContextType.SystemFull || Context.ContextType == X509ContextType.SystemReadOnly) {
+                        if (Context.ContextType == X509CryptoContextType.SystemFull || Context.ContextType == X509CryptoContextType.SystemReadOnly) {
                             AddIISKeyAccess(cert.Thumbprint);
                         }
                         certInstalled = true;

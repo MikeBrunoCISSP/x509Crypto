@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
-using System.Security.Cryptography.X509Certificates;
 using Org.X509Crypto;
+using Org.X509Crypto.Dto;
 using Org.X509Crypto.Services;
 
 namespace X509CryptoPOSH {
@@ -42,7 +42,7 @@ namespace X509CryptoPOSH {
             var AssignedThumbprints = Aliases.Select(p => p.Thumbprint.ToUpper()).ToList();
 
             if (All) {
-                List<X509Certificate2> certs = _certService.GetAllCertificates(Context.Location);
+                List<CertificateDto> certs = _certService.GetAllCertificates(Context);
                 foreach (var cert in certs.Where(cert => !AssignedThumbprints.Contains(cert.Thumbprint.ToUpper()))) {
                     Result.Add(new X509AliasDescription(cert));
                 }

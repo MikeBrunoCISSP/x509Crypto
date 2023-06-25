@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Org.X509Crypto.Dto;
 using Org.X509Crypto.Services;
 
 namespace Org.X509Crypto {
@@ -17,7 +17,7 @@ namespace Org.X509Crypto {
 
         private string thumbprint;
         private bool certificateLoaded;
-        private X509Certificate2 certificate;
+        private CertificateDto certificate;
 
         /// <summary>
         /// Default constructor
@@ -85,25 +85,12 @@ namespace Org.X509Crypto {
 
         private string StoragePath => Path.Combine(Context.GetStorageDirectory(), $"{Name}{FileExtensions.X509Alias}");
 
-        private X509KeyStorageFlags StorageFlags {
-            get {
-                var flags = X509KeyStorageFlags.Exportable;
-                if (Context.IsSystemContext()) {
-                    flags |= X509KeyStorageFlags.MachineKeySet;
-                } else {
-                    flags |= X509KeyStorageFlags.UserKeySet;
-                }
-
-                return flags;
-            }
-        }
-
         /// <summary>
         /// Gets the certificate associated with this <see cref="X509Alias"/>
         /// </summary>
-        /// <returns>An <see cref="X509Certificate2"/></returns>
+        /// <returns>An <see cref="CertificateDto"/></returns>
         /// <exception cref="X509CryptoException"></exception>
-        public X509Certificate2 GetCertificate() {
+        public CertificateDto GetCertificate() {
             if (!certificateLoaded && !loadCertificate()) {
                 return null;
             }
@@ -116,7 +103,7 @@ namespace Org.X509Crypto {
         /// <param name="Context"></param>
         /// <returns></returns>
         public bool HasCert(X509Context Context) {
-            return _certService.CertExistsInStore(Thumbprint, Context.Location);
+            return _certService.CertExistsInStore(Thumbprint, Context);
         }
 
         /// <summary>
@@ -297,7 +284,7 @@ namespace Org.X509Crypto {
             newContext ??= Context;
 
             newThumbprint = newThumbprint.RemoveNonHexChars();
-            if (!_certService.CertExistsInStore(newThumbprint, newContext.Location)) {
+            if (!_certService.CertExistsInStore(newThumbprint, newContext)) {
                 throw new X509CryptoException($"A valid encryption certificate with thumbprint {newThumbprint} was not found in the {Context.Name} context");
             }
 
@@ -364,7 +351,7 @@ namespace Org.X509Crypto {
                     return;
                 }
 
-                _certService.RemoveCertificate(Thumbprint, Context.Location);
+                _certService.RemoveCertificate(Thumbprint, Context);
             } catch (Exception ex) {
                 throw new X509CryptoException($"The X509Crypto alias '{Name}' could not be removed from the {Context.Name} context", ex);
             }
@@ -408,11 +395,11 @@ namespace Org.X509Crypto {
         }
         private byte[] exportCertKeyBase64() {
             var password = Util.GetPassword("Enter a strong password to protect the X509Alias file", Constants.MinimumPasswordLength, true);
-            return _certService.ExportBase64UnSecure(Thumbprint, password, Context.Location);
+            return _certService.ExportBase64UnSecure(Thumbprint, password, Context);
         }
         private void importCertKeyBase64(byte[] certBlob) {
             var password = Util.GetPassword("Enter the password to unlock this X509Alias file", 0);
-            _certService.ImportCertificate(certBlob, password, Context.Location, StorageFlags);
+            _certService.ImportCertificate(certBlob, password, Context);
         }
         private bool loadIfExists(bool complainIfExists) {
             if (!File.Exists(StoragePath)) {
@@ -482,16 +469,15 @@ namespace Org.X509Crypto {
             }
         }
         private bool loadCertificate() {
-            using var store = new X509Store(Context.Location);
-            store.Open(OpenFlags.ReadOnly);
-            X509Certificate2Collection result = store.Certificates.Find(X509FindType.FindByThumbprint, Thumbprint, false);
-            if (result.Count > 0 && result[0].HasPrivateKey) {
-                certificate = result[0];
-                certificateLoaded = true;
-                return true;
+            var payLoad = _certService.FindCertificate(Thumbprint, Context);
+            if (payLoad == null) {
+                return false;
             }
 
-            return false;
+            certificate = payLoad;
+            certificateLoaded = true;
+            return true;
+
         }
 
         /// <summary>
@@ -538,23 +524,6 @@ namespace Org.X509Crypto {
             return true;
         }
 
-        internal static Dictionary<string, X509Certificate2> GetAll(X509Context context) {
-            var aliases = new Dictionary<string, X509Certificate2>();
-            X509Certificate2Collection certStore = GetCertificates(context);
-
-            X509Alias currentAlias;
-            foreach (string aliasName in context.GetAliasNames()) {
-                currentAlias = new X509Alias(aliasName, context);
-                using X509Store store = new X509Store(context.Location);
-                store.Open(OpenFlags.ReadOnly);
-                var searchResult = store.Certificates.Find(X509FindType.FindByThumbprint, currentAlias.Thumbprint, false);
-                if (searchResult.Count > 0 && searchResult[0].HasPrivateKey) {
-                    aliases.Add(aliasName, searchResult[0]);
-                }
-            }
-            return aliases;
-        }
-
         internal static string GetOne(string thumbprint, X509Context Context) {
             foreach (X509Alias Alias in Context.GetAliases()) {
                 if (Alias.Thumbprint.Matches(thumbprint)) {
@@ -563,12 +532,6 @@ namespace Org.X509Crypto {
             }
 
             throw new X509AliasNotFoundException(thumbprint, Context);
-        }
-
-        private static X509Certificate2Collection GetCertificates(X509Context Context) {
-            X509Store Store = new X509Store(Context.Location);
-            Store.Open(OpenFlags.ReadOnly);
-            return Store.Certificates;
         }
 
         /// <summary>
