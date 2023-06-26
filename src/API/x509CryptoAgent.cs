@@ -121,7 +121,6 @@ namespace Org.X509Crypto {
 
                         //Write the ciphertext using a CryptoStream
                         using (CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write)) {
-                            int count = 0;
                             int offset = 0;
                             int blockSizeInBytes = aesManaged.BlockSize / CryptoConstants.AESWords;
 
@@ -129,6 +128,7 @@ namespace Org.X509Crypto {
                             int bytesRead = 0;
 
                             using (MemoryStream inStream = new MemoryStream(plainTextBytes, false)) {
+                                var count = 0;
                                 do {
                                     count = inStream.Read(data, 0, blockSizeInBytes);
                                     offset += count;
