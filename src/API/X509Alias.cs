@@ -14,7 +14,8 @@ namespace Org.X509Crypto {
     [DataContract]
     public class X509Alias : IDisposable {
         private static readonly CertService _certService = new();
-        private static readonly EncryptionService _cryptService = new();
+
+        private readonly EncryptionService _cryptService;
 
         private string thumbprint;
         private bool certificateLoaded;
@@ -36,6 +37,8 @@ namespace Org.X509Crypto {
             if (!loadIfExists(false)) {
                 throw new X509AliasNotFoundException(this);
             }
+
+            _cryptService = new EncryptionService(GetCertificate());
         }
         /// <summary>
         /// This constructor is intended to create a new X509Alias pointing to the specified encryption certificate
@@ -51,9 +54,12 @@ namespace Org.X509Crypto {
 
             loadIfExists(complainIfExists);
 
-            if (!_certService.CertExistsInStore(thumbprint, context)) {
+            loadCertificate();
+            if (!certificateLoaded) {
                 throw new X509CryptoCertificateNotFoundException(thumbprint, context);
             }
+
+            _cryptService = new EncryptionService(GetCertificate());
         }
 
         /// <summary>
@@ -117,7 +123,7 @@ namespace Org.X509Crypto {
         /// <param name="plaintext">the text expression to be encrypted</param>
         /// <returns>Base64-encoded ciphertext string</returns>
         public string EncryptText(string plaintext) {
-            EncryptedSecretDto payload = _cryptService.EncryptText(GetCertificate(), plaintext);
+            EncryptedSecretDto payload = _cryptService.EncryptText(plaintext);
             return DataSerializer.SerializeObject(payload).Base64Encode();
         }
         /// <summary>
@@ -131,7 +137,7 @@ namespace Org.X509Crypto {
                 throw new SerializationException("The secret could not be read.");
             }
 
-            return _cryptService.DecryptText(GetCertificate(), secret);
+            return _cryptService.DecryptText(secret);
         }
 
         /// <summary>
