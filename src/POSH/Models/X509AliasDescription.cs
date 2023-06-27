@@ -12,7 +12,7 @@ namespace X509CryptoPOSH {
         public X509AliasDescription(X509Alias alias) {
             AliasName = alias.Name;
             Thumbprint = alias.Thumbprint;
-            CertificateDto cert = alias.GetCertificate();
+            CertificateDto cert = alias.GetCertificate(true);
             if (cert != null) {
                 Subject = cert.Subject;
                 Expires = cert.NotAfter;

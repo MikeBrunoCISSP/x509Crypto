@@ -150,7 +150,7 @@ namespace Org.X509Crypto {
         /// <exception cref="Exception"></exception>
         public void MakeCert(string name, int keyLength, int yearsValid, out string thumbprint) {
             try {
-                CertificateDto dto = _certService.CreateCertificateRsa(keyLength, name, yearsValid, this);
+                CertificateDto dto = _certService.CreateX509CryptCertificate(keyLength, name, yearsValid, this);
                 thumbprint = dto.Thumbprint;
             } catch (Exception ex) {
                 throw new Exception($"A certificate could not be added to the {Name} {nameof(X509Context)}.", ex);

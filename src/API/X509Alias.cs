@@ -14,6 +14,7 @@ namespace Org.X509Crypto {
     [DataContract]
     public class X509Alias : IDisposable {
         private static readonly CertService _certService = new();
+        private static readonly EncryptionService _cryptService = new();
 
         private string thumbprint;
         private bool certificateLoaded;
@@ -50,7 +51,7 @@ namespace Org.X509Crypto {
 
             loadIfExists(complainIfExists);
 
-            if (!X509CryptoAgent.CertificateExists(thumbprint, context)) {
+            if (!_certService.CertExistsInStore(thumbprint, context)) {
                 throw new X509CryptoCertificateNotFoundException(thumbprint, context);
             }
         }
@@ -79,7 +80,7 @@ namespace Org.X509Crypto {
         public string FullName => $"{Context.Name}\\{Name}";
 
         [DataMember]
-        public Dictionary<string, X509CryptoSecret> Secrets { get; set; } = new();
+        public Dictionary<string, string> Secrets { get; set; } = new(StringComparer.InvariantCultureIgnoreCase);
         [DataMember]
         internal byte[] CertificateBlob { get; set; }
 
@@ -90,12 +91,16 @@ namespace Org.X509Crypto {
         /// </summary>
         /// <returns>An <see cref="CertificateDto"/></returns>
         /// <exception cref="X509CryptoException"></exception>
-        public CertificateDto GetCertificate() {
-            if (!certificateLoaded && !loadCertificate()) {
+        public CertificateDto GetCertificate(bool nullSafe = false) {
+            if (certificateLoaded || loadCertificate()) {
+                return certificate;
+            }
+            if (nullSafe) {
                 return null;
             }
 
-            return certificate;
+            throw new X509CryptoCertificateNotFoundException(Thumbprint, Context);
+
         }
         /// <summary>
         /// Determines whether the encryption certificate exists in the <see cref="X509Context"/>
@@ -112,10 +117,22 @@ namespace Org.X509Crypto {
         /// <param name="plaintext">the text expression to be encrypted</param>
         /// <returns>Base64-encoded ciphertext string</returns>
         public string EncryptText(string plaintext) {
-            X509CryptoSecret Secret = new X509CryptoSecret(this, string.Empty, plaintext);
-            return Secret.Value;
+            EncryptedSecretDto payload = _cryptService.EncryptText(GetCertificate(), plaintext);
+            return DataSerializer.SerializeObject(payload).Base64Encode();
         }
+        /// <summary>
+        /// Decrypts the specified Base64-encoded ciphertext expression
+        /// </summary>
+        /// <param name="ciphertext">The Base64-encoded ciphertext expression to be decrypted</param>
+        /// <returns>A recovered plaintext string</returns>
+        public string DecryptText(string ciphertext) {
+            var secret = DataSerializer.DeserializeObject<EncryptedSecretDto>(ciphertext.Base64Decode(), true);
+            if (secret is null) {
+                throw new SerializationException("The secret could not be read.");
+            }
 
+            return _cryptService.DecryptText(GetCertificate(), secret);
+        }
 
         /// <summary>
         /// Encrypts the specified file. All file types are supported.
@@ -189,19 +206,6 @@ namespace Org.X509Crypto {
         }
 
         /// <summary>
-        /// Decrypts the specified Base64-encoded ciphertext expression
-        /// </summary>
-        /// <param name="ciphertext">The Base64-encoded ciphertext expression to be decrypted</param>
-        /// <returns>A recovered plaintext string</returns>
-        public string DecryptText(string ciphertext) {
-            string plaintext = string.Empty;
-            using (X509CryptoAgent Agent = new X509CryptoAgent(Thumbprint, Context)) {
-                plaintext = Agent.DecryptText(ciphertext);
-            }
-            return plaintext;
-        }
-
-        /// <summary>
         /// Encrypts the specified plaintext expression and stores it in this X509Alias
         /// </summary>
         /// <param name="identifier">The desired identifier for the secret (must be unique within the alias)</param>
@@ -209,8 +213,16 @@ namespace Org.X509Crypto {
         /// <param name="overwriteExisting">Indicates whether an existing secret in the alias with the same value for "Name" as specified may be overwritten</param>
         /// <returns>A Base64-encoded ciphertext string</returns>
         public string AddSecret(string identifier, string plaintext, bool overwriteExisting) {
-            X509CryptoSecret secret = createSecret(identifier.ToLower(), plaintext);
-            return AddSecret(secret, overwriteExisting);
+            string payLoad = EncryptText(plaintext);
+            if (Secrets.ContainsKey(identifier)) {
+                if (overwriteExisting) {
+                    Secrets[identifier] = payLoad;
+                }
+                throw new X509SecretAlreadyExistsException(this, identifier);
+            }
+
+            Secrets.Add(identifier, plaintext);
+            return payLoad;
         }
         /// <summary>
         /// Adds a secret (which has already been encrypted using the certificate associated with this X509Alias) and its identifier to this X509Alias
@@ -235,46 +247,28 @@ namespace Org.X509Crypto {
         /// <param name="overwriteExisting">If true, an existing secret in this X509Alias with the same identifier may be overwritten</param>
         /// <returns>A Base64-encoded ciphertext expression</returns>
         public string AddSecret(string identifier, X509Alias OldAlias, bool overwriteExisting) {
-            return AddSecret(identifier.ToLower(), OldAlias.RecoverSecret(identifier), overwriteExisting);
+            return AddSecret(identifier, OldAlias.RecoverSecret(identifier), overwriteExisting);
         }
-
-        /// <summary>
-        /// Gets the ciphertext value for the specified secret from the current X509Alias
-        /// </summary>
-        /// <param name="identifier">The identifier of the secret</param>
-        /// <returns>A Base64-encoded ciphertext expression</returns>
-        public string GetEncryptedSecret(string identifier) {
-            String normalizedIdentifier = identifier.ToLower();
-            if (Secrets.ContainsKey(normalizedIdentifier)) {
-                return Secrets[normalizedIdentifier].Value;
-            }
-
-            throw new X509CryptoException($"No secret named '{identifier}' was found in alias '{FullName}'");
-        }
-
         /// <summary>
         /// Indicates whether a secret with the specified identifier exists within this X509Alias
         /// </summary>
         /// <param name="identifier">The secret identifier to check the X509Alias for</param>
         /// <returns>true if a secret with the specified identifier is found in this X509Alias</returns>
         public bool TestSecretExists(string identifier) {
-            return Secrets.ContainsKey(identifier.ToLower());
+            return Secrets.ContainsKey(identifier);
         }
-
         /// <summary>
         /// Recovers a secret from an X509Alias with the specified identifier
         /// </summary>
         /// <param name="identifier">The identifier of the secret to be recovered</param>
         /// <returns>The recovered, plaintext secret</returns>
         public string RecoverSecret(string identifier) {
-            String normalizedIdentifier = identifier.ToLower();
-            if (Secrets.ContainsKey(normalizedIdentifier)) {
-                return Secrets[normalizedIdentifier].RevealPlaintext(this);
+            if (Secrets.ContainsKey(identifier)) {
+                return DecryptText(Secrets[identifier]);
             }
 
             throw new X509CryptoException($"No secret named '{identifier}' was found in alias '{FullName}'");
         }
-
         /// <summary>
         /// Updates this X509Alias to use a new encryption certificate and key pair. The old certificate and key pair must still be available to perform this operation.
         /// </summary>
@@ -288,8 +282,9 @@ namespace Org.X509Crypto {
                 throw new X509CryptoException($"A valid encryption certificate with thumbprint {newThumbprint} was not found in the {Context.Name} context");
             }
 
-            foreach (X509CryptoSecret secret in Secrets.Values) {
-                secret.ReEncrypt(this, newThumbprint, newContext);
+            var tmpAlias = new X509Alias(Name, newThumbprint, newContext, false);
+            foreach (string identifier in Secrets.Keys) {
+                Secrets[identifier] = tmpAlias.EncryptText(RecoverSecret(identifier));
             }
 
             Thumbprint = newThumbprint;
@@ -302,7 +297,7 @@ namespace Org.X509Crypto {
         /// </summary>
         /// <param name="path">The fully-qualified path where the export file should be written</param>
         public void ExportCert(string path) {
-            X509CryptoAgent.ExportCert(Thumbprint, Context, path);
+            _certService.ExportCertificate(GetCertificate(), path);
         }
 
         /// <summary>
@@ -377,20 +372,25 @@ namespace Org.X509Crypto {
                 output.AppendLine(firstLine.GetDivider());
             }
             int index = 1;
-            foreach (X509CryptoSecret secret in Secrets.Values) {
-                output.AppendLine(revealSecrets
-                    ? secret.PrintUnsecure(index, this, printFormat)
-                    : secret.PrintIdentifierOnly(index, printFormat));
-                index++;
+            foreach (KeyValuePair<string, string> secret in Secrets) {
+                printSecret(index++, secret.Key, printFormat, revealSecrets);
             }
             output.AppendLine();
             return output.ToString();
         }
 
-        X509CryptoSecret createSecret(string identifier, string plaintextValue) {
-            return new X509CryptoSecret {
-                Id = identifier,
-                Value = EncryptText(plaintextValue)
+        string printSecret(int index, string identifier, X509CryptSecretPrintFormat printFormat, bool revealSecret) {
+            if (revealSecret) {
+                string plaintext = DecryptText(Secrets[identifier]);
+                return printFormat switch {
+                    X509CryptSecretPrintFormat.Screen => $"Secret #{index}\r\n  Name: {identifier}\r\n  Value: {plaintext}\r\n",
+                    X509CryptSecretPrintFormat.CommaSeparated => $"{index},{identifier},'{plaintext}'"
+                };
+            }
+
+            return printFormat switch {
+                X509CryptSecretPrintFormat.Screen => $"Artifact #{index}\r\nName: {identifier}\r\n",
+                X509CryptSecretPrintFormat.CommaSeparated => $"{index},{identifier}"
             };
         }
         private byte[] exportCertKeyBase64() {
