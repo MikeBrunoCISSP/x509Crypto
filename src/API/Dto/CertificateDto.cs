@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.Serialization;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Org.X509Crypto.Dto;
@@ -10,12 +9,6 @@ namespace Org.X509Crypto.Dto;
 /// </summary>
 [DataContract]
 public class CertificateDto {
-    public CertificateDto(X509Certificate2 cert) {
-        Certificate = cert;
-        Thumbprint = cert.Thumbprint.ToLower();
-        Subject = cert.Subject;
-        NotAfter = cert.NotAfter;
-    }
     /// <summary>
     /// The certificate as an <see cref="X509Certificate2"/> object
     /// </summary>
@@ -37,16 +30,12 @@ public class CertificateDto {
     [DataMember]
     public DateTime NotAfter { get; set; }
 
-    public RSA GetPublicKey() => Certificate.GetRSAPublicKey();
-    public RSA GetPrivateKey() => Certificate.GetRSAPrivateKey();
-
-    public Byte[] EncryptKey(byte[] plaintextKey, RSAEncryptionPadding padding) {
-        using RSA rsa = Certificate.GetRSAPublicKey();
-        return rsa.Encrypt(plaintextKey, padding);
-    }
-
-    public Byte[] DecryptKey(byte[] encryptedKey, RSAEncryptionPadding padding) {
-        using RSA rsa = Certificate.GetRSAPrivateKey();
-        return rsa.Decrypt(encryptedKey, padding);
+    public static CertificateDto FromX509Certificate2(X509Certificate2 cert) {
+        return new CertificateDto {
+            Certificate = cert,
+            Thumbprint = cert.Thumbprint,
+            Subject = cert.Subject,
+            NotAfter = cert.NotAfter
+        };
     }
 }

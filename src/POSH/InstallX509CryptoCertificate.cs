@@ -62,14 +62,14 @@ namespace X509CryptoPOSH {
             }
 
             var PfxPassword = Util.GetPassword($"Enter the password to unlock '{System.IO.Path.GetFileName(Path)}'", 0);
-            var thumbprint = X509Utils.InstallCert(Path, PfxPassword, Context);
+            var thumbprint = X509CryptoUtils.InstallCert(Path, PfxPassword, Context);
             StringBuilder Expression = new StringBuilder($"Added encryption certificate to the {Context.Name} {nameof(X509Context)}. \r\nCertificate Thumbprint: {thumbprint}");
 
             if (null != Alias && Alias.HasCert(Context)) {
                 Alias.ReEncrypt(thumbprint, Context);
                 Expression.AppendLine($"\r\nAll secrets contained in the existing {nameof(X509Alias)} '{Alias.Name}' have been re-encrypted using the new certificate.");
             } else {
-                Alias = new X509Alias(Name, thumbprint, Context, false);
+                Alias = new X509Alias(Name, Context, thumbprint, false);
                 Alias.Commit();
                 Expression.Append($"\r\n             {nameof(X509Alias)}: {Name}");
             }

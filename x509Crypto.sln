@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "X509Crypto", "src\API\X509C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester", "src\Test\Tester\Tester.csproj", "{8FB7FD35-210C-4E80-909C-7C1D38DEFC4C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{12E3F32E-E1A2-4909-86B9-F44047DAA8E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{8FB7FD35-210C-4E80-909C-7C1D38DEFC4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FB7FD35-210C-4E80-909C-7C1D38DEFC4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FB7FD35-210C-4E80-909C-7C1D38DEFC4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12E3F32E-E1A2-4909-86B9-F44047DAA8E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12E3F32E-E1A2-4909-86B9-F44047DAA8E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12E3F32E-E1A2-4909-86B9-F44047DAA8E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12E3F32E-E1A2-4909-86B9-F44047DAA8E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

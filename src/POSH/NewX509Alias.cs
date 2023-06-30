@@ -39,7 +39,7 @@ namespace X509CryptoPOSH {
                 Thumbprint = MakeCert();
             }
 
-            X509Alias Alias = new X509Alias(Name, Thumbprint, context, true);
+            X509Alias Alias = new X509Alias(Name, context, Thumbprint, true);
             Alias.Commit();
             Result = Alias;
             Console.WriteLine($@"New alias '{Name}' committed to '{context.Name}' {nameof(X509Context)}

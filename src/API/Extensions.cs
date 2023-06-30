@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -172,6 +174,20 @@ namespace Org.X509Crypto {
 
         internal static string GetDivider(this string expression, char c = '-') {
             return new string(c, expression.Length);
+        }
+        public static byte[] ToByteArray<TObj>(this TObj obj) {
+            var bf = new BinaryFormatter();
+            using var ms = new MemoryStream();
+            bf.Serialize(ms, obj);
+            return ms.ToArray();
+        }
+        public static TObj ToObject<TObj>(this byte[] arrBytes) {
+            using var memStream = new MemoryStream();
+            var binForm = new BinaryFormatter();
+            memStream.Write(arrBytes, 0, arrBytes.Length);
+            memStream.Seek(0, SeekOrigin.Begin);
+            var obj = binForm.Deserialize(memStream);
+            return (TObj)obj;
         }
     }
 }

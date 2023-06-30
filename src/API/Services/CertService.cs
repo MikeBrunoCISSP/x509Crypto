@@ -14,26 +14,27 @@ public class CertService {
         store.Open(OpenFlags.ReadOnly);
         return store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false).Count > 0;
     }
-    public CertificateDto FindCertificate(string thumbprint, X509Context context) {
+    public CertificateDto FindCertificate(string thumbprint, X509Context context, bool nullSafe) {
         using X509Store store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.ReadOnly);
-        return findCertificate(thumbprint, store);
+        return findCertificate(thumbprint, store, nullSafe);
     }
     public void RemoveCertificate(string thumbprint, X509Context context) {
         using X509Store store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.MaxAllowed);
-        CertificateDto dto = findCertificate(thumbprint, store);
+        CertificateDto dto = findCertificate(thumbprint, store, true);
         if (dto != null) {
             store.Remove(dto.Certificate);
         }
     }
-    public void ImportCertificate(byte[] certBlob, SecureString password, X509Context context) {
+    public CertificateDto ImportCertificate(byte[] certBlob, SecureString password, X509Context context) {
         var certObj = new X509Certificate2();
         certObj.Import(certBlob, password.ToUnsecureString(), GetKeyStorageFlags(context));
 
         using var Store = new X509Store(getStoreLocationFromContext(context.ContextType));
         Store.Open(OpenFlags.MaxAllowed);
         Store.Add(certObj);
+        return CertificateDto.FromX509Certificate2(certObj);
     }
 
     public void ExportCertificate(CertificateDto cert, String path) {
@@ -48,11 +49,7 @@ public class CertService {
     }
 
     public byte[] ExportBase64UnSecure(string thumbprint, SecureString password, X509Context context) {
-        CertificateDto dto = FindCertificate(thumbprint, context);
-        if (dto is null) {
-            throw new X509CryptoCertificateNotFoundException(thumbprint, context);
-        }
-
+        CertificateDto dto = FindCertificate(thumbprint, context, false);
         return dto.Certificate.Export(X509ContentType.Pkcs12, password.ToUnsecureString());
     }
 
@@ -62,19 +59,19 @@ public class CertService {
         store.Open(OpenFlags.ReadOnly);
         foreach (var cert in store.Certificates) {
             if (cert.HasPrivateKey) {
-                payLoad.Add(new CertificateDto(cert));
+                payLoad.Add(CertificateDto.FromX509Certificate2(cert));
             }
         }
 
         return payLoad;
     }
-    public CertificateDto CreateX509CryptCertificate(int keyLength, string name, int yearsValid, X509Context context) {
+    public CertificateDto CreateX509CryptCertificate(string name, X509Context context, int keyLength = 2048, int yearsValid = 3) {
         using var rsa = RSA.Create(keyLength);
         var request = new CertificateRequest($"CN={name}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         X509Certificate2 cert = request.CreateSelfSigned(DateTime.Now, DateTime.Now.AddYears(yearsValid));
         using var store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Add(cert);
-        return new CertificateDto(cert);
+        return CertificateDto.FromX509Certificate2(cert);
     }
     public X509KeyStorageFlags GetKeyStorageFlags(X509Context context) {
         return X509KeyStorageFlags.Exportable | (context.IsSystemContext()
@@ -82,15 +79,19 @@ public class CertService {
             : X509KeyStorageFlags.UserKeySet);
     }
 
-    CertificateDto findCertificate(string thumbprint, X509Store openStore) {
+    CertificateDto findCertificate(string thumbprint, X509Store openStore, bool nullSafe) {
         var searchResult = openStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
         if (searchResult.Count > 0
             && searchResult[0].HasPrivateKey
             && searchResult[0].PublicKey.Oid.Value.Equals(AlgorithmOid.RSA)) {
-            return new CertificateDto(searchResult[0]);
+            return CertificateDto.FromX509Certificate2(searchResult[0]);
         }
 
-        return null;
+        if (nullSafe) {
+            return null;
+        }
+
+        throw new X509CryptoCertificateNotFoundException(thumbprint, openStore);
     }
     StoreLocation getStoreLocationFromContext(X509CryptoContextType contextType) {
         return contextType switch {

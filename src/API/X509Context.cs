@@ -10,7 +10,7 @@ namespace Org.X509Crypto {
     /// <summary>
     /// Defines the CAPI store, file system location and name for an X509Cryto encryption context
     /// </summary>
-    public partial class X509Context {
+    public class X509Context {
         private static readonly CertService _certService = new();
 
         private static bool systemContextInitialized;
@@ -137,7 +137,7 @@ namespace Org.X509Crypto {
         /// </summary>
         /// <returns>the collection of all <see cref="X509Alias"/>es found in this context</returns>
         public List<X509Alias> GetAliases(bool includeIfCertNotFound = true) {
-            return GetAliasNames().Select(name => new X509Alias(name, this))
+            return GetAliasNames().Select(name => X509Alias.Load(name, this))
                                   .Where(alias => includeIfCertNotFound || alias.GetCertificate() != null).ToList();
         }
         /// <summary>
@@ -150,7 +150,7 @@ namespace Org.X509Crypto {
         /// <exception cref="Exception"></exception>
         public void MakeCert(string name, int keyLength, int yearsValid, out string thumbprint) {
             try {
-                CertificateDto dto = _certService.CreateX509CryptCertificate(keyLength, name, yearsValid, this);
+                CertificateDto dto = _certService.CreateX509CryptCertificate(name, this, keyLength, yearsValid);
                 thumbprint = dto.Thumbprint;
             } catch (Exception ex) {
                 throw new Exception($"A certificate could not be added to the {Name} {nameof(X509Context)}.", ex);
@@ -173,7 +173,7 @@ namespace Org.X509Crypto {
         }
 
         private void assignIISRights() {
-            if (!X509Utils.IISGroupExists()) {
+            if (!X509CryptoUtils.IISGroupExists()) {
                 return;
             }
             try {
@@ -191,6 +191,7 @@ namespace Org.X509Crypto {
         /// </summary>
         /// <param name="name">The name of the desired X509Context</param>
         /// <returns>An X509Context object</returns>
+        /// <exception cref="X509ContextNotSupported"></exception>
         public static X509Context Select(string name) {
             try {
                 return SupportedContexts.First(p => p.isWritable && p.Aliases.Contains(name, StringComparison.OrdinalIgnoreCase));
@@ -198,6 +199,12 @@ namespace Org.X509Crypto {
                 throw new X509ContextNotSupported(name);
             }
         }
+        /// <summary>
+        /// Returns an X509CryptoContext based on the indicated type.
+        /// </summary>
+        /// <param name="contextType">The X509CryptoContextType</param>
+        /// <returns></returns>
+        public static X509Context Select(X509CryptoContextType contextType) => SupportedContexts.First(p => p.ContextType == contextType);
         /// <summary>
         /// Creates the directory for an impersonated user where X509Alias files will be stored for later retrieval
         /// </summary>

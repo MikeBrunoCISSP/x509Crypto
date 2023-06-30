@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
+using System.Security;
 using System.Text;
 using Org.X509Crypto.Dto;
 using Org.X509Crypto.Services;
@@ -15,52 +16,11 @@ namespace Org.X509Crypto {
     public class X509Alias : IDisposable {
         private static readonly CertService _certService = new();
 
-        private readonly EncryptionService _cryptService;
+        private EncryptionService cryptService;
 
         private string thumbprint;
         private bool certificateLoaded;
         private CertificateDto certificate;
-
-        /// <summary>
-        /// Default constructor
-        /// </summary>
-        public X509Alias() { }
-        /// <summary>
-        /// This constructor is intended to load an already-existing X509Alias
-        /// </summary>
-        /// <param name="name">The desired identifier for the alias (must be unique within the specified context</param>
-        /// <param name="context">The context in which to create the alias</param>
-        public X509Alias(string name, X509Context context) {
-            Context = context;
-            Name = name;
-
-            if (!loadIfExists(false)) {
-                throw new X509AliasNotFoundException(this);
-            }
-
-            _cryptService = new EncryptionService(GetCertificate());
-        }
-        /// <summary>
-        /// This constructor is intended to create a new X509Alias pointing to the specified encryption certificate
-        /// </summary>
-        /// <param name="name">The desired identifier for the alias</param>
-        /// <param name="thumbprint">The SHA1 thumbprint of the certificate to be used for cryptographic operations. Must exist in the specified Context</param>
-        /// <param name="context">The context in which to create the alias</param>
-        /// <param name="complainIfExists">If set to true, an exception is thrown if an existing alias identifier is specified for "Name"</param>
-        public X509Alias(string name, string thumbprint, X509Context context, bool complainIfExists) {
-            Context = context;
-            Name = name;
-            Thumbprint = thumbprint;
-
-            loadIfExists(complainIfExists);
-
-            loadCertificate();
-            if (!certificateLoaded) {
-                throw new X509CryptoCertificateNotFoundException(thumbprint, context);
-            }
-
-            _cryptService = new EncryptionService(GetCertificate());
-        }
 
         /// <summary>
         /// The identifier assigned to this alias
@@ -76,7 +36,7 @@ namespace Org.X509Crypto {
             set => thumbprint = value.RemoveNonHexChars();
         }
         /// <summary>
-        /// The context where cryptographic operations shoudl occur (either system or user)
+        /// The context where cryptographic operations should occur (either system or user)
         /// </summary>
         [DataMember]
         public X509Context Context { get; set; }
@@ -84,6 +44,15 @@ namespace Org.X509Crypto {
         /// The fully-qualified name of the X509Alias in the format [Context]\[Name]
         /// </summary>
         public string FullName => $"{Context.Name}\\{Name}";
+
+        internal CertificateDto Certificate {
+            get => certificate;
+            set {
+                certificate = value;
+                cryptService = new EncryptionService(certificate);
+                certificateLoaded = true;
+            }
+        }
 
         [DataMember]
         public Dictionary<string, string> Secrets { get; set; } = new(StringComparer.InvariantCultureIgnoreCase);
@@ -99,7 +68,7 @@ namespace Org.X509Crypto {
         /// <exception cref="X509CryptoException"></exception>
         public CertificateDto GetCertificate(bool nullSafe = false) {
             if (certificateLoaded || loadCertificate()) {
-                return certificate;
+                return Certificate;
             }
             if (nullSafe) {
                 return null;
@@ -111,10 +80,10 @@ namespace Org.X509Crypto {
         /// <summary>
         /// Determines whether the encryption certificate exists in the <see cref="X509Context"/>
         /// </summary>
-        /// <param name="Context"></param>
+        /// <param name="context"></param>
         /// <returns></returns>
-        public bool HasCert(X509Context Context) {
-            return _certService.CertExistsInStore(Thumbprint, Context);
+        public bool HasCert(X509Context context) {
+            return _certService.CertExistsInStore(Thumbprint, context);
         }
 
         /// <summary>
@@ -123,7 +92,7 @@ namespace Org.X509Crypto {
         /// <param name="plaintext">the text expression to be encrypted</param>
         /// <returns>Base64-encoded ciphertext string</returns>
         public string EncryptText(string plaintext) {
-            EncryptedSecretDto payload = _cryptService.EncryptText(plaintext);
+            EncryptedSecretDto payload = cryptService.EncryptText(plaintext);
             return DataSerializer.SerializeObject(payload).Base64Encode();
         }
         /// <summary>
@@ -137,7 +106,7 @@ namespace Org.X509Crypto {
                 throw new SerializationException("The secret could not be read.");
             }
 
-            return _cryptService.DecryptText(secret);
+            return cryptService.DecryptText(secret);
         }
 
         /// <summary>
@@ -147,16 +116,15 @@ namespace Org.X509Crypto {
         /// <param name="outFile">he path in which to write the encrypted file.</param>
         /// <param name="wipeTimesToWrite">Performs n-pass forensic wipe of the disk sectors where the input file was stored.</param>
         public void EncryptFile(string inFile, string outFile, int wipeTimesToWrite = 0) {
-            using (X509CryptoAgent Agent = new X509CryptoAgent(this)) {
-                Agent.EncryptFile(inFile, outFile);
-            }
+            byte[] data = cryptService.EncryptFile(inFile);
+            File.WriteAllBytes(outFile, data);
 
             if (!File.Exists(outFile)) {
                 throw new X509CryptoException($"Unable to encrypt the file '{inFile}'. The ciphertext file '{outFile}' could not be created.");
             }
 
             if (wipeTimesToWrite > 0) {
-                X509Utils.WipeFile(inFile, wipeTimesToWrite);
+                X509CryptoUtils.WipeFile(inFile, wipeTimesToWrite);
             }
         }
 
@@ -166,7 +134,8 @@ namespace Org.X509Crypto {
         /// <param name="inFile">The path to the ciphertext file to re-encrypt</param>
         /// <param name="OldAlias">The X509Alias which was previously used to encrypt the file</param>
         public void ReEncryptFile(string inFile, X509Alias OldAlias) {
-            X509Utils.ReEncryptFile(OldAlias, this, inFile);
+            //TODO: Re-implement this.
+            //X509CryptoUtils.ReEncryptFile(OldAlias, this, inFile);
         }
 
         /// <summary>
@@ -176,16 +145,15 @@ namespace Org.X509Crypto {
         /// <param name="outFile">The path in which to write the recovered plaintext file</param>
         /// <param name="wipeTimesToWrite">Performs n-pass forensic wipe of the disk sectors where the input file was stored.</param>
         public void DecryptFile(string inFile, string outFile, int wipeTimesToWrite = 0) {
-            using (X509CryptoAgent Agent = new X509CryptoAgent(this)) {
-                Agent.DecryptFile(inFile, outFile);
-            }
+            byte[] data = cryptService.DecryptFile(inFile);
+            File.WriteAllBytes(outFile, data);
 
             if (!File.Exists(outFile)) {
                 throw new X509CryptoException($"Unable to decrypt the file '{inFile}'. The plaintext file '{outFile}' could not be created.");
             }
 
             if (wipeTimesToWrite > 0) {
-                X509Utils.WipeFile(inFile, wipeTimesToWrite);
+                X509CryptoUtils.WipeFile(inFile, wipeTimesToWrite);
             }
         }
 
@@ -218,32 +186,20 @@ namespace Org.X509Crypto {
         /// <param name="plaintext">The plaintext expression to be encrypted</param>
         /// <param name="overwriteExisting">Indicates whether an existing secret in the alias with the same value for "Name" as specified may be overwritten</param>
         /// <returns>A Base64-encoded ciphertext string</returns>
+        /// <exception cref="X509SecretAlreadyExistsException"></exception>
         public string AddSecret(string identifier, string plaintext, bool overwriteExisting) {
-            string payLoad = EncryptText(plaintext);
-            if (Secrets.ContainsKey(identifier)) {
-                if (overwriteExisting) {
-                    Secrets[identifier] = payLoad;
-                }
+            if (Secrets.ContainsKey(identifier) && !overwriteExisting) {
                 throw new X509SecretAlreadyExistsException(this, identifier);
             }
 
-            Secrets.Add(identifier, plaintext);
-            return payLoad;
-        }
-        /// <summary>
-        /// Adds a secret (which has already been encrypted using the certificate associated with this X509Alias) and its identifier to this X509Alias
-        /// </summary>
-        /// <param name="secret">The <see cref="X509CryptoSecret"/> to add to the alias</param>
-        /// <param name="overwriteExisting">Indicates whether an existing secret in the alias with the same value for "Name" as specified may be overwritten</param>
-        public string AddSecret(X509CryptoSecret secret, bool overwriteExisting) {
-            if (Secrets.ContainsKey(secret.Id)) {
-                if (overwriteExisting) {
-                    Secrets[secret.Id] = secret;
-                }
-                throw new X509SecretAlreadyExistsException(this, secret.Id);
+            string payLoad = EncryptText(plaintext);
+            if (Secrets.ContainsKey(identifier)) {
+                Secrets[identifier] = payLoad;
+            } else {
+                Secrets.Add(identifier, plaintext);
             }
-            Secrets.Add(secret.Id, secret);
-            return secret.Value;
+
+            return payLoad;
         }
         /// <summary>
         /// Re-encrypts a secret from a different X509Alias and stores it in this X509Alias
@@ -252,28 +208,21 @@ namespace Org.X509Crypto {
         /// <param name="OldAlias">The old X509Alias where the secret is currently encrypted and stored</param>
         /// <param name="overwriteExisting">If true, an existing secret in this X509Alias with the same identifier may be overwritten</param>
         /// <returns>A Base64-encoded ciphertext expression</returns>
-        public string AddSecret(string identifier, X509Alias OldAlias, bool overwriteExisting) {
+        public string ReEncryptSecret(string identifier, X509Alias OldAlias, bool overwriteExisting) {
             return AddSecret(identifier, OldAlias.RecoverSecret(identifier), overwriteExisting);
-        }
-        /// <summary>
-        /// Indicates whether a secret with the specified identifier exists within this X509Alias
-        /// </summary>
-        /// <param name="identifier">The secret identifier to check the X509Alias for</param>
-        /// <returns>true if a secret with the specified identifier is found in this X509Alias</returns>
-        public bool TestSecretExists(string identifier) {
-            return Secrets.ContainsKey(identifier);
         }
         /// <summary>
         /// Recovers a secret from an X509Alias with the specified identifier
         /// </summary>
         /// <param name="identifier">The identifier of the secret to be recovered</param>
         /// <returns>The recovered, plaintext secret</returns>
+        /// <exception cref="X509CryptoSecretNotFoundException"></exception>
         public string RecoverSecret(string identifier) {
             if (Secrets.ContainsKey(identifier)) {
                 return DecryptText(Secrets[identifier]);
             }
 
-            throw new X509CryptoException($"No secret named '{identifier}' was found in alias '{FullName}'");
+            throw new X509CryptoSecretNotFoundException(identifier, this);
         }
         /// <summary>
         /// Updates this X509Alias to use a new encryption certificate and key pair. The old certificate and key pair must still be available to perform this operation.
@@ -288,7 +237,7 @@ namespace Org.X509Crypto {
                 throw new X509CryptoException($"A valid encryption certificate with thumbprint {newThumbprint} was not found in the {Context.Name} context");
             }
 
-            var tmpAlias = new X509Alias(Name, newThumbprint, newContext, false);
+            var tmpAlias = Create(Name, newContext, newThumbprint);
             foreach (string identifier in Secrets.Keys) {
                 Secrets[identifier] = tmpAlias.EncryptText(RecoverSecret(identifier));
             }
@@ -297,7 +246,14 @@ namespace Org.X509Crypto {
             Context = newContext;
             Commit();
         }
-
+        /// <summary>
+        /// Imports the encryption certificate from the specified encoded blob
+        /// </summary>
+        /// <param name="encodedCert">The encoded certificate blob</param>
+        /// <param name="password">The password to unlock the private key</param>
+        public void ImportCert(byte[] encodedCert, SecureString password) {
+            Certificate = _certService.ImportCertificate(encodedCert, password, Context);
+        }
         /// <summary>
         /// Exports the encryption certificate contained in this alias to a Base64-encoded text file. The private key is not exported.
         /// </summary>
@@ -346,7 +302,8 @@ namespace Org.X509Crypto {
         /// </summary>
         public void Remove(bool deleteCert = false) {
             try {
-                X509Utils.DeleteFile(StoragePath, complainIfNotFound: true, confirmDelete: true);
+                File.Delete(StoragePath);
+                //X509CryptoUtils.DeleteFile(StoragePath, complainIfNotFound: true, confirmDelete: true);
 
                 if (!deleteCert) {
                     return;
@@ -384,7 +341,66 @@ namespace Org.X509Crypto {
             output.AppendLine();
             return output.ToString();
         }
+        /// <summary>
+        /// Saves the X509CryptoAlias along with its certificate and key pair to a file
+        /// </summary>
+        /// <param name="path">The path to which to write the file</param>
+        /// <param name="password">The password to protect the certificate private key.</param>
+        /// <param name="overwrite">If true, an existing file may be overwritten</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public void Save(string path, SecureString password, bool overwrite = false) {
+            if (path is null) {
+                throw new ArgumentNullException(nameof(path));
+            }
+            if (password is null) {
+                throw new ArgumentNullException(nameof(password));
+            }
 
+            if (File.Exists(path) && !overwrite) {
+                throw new ArgumentException($"'{path}': File already exists.");
+            }
+
+            save(path, X509CryptoAliasDto.FromX509Alias(this, password));
+        }
+        /// <summary>
+        /// Saves the X509CryptoAlias to a file
+        /// </summary>
+        /// <param name="path">The path to which to write the file</param>
+        /// <param name="overwrite">If true, an existing file may be overwritten</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public void Save(string path, bool overwrite = false) {
+            if (path is null) {
+                throw new ArgumentNullException(nameof(path));
+            }
+            if (File.Exists(path) && !overwrite) {
+                throw new ArgumentException($"'{path}': File already exists.");
+            }
+
+            save(path, X509CryptoAliasDto.FromX509Alias(this));
+        }
+
+        internal bool LoadIfExists(bool complainIfExists) {
+            if (!File.Exists(StoragePath)) {
+                return false;
+            }
+
+            if (complainIfExists) {
+                throw new X509AliasAlreadyExistsException(this);
+            }
+
+            decodeFromFile();
+
+            return true;
+        }
+        internal byte[] EncodeCert(SecureString password) => _certService.ExportBase64UnSecure(Thumbprint, password, Context);
+
+        void save(string path, X509CryptoAliasDto dto) {
+            string json = DataSerializer.SerializeObject(dto);
+            var encoded = json.Base64Encode();
+            File.WriteAllText(path, encoded);
+        }
         string printSecret(int index, string identifier, X509CryptSecretPrintFormat printFormat, bool revealSecret) {
             if (revealSecret) {
                 string plaintext = DecryptText(Secrets[identifier]);
@@ -405,22 +421,8 @@ namespace Org.X509Crypto {
         }
         private void importCertKeyBase64(byte[] certBlob) {
             var password = Util.GetPassword("Enter the password to unlock this X509Alias file", 0);
-            _certService.ImportCertificate(certBlob, password, Context);
+            Certificate = _certService.ImportCertificate(certBlob, password, Context);
         }
-        private bool loadIfExists(bool complainIfExists) {
-            if (!File.Exists(StoragePath)) {
-                return false;
-            }
-
-            if (complainIfExists) {
-                throw new X509AliasAlreadyExistsException(this);
-            }
-
-            decodeFromFile();
-
-            return true;
-        }
-
         private string encode(bool includeCert) {
             var Serializer = new DataContractJsonSerializer(typeof(X509Alias));
             string json,
@@ -475,15 +477,104 @@ namespace Org.X509Crypto {
             }
         }
         private bool loadCertificate() {
-            var payLoad = _certService.FindCertificate(Thumbprint, Context);
+            var payLoad = _certService.FindCertificate(Thumbprint, Context, true);
             if (payLoad == null) {
                 return false;
             }
 
-            certificate = payLoad;
+            Certificate = payLoad;
             certificateLoaded = true;
             return true;
 
+        }
+
+        /// <summary>
+        /// Creates a new X509Alias
+        /// </summary>
+        /// <param name="name">The desired name of the X509Alias</param>
+        /// <param name="context">The <see cref="X509Context"/> where the alias should be created</param>
+        /// <param name="overWrite">If true, an existing alias may be overwritten</param>
+        /// <returns></returns>
+        /// <exception cref="X509AliasAlreadyExistsException"></exception>
+        public static X509Alias Create(string name, X509Context context, bool overWrite = false) {
+            var payLoad = new X509Alias {
+                Name = name,
+                Context = context
+            };
+            if (!overWrite && payLoad.LoadIfExists(true)) {
+                throw new X509AliasAlreadyExistsException(payLoad);
+            }
+            payLoad.Certificate = _certService.CreateX509CryptCertificate(name, context);
+
+            return payLoad;
+        }
+        /// <summary>
+        /// Creates a new X509Alias pointing to an existing encryption certificate
+        /// </summary>
+        /// <param name="name">The desired name of the X509Alias</param>
+        /// <param name="context">The <see cref="X509Context"/> where the alias should be created</param>
+        /// <param name="thumbprint">The thumbprint of the encryption certificate</param>
+        /// <param name="overWrite">If true, an existing alias may be overwritten</param>
+        /// <returns></returns>
+        /// <exception cref="X509AliasAlreadyExistsException"></exception>
+        /// <exception cref="X509CryptoCertificateNotFoundException"></exception>
+        public static X509Alias Create(string name, X509Context context, string thumbprint, bool overWrite = false) {
+            var payLoad = new X509Alias {
+                Name = name,
+                Context = context
+            };
+            if (!overWrite && payLoad.LoadIfExists(true)) {
+                throw new X509AliasAlreadyExistsException(payLoad);
+            }
+            payLoad.Certificate = _certService.FindCertificate(thumbprint, context, false);
+
+            return payLoad;
+        }
+        /// <summary>
+        /// Loads an existing X509Alias
+        /// </summary>
+        /// <param name="name">The name of the alias</param>
+        /// <param name="context">The <see cref="X509Context"/> where the alias exists</param>
+        /// <returns></returns>
+        /// <exception cref="X509AliasNotFoundException"></exception>
+        public static X509Alias Load(string name, X509Context context) {
+            var payLoad = new X509Alias {
+                Name = name,
+                Context = context
+            };
+            if (!payLoad.LoadIfExists(false)) {
+                throw new X509AliasNotFoundException(payLoad);
+            }
+
+            return payLoad;
+        }
+
+        /// <summary>
+        /// Loads an existing X509Alias from a file
+        /// </summary>
+        /// <param name="path">The path where the alias is stored</param>
+        /// <param name="password">The password to unlock the private key</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public static X509Alias Load(FileInfo path, SecureString password) {
+            if (path is null) {
+                throw new ArgumentNullException(nameof(path));
+            }
+            if (password is null) {
+                throw new ArgumentNullException(nameof(password));
+            }
+            if (!File.Exists(path.FullName)) {
+                throw new FileNotFoundException(path.FullName);
+            }
+            string json = File.ReadAllText(path.FullName).Base64Decode();
+            var dto = DataSerializer.DeserializeObject<X509CryptoAliasDto>(json, false);
+            if (dto is null) {
+                throw new ArgumentException("The file is corrupt.");
+            }
+
+            return dto.Decode(password);
         }
 
         /// <summary>
@@ -500,6 +591,8 @@ namespace Org.X509Crypto {
             }
 
             try {
+
+
                 X509Alias alias = context.CreateX509Alias();
                 alias.decodeFromFile(importPath, newName);
                 return alias;
@@ -507,7 +600,6 @@ namespace Org.X509Crypto {
                 throw new X509CryptoException($"Unable to import X509Alias from path '{importPath}'", ex);
             }
         }
-
         /// <summary>
         /// Indicates whether there is already a storage path for the specified X509Alias on the system
         /// </summary>
@@ -530,20 +622,11 @@ namespace Org.X509Crypto {
             return true;
         }
 
-        internal static string GetOne(string thumbprint, X509Context Context) {
-            foreach (X509Alias Alias in Context.GetAliases()) {
-                if (Alias.Thumbprint.Matches(thumbprint)) {
-                    return Alias.Name;
-                }
-            }
-
-            throw new X509AliasNotFoundException(thumbprint, Context);
-        }
-
         /// <summary>
         /// X509Alias Destructor
         /// </summary>
         public void Dispose() {
+            cryptService?.Dispose();
             Name = null;
             thumbprint = null;
             Context = null;

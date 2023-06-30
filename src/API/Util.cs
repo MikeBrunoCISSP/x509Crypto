@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 
@@ -42,27 +40,6 @@ namespace Org.X509Crypto {
                     throw new X509CryptoException($"A file named '{fileName}' already exists. Set '{overwriteArgument} = {overwriteValue}' to allow overwrite");
                 }
             }
-        }
-
-        public static bool AddSecret(string secretName, string ciphertext, X509Alias Alias) {
-            bool secretAdded = false;
-            KeyValuePair<string, string> tuple = new KeyValuePair<string, string>(secretName, ciphertext);
-            try {
-                Alias.AddSecret(tuple, AllowSecretOverwrite.No);
-                secretAdded = true;
-            } catch (X509SecretAlreadyExistsException ex) {
-                if (Util.WarnConfirm(ex.Message, Constants.Affirm)) {
-                    Alias.AddSecret(tuple, AllowSecretOverwrite.Yes);
-                    secretAdded = true;
-                }
-            }
-
-            if (secretAdded) {
-                Alias.Commit();
-                Console.WriteLine($"\r\nSecret {secretName} has been added to {nameof(X509Alias)} {Alias.Name} in the {Alias.Context.Name} {nameof(X509Context)}\r\n");
-            }
-
-            return secretAdded;
         }
 
         public static bool IsCertThumbprint(string expression) {
@@ -135,19 +112,19 @@ namespace Org.X509Crypto {
             Console.WriteLine($"\r\n{message}\r\n", ConsoleColor.Yellow);
         }
 
-        public static X509Certificate2 GetCertByThumbprint(string thumbprint, X509Context Context) {
-            thumbprint = thumbprint.RemoveNonHexChars();
+        //public static X509Certificate2 GetCertByThumbprint(string thumbprint, X509Context Context) {
+        //    thumbprint = thumbprint.RemoveNonHexChars();
 
-            X509Store Store = new X509Store(StoreName.My, Context.Location);
-            Store.Open(OpenFlags.ReadOnly);
-            foreach (X509Certificate2 cert in Store.Certificates) {
-                if (cert.Thumbprint.Matches(thumbprint)) {
-                    return cert;
-                }
-            }
+        //    X509Store Store = new X509Store(StoreName.My, Context.Location);
+        //    Store.Open(OpenFlags.ReadOnly);
+        //    foreach (X509Certificate2 cert in Store.Certificates) {
+        //        if (cert.Thumbprint.Matches(thumbprint)) {
+        //            return cert;
+        //        }
+        //    }
 
-            throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
-        }
+        //    throw new X509CryptoCertificateNotFoundException(thumbprint, Context);
+        //}
 
         public static byte[] GetSecureRandom(int byteLength) {
             using RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();

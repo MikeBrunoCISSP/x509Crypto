@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Org.X509Crypto {
     /// <summary>
@@ -43,6 +44,13 @@ namespace Org.X509Crypto {
         /// <param name="Context">The X509Context which was checked for the encryption certificate</param>
         public X509CryptoCertificateNotFoundException(string thumbprint, X509Context Context)
             : base($"A certificate with thumbprint '{thumbprint}' was not found in the '{Context.Name}' context.") { }
+        /// <summary>
+        /// Instantiates an X509CryptoCertificateNotFoundException
+        /// </summary>
+        /// <param name="thumbprint">The thumbprint of the certificate which could not be located in the specified certificate store</param>
+        /// <param name="store">The <see cref="X509Store"/> which was checked for the encryption certificate</param>
+        public X509CryptoCertificateNotFoundException(string thumbprint, X509Store store)
+            : base($"A certificate with thumbprint '{thumbprint}' was not found in the '{store.Name}' certificate store.") { }
     }
 
     /// <summary>
@@ -67,6 +75,14 @@ namespace Org.X509Crypto {
     public class X509DirectoryRightsException : Exception {
         internal X509DirectoryRightsException(string contextName, string directory, bool writeAccessRequested)
             : base($"Insufficient rights to {(writeAccessRequested ? @"write to" : @"read from")} the {contextName} directory ({directory})") { }
+    }
+
+    /// <summary>
+    /// Thrown if the current X509Alias does not contain the specified secret
+    /// </summary>
+    public class X509CryptoSecretNotFoundException : Exception {
+        internal X509CryptoSecretNotFoundException(string identifier, X509Alias alias)
+            : base($"No secret named '{identifier}' was found in alias '{alias.FullName}'") { }
     }
 
     /// <summary>

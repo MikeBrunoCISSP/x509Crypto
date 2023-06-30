@@ -98,7 +98,7 @@ namespace X509CryptoPOSH {
             }
 
             if (!aliasSet) {
-                Alias = new X509Alias(string.Empty, Thumbprint, Context, false);
+                Alias = new X509Alias(string.Empty, Context, Thumbprint, false);
             }
 
             if (!System.IO.Path.GetExtension(Path).Matches(FileExtensions.Pfx)) {
@@ -107,7 +107,7 @@ namespace X509CryptoPOSH {
 
             if (File.Exists(Path)) {
                 if (Overwrite || Util.WarnConfirm($"The specified file {Path} already exists. Do you wish to overwrite it?", Constants.Affirm)) {
-                    X509Utils.DeleteFile(Path, confirmDelete: true);
+                    X509CryptoUtils.DeleteFile(Path, confirmDelete: true);
                 } else {
                     throw new X509CryptoException($"The specified file {Path} already exists.");
                 }
