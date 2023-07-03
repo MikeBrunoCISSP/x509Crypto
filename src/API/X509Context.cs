@@ -89,6 +89,14 @@ namespace Org.X509Crypto {
             };
         }
 
+        public override bool Equals(object obj) {
+            return obj is X509Context other && other.ContextType == ContextType;
+        }
+
+        public override int GetHashCode() {
+            return ContextType.GetHashCode();
+        }
+
         /// <summary>
         /// The path where X509Alias files created in the context are stored.
         /// For "User" it is "C:\Users\\[sAMAccountName]\AppData\Local\X509Crypto"

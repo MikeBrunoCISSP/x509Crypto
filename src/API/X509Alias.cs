@@ -83,7 +83,7 @@ namespace Org.X509Crypto {
         /// <param name="context"></param>
         /// <returns></returns>
         public bool HasCert(X509Context context) {
-            return _certService.CertExistsInStore(Thumbprint, context);
+            return _certService.TestCertExists(Thumbprint, context);
         }
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace Org.X509Crypto {
             newContext ??= Context;
 
             newThumbprint = newThumbprint.RemoveNonHexChars();
-            if (!_certService.CertExistsInStore(newThumbprint, newContext)) {
+            if (!_certService.TestCertExists(newThumbprint, newContext)) {
                 throw new X509CryptoException($"A valid encryption certificate with thumbprint {newThumbprint} was not found in the {Context.Name} context");
             }
 

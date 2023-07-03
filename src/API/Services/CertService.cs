@@ -9,7 +9,7 @@ using Org.X509Crypto.Dto;
 
 namespace Org.X509Crypto.Services;
 public class CertService {
-    public bool CertExistsInStore(string thumbprint, X509Context context) {
+    public bool TestCertExists(string thumbprint, X509Context context) {
         using X509Store store = new X509Store(getStoreLocationFromContext(context.ContextType));
         store.Open(OpenFlags.ReadOnly);
         return store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false).Count > 0;
@@ -50,6 +50,7 @@ public class CertService {
 
     public byte[] ExportBase64UnSecure(string thumbprint, SecureString password, X509Context context) {
         CertificateDto dto = FindCertificate(thumbprint, context, false);
+        string foo = password.ToUnsecureString();
         return dto.Certificate.Export(X509ContentType.Pkcs12, password.ToUnsecureString());
     }
 
@@ -65,14 +66,23 @@ public class CertService {
 
         return payLoad;
     }
+
     public CertificateDto CreateX509CryptCertificate(string name, X509Context context, int keyLength = 2048, int yearsValid = 3) {
+        X509KeyStorageFlags storageFlags = X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable;
+        if (context == X509Context.SystemFull) {
+            storageFlags |= X509KeyStorageFlags.MachineKeySet;
+        }
         using var rsa = RSA.Create(keyLength);
         var request = new CertificateRequest($"CN={name}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        X509Certificate2 cert = request.CreateSelfSigned(DateTime.Now, DateTime.Now.AddYears(yearsValid));
+        using X509Certificate2 ephemeral = request.CreateSelfSigned(DateTime.Now, DateTime.Now.AddYears(yearsValid));
+        using X509Certificate2 cert = new X509Certificate2(ephemeral.Export(X509ContentType.Pkcs12), string.Empty, storageFlags);
+
         using var store = new X509Store(getStoreLocationFromContext(context.ContextType));
+        store.Open(OpenFlags.MaxAllowed);
         store.Add(cert);
         return CertificateDto.FromX509Certificate2(cert);
     }
+
     public X509KeyStorageFlags GetKeyStorageFlags(X509Context context) {
         return X509KeyStorageFlags.Exportable | (context.IsSystemContext()
             ? X509KeyStorageFlags.MachineKeySet
