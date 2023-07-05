@@ -14,8 +14,6 @@ namespace Org.X509Crypto {
     /// </summary>
     [DataContract]
     public class X509Alias : IDisposable {
-        private static readonly CertService _certService = new();
-
         private EncryptionService cryptService;
 
         private string thumbprint;
@@ -59,7 +57,7 @@ namespace Org.X509Crypto {
         [DataMember]
         internal byte[] CertificateBlob { get; set; }
 
-        private string StoragePath => Path.Combine(Context.GetStorageDirectory(), $"{Name}{FileExtensions.X509Alias}");
+        private string GetStoragePath() => Path.Combine(Context.ContextDirectory.DirPath, $"{Name}{FileExtensions.X509Alias}");
 
         /// <summary>
         /// Gets the certificate associated with this <see cref="X509Alias"/>
@@ -83,7 +81,7 @@ namespace Org.X509Crypto {
         /// <param name="context"></param>
         /// <returns></returns>
         public bool HasCert(X509Context context) {
-            return _certService.TestCertExists(Thumbprint, context);
+            return CertService.TestCertExists(Thumbprint, context);
         }
 
         /// <summary>
@@ -233,7 +231,7 @@ namespace Org.X509Crypto {
             newContext ??= Context;
 
             newThumbprint = newThumbprint.RemoveNonHexChars();
-            if (!_certService.TestCertExists(newThumbprint, newContext)) {
+            if (!CertService.TestCertExists(newThumbprint, newContext)) {
                 throw new X509CryptoException($"A valid encryption certificate with thumbprint {newThumbprint} was not found in the {Context.Name} context");
             }
 
@@ -252,14 +250,14 @@ namespace Org.X509Crypto {
         /// <param name="encodedCert">The encoded certificate blob</param>
         /// <param name="password">The password to unlock the private key</param>
         public void ImportCert(byte[] encodedCert, SecureString password) {
-            Certificate = _certService.ImportCertificate(encodedCert, password, Context);
+            Certificate = CertService.ImportCertificate(encodedCert, password, Context);
         }
         /// <summary>
         /// Exports the encryption certificate contained in this alias to a Base64-encoded text file. The private key is not exported.
         /// </summary>
         /// <param name="path">The fully-qualified path where the export file should be written</param>
         public void ExportCert(string path) {
-            _certService.ExportCertificate(GetCertificate(), path);
+            CertService.ExportCertificate(GetCertificate(), path);
         }
 
         /// <summary>
@@ -289,11 +287,11 @@ namespace Org.X509Crypto {
         /// Writes the X509Alias to the local file system for later retrieval
         /// </summary>
         public void Commit() {
-            if (!Directory.Exists(Context.GetStorageDirectory())) {
-                Directory.CreateDirectory(Context.GetStorageDirectory());
+            if (!Directory.Exists(Context.ContextDirectory.DirPath)) {
+                Directory.CreateDirectory(Context.ContextDirectory.DirPath);
             }
 
-            var tmp = StoragePath;
+            var tmp = GetStoragePath();
             Export(ref tmp, includeCert: false, overwriteExisting: true);
         }
 
@@ -302,14 +300,14 @@ namespace Org.X509Crypto {
         /// </summary>
         public void Remove(bool deleteCert = false) {
             try {
-                File.Delete(StoragePath);
+                File.Delete(GetStoragePath());
                 //X509CryptoUtils.DeleteFile(StoragePath, complainIfNotFound: true, confirmDelete: true);
 
                 if (!deleteCert) {
                     return;
                 }
 
-                _certService.RemoveCertificate(Thumbprint, Context);
+                CertService.RemoveCertificate(Thumbprint, Context);
             } catch (Exception ex) {
                 throw new X509CryptoException($"The X509Crypto alias '{Name}' could not be removed from the {Context.Name} context", ex);
             }
@@ -382,7 +380,7 @@ namespace Org.X509Crypto {
         }
 
         internal bool LoadIfExists(bool complainIfExists) {
-            if (!File.Exists(StoragePath)) {
+            if (!File.Exists(GetStoragePath())) {
                 return false;
             }
 
@@ -394,7 +392,7 @@ namespace Org.X509Crypto {
 
             return true;
         }
-        internal byte[] EncodeCert(SecureString password) => _certService.ExportBase64UnSecure(Thumbprint, password, Context);
+        internal byte[] EncodeCert(SecureString password) => CertService.ExportBase64UnSecure(Thumbprint, password, Context);
 
         void save(string path, X509CryptoAliasDto dto) {
             string json = DataSerializer.SerializeObject(dto);
@@ -417,11 +415,11 @@ namespace Org.X509Crypto {
         }
         private byte[] exportCertKeyBase64() {
             var password = Util.GetPassword("Enter a strong password to protect the X509Alias file", Constants.MinimumPasswordLength, true);
-            return _certService.ExportBase64UnSecure(Thumbprint, password, Context);
+            return CertService.ExportBase64UnSecure(Thumbprint, password, Context);
         }
         private void importCertKeyBase64(byte[] certBlob) {
             var password = Util.GetPassword("Enter the password to unlock this X509Alias file", 0);
-            Certificate = _certService.ImportCertificate(certBlob, password, Context);
+            Certificate = CertService.ImportCertificate(certBlob, password, Context);
         }
         private string encode(bool includeCert) {
             var Serializer = new DataContractJsonSerializer(typeof(X509Alias));
@@ -450,7 +448,7 @@ namespace Org.X509Crypto {
         }
 
         private void decodeFromFile(string importPath = "", string newName = "") {
-            string fileToDecode = string.IsNullOrEmpty(importPath) ? StoragePath : importPath;
+            string fileToDecode = string.IsNullOrEmpty(importPath) ? GetStoragePath() : importPath;
 
             try {
 
@@ -477,7 +475,7 @@ namespace Org.X509Crypto {
             }
         }
         private bool loadCertificate() {
-            var payLoad = _certService.FindCertificate(Thumbprint, Context, true);
+            var payLoad = CertService.FindCertificate(Thumbprint, Context, true);
             if (payLoad == null) {
                 return false;
             }
@@ -504,7 +502,7 @@ namespace Org.X509Crypto {
             if (!overWrite && payLoad.LoadIfExists(true)) {
                 throw new X509AliasAlreadyExistsException(payLoad);
             }
-            payLoad.Certificate = _certService.CreateX509CryptCertificate(name, context);
+            payLoad.Certificate = CertService.CreateX509CryptCertificate(name, context);
 
             return payLoad;
         }
@@ -526,7 +524,7 @@ namespace Org.X509Crypto {
             if (!overWrite && payLoad.LoadIfExists(true)) {
                 throw new X509AliasAlreadyExistsException(payLoad);
             }
-            payLoad.Certificate = _certService.FindCertificate(thumbprint, context, false);
+            payLoad.Certificate = CertService.FindCertificate(thumbprint, context, false);
 
             return payLoad;
         }
@@ -607,13 +605,13 @@ namespace Org.X509Crypto {
         /// <param name="context">The <see cref="X509Context"/> to check for the <see cref="X509Alias"/>. If not specified, only the file location will be checked.</param>
         /// <returns>true if a storage path exists for the specified X509Alias</returns>
         public static bool TestAliasExists(X509Alias alias, X509Context context = null) {
-            if (!File.Exists(alias.StoragePath)) {
+            if (!File.Exists(alias.GetStoragePath())) {
                 return false;
             }
 
             if (context != null) {
                 try {
-                    context.CreateX509Alias().decodeFromFile(alias.StoragePath);
+                    context.CreateX509Alias().decodeFromFile(alias.GetStoragePath());
                 } catch {
                     return false;
                 }

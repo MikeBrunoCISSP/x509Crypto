@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.AccessControl;
 using Org.X509Crypto.Dto;
 using Org.X509Crypto.Services;
 
@@ -11,12 +10,6 @@ namespace Org.X509Crypto {
     /// Defines the CAPI store, file system location and name for an X509Cryto encryption context
     /// </summary>
     public class X509Context {
-        private static readonly CertService _certService = new();
-
-        private static bool systemContextInitialized;
-
-        private bool isWritable;
-
         /// <summary>
         /// The human-readable name of the context
         /// </summary>
@@ -28,7 +21,9 @@ namespace Org.X509Crypto {
         /// <summary>
         /// The X509Context type.
         /// </summary>
-        public X509CryptoContextType ContextType { get; private set; }
+        public X509CryptoContextFlags ContextFlags { get; private set; }
+
+        internal X509CryptoContextDirectory ContextDirectory { get; set; }
 
         #region Supported Contexts
 
@@ -36,40 +31,41 @@ namespace Org.X509Crypto {
         /// Provides read-only access to the context of the currently logged in (or impersonated) user.
         /// </summary>
         public static readonly X509Context UserReadOnly = new() {
-            ContextType = X509CryptoContextType.UserReadOnly,
+            ContextFlags = X509CryptoContextFlags.User,
             Name = X509ContextName.User,
             Aliases = new List<string>() { X509ContextName.User, X509ContextName.CurrentUser },
-            isWritable = false
+            ContextDirectory = new X509CryptoContextDirectory(X509CryptoContextFlags.User)
         };
 
         /// <summary>
         /// Provides read/write access to the context of the currently logged in (or impersonated) user.
         /// </summary>
         public static readonly X509Context UserFull = new() {
-            ContextType = X509CryptoContextType.UserFull,
+            ContextFlags = X509CryptoContextFlags.User | X509CryptoContextFlags.WriteAccess,
             Name = X509ContextName.User,
             Aliases = new List<string>() { X509ContextName.User, X509ContextName.CurrentUser },
-            isWritable = true
+            ContextDirectory = new X509CryptoContextDirectory(X509CryptoContextFlags.User | X509CryptoContextFlags.WriteAccess)
         };
 
         /// <summary>
         /// Provides read-only access to the context of the currently logged in (or impersonated) user.
         /// </summary>
-        public static readonly X509Context SystemReadOnly = new X509Context {
-            ContextType = X509CryptoContextType.SystemReadOnly,
+        public static readonly X509Context SystemReadOnly = new() {
+            ContextFlags = X509CryptoContextFlags.System,
             Name = X509ContextName.System,
             Aliases = new List<string>() { X509ContextName.System, X509ContextName.LocalSystem },
-            isWritable = false
+            ContextDirectory = new X509CryptoContextDirectory(X509CryptoContextFlags.System)
         };
 
         /// <summary>
         /// Provides read/write access to the context of the currently logged in (or impersonated) user.
         /// </summary>
-        public static readonly X509Context SystemFull = new X509Context {
-            ContextType = X509CryptoContextType.SystemFull,
+        public static readonly X509Context SystemFull = new() {
+            ContextFlags = X509CryptoContextFlags.System | X509CryptoContextFlags.WriteAccess,
             Name = X509ContextName.System,
             Aliases = new List<string>() { X509ContextName.System, X509ContextName.LocalSystem },
-            isWritable = true
+            ContextDirectory = new X509CryptoContextDirectory(X509CryptoContextFlags.System | X509CryptoContextFlags.WriteAccess)
+
         };
 
         /// <summary>
@@ -84,60 +80,26 @@ namespace Org.X509Crypto {
         /// </summary>
         /// <returns></returns>
         public X509Alias CreateX509Alias() {
-            return new X509Alias() {
+            return new X509Alias {
                 Context = this
             };
         }
 
         public override bool Equals(object obj) {
-            return obj is X509Context other && other.ContextType == ContextType;
+            return obj is X509Context other && other.ContextFlags == ContextFlags;
         }
 
         public override int GetHashCode() {
-            return ContextType.GetHashCode();
+            return ContextFlags.GetHashCode();
         }
 
-        /// <summary>
-        /// The path where X509Alias files created in the context are stored.
-        /// For "User" it is "C:\Users\\[sAMAccountName]\AppData\Local\X509Crypto"
-        /// For "System" it is "C:\ProgramData\X509Crypto"
-        /// </summary>
-        public string GetStorageDirectory() {
-            switch (ContextType) {
-                case X509CryptoContextType.UserReadOnly:
-                    return X509Directory.User;
-                case X509CryptoContextType.UserFull:
-                    if (!Directory.Exists(X509Directory.User)) {
-                        try {
-                            Directory.CreateDirectory(X509Directory.User);
-                        } catch (UnauthorizedAccessException) {
-                            throw new X509DirectoryRightsException(Name, X509Directory.User, true);
-                        }
-                    }
-
-                    return X509Directory.User;
-                case X509CryptoContextType.SystemReadOnly:
-                    return X509Directory.System;
-                case X509CryptoContextType.SystemFull:
-                    try {
-                        initializeSystemContext();
-                    } catch (UnauthorizedAccessException) {
-                        throw new X509DirectoryRightsException(Name, X509Directory.System, true);
-                    }
-
-                    return X509Directory.System;
-                default:
-                    //This case will never be reached.
-                    return string.Empty;
-            }
-        }
         /// <summary>
         /// Returns a list of X509Alias names available in the current X509Context.
         /// </summary>
         /// <returns></returns>
         public List<string> GetAliasNames() {
-            return Directory.Exists(GetStorageDirectory())
-                ? Directory.GetFiles(GetStorageDirectory()).Select(Path.GetFileNameWithoutExtension).ToList()
+            return Directory.Exists(ContextDirectory.DirPath)
+                ? Directory.GetFiles(ContextDirectory.DirPath).Select(Path.GetFileNameWithoutExtension).ToList()
                 : new List<string>();
         }
         /// <summary>
@@ -158,39 +120,10 @@ namespace Org.X509Crypto {
         /// <exception cref="Exception"></exception>
         public void MakeCert(string name, int keyLength, int yearsValid, out string thumbprint) {
             try {
-                CertificateDto dto = _certService.CreateX509CryptCertificate(name, this, keyLength, yearsValid);
+                CertificateDto dto = CertService.CreateX509CryptCertificate(name, this, keyLength, yearsValid);
                 thumbprint = dto.Thumbprint;
             } catch (Exception ex) {
                 throw new Exception($"A certificate could not be added to the {Name} {nameof(X509Context)}.", ex);
-            }
-        }
-
-        private void initializeSystemContext() {
-            if (systemContextInitialized) {
-                return;
-            }
-
-            createSystemAppDirectory();
-            assignIISRights();
-            systemContextInitialized = true;
-        }
-        private void createSystemAppDirectory() {
-            if (!Directory.Exists(X509Directory.System)) {
-                Directory.CreateDirectory(X509Directory.System);
-            }
-        }
-
-        private void assignIISRights() {
-            if (!X509CryptoUtils.IISGroupExists()) {
-                return;
-            }
-            try {
-                DirectoryInfo dirInfo = new DirectoryInfo(X509Directory.System);
-                DirectorySecurity dirSec = dirInfo.GetAccessControl();
-                dirSec.AddAccessRule(new FileSystemAccessRule(Constants.IISGroup, FileSystemRights.Read, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
-                dirInfo.SetAccessControl(dirSec);
-            } catch {
-                //Gave it a college try
             }
         }
 
@@ -202,7 +135,9 @@ namespace Org.X509Crypto {
         /// <exception cref="X509ContextNotSupported"></exception>
         public static X509Context Select(string name) {
             try {
-                return SupportedContexts.First(p => p.isWritable && p.Aliases.Contains(name, StringComparison.OrdinalIgnoreCase));
+                return SupportedContexts.First(p =>
+                    (p.ContextFlags & X509CryptoContextFlags.WriteAccess) == X509CryptoContextFlags.WriteAccess
+                    && p.Aliases.Contains(name, StringComparison.OrdinalIgnoreCase));
             } catch {
                 throw new X509ContextNotSupported(name);
             }
@@ -210,22 +145,8 @@ namespace Org.X509Crypto {
         /// <summary>
         /// Returns an X509CryptoContext based on the indicated type.
         /// </summary>
-        /// <param name="contextType">The X509CryptoContextType</param>
+        /// <param name="contextFlags">The X509CryptoContextType</param>
         /// <returns></returns>
-        public static X509Context Select(X509CryptoContextType contextType) => SupportedContexts.First(p => p.ContextType == contextType);
-        /// <summary>
-        /// Creates the directory for an impersonated user where X509Alias files will be stored for later retrieval
-        /// </summary>
-        /// <param name="sAMAccountName">The username of the impersonated user</param>
-        public static void CreateImpersonatedUserAppDirectory(string sAMAccountName) {
-            string impUserAppDir = X509Directory.GetImpersonatedUserHomeDirectory(sAMAccountName);
-            if (!Directory.Exists(impUserAppDir)) {
-                Directory.CreateDirectory(impUserAppDir);
-                DirectoryInfo DirInfo = new DirectoryInfo(impUserAppDir);
-                DirectorySecurity DirSec = DirInfo.GetAccessControl();
-                DirSec.AddAccessRule(new FileSystemAccessRule(sAMAccountName, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
-                DirInfo.SetAccessControl(DirSec);
-            }
-        }
+        public static X509Context Select(X509CryptoContextFlags contextFlags) => SupportedContexts.First(p => p.ContextFlags == contextFlags);
     }
 }

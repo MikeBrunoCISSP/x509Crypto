@@ -8,7 +8,7 @@ public class X509CryptoAliasDto {
     static readonly CertService _certService = new();
 
     public string Name { get; set; }
-    public X509CryptoContextType ContextType { get; set; }
+    public X509CryptoContextFlags ContextFlags { get; set; }
     public string Thumbprint { get; set; }
     public byte[] EncodedCert { get; set; }
     public Dictionary<string, string> Secrets { get; set; } = new();
@@ -17,7 +17,7 @@ public class X509CryptoAliasDto {
         var payLoad = new X509Alias {
             Name = Name,
             Thumbprint = Thumbprint,
-            Context = X509Context.Select(ContextType),
+            Context = X509Context.Select(ContextFlags),
             Secrets = Secrets
         };
         if (password != null && EncodedCert != null) {
@@ -31,7 +31,7 @@ public class X509CryptoAliasDto {
         var payLoad = new X509CryptoAliasDto {
             Name = alias.Name,
             Thumbprint = alias.Thumbprint,
-            ContextType = alias.Context.ContextType,
+            ContextFlags = alias.Context.ContextFlags,
             Secrets = alias.Secrets
         };
         payLoad.EncodedCert = alias.EncodeCert(password);
@@ -42,7 +42,7 @@ public class X509CryptoAliasDto {
         return new X509CryptoAliasDto {
             Name = alias.Name,
             Thumbprint = alias.Thumbprint,
-            ContextType = alias.Context.ContextType,
+            ContextFlags = alias.Context.ContextFlags,
             Secrets = alias.Secrets
         };
     }

@@ -6,6 +6,7 @@ namespace Tests {
         private string thumbprint;
 
         public byte[] CertBytes { get; set; }
+        public string ExportPath { get; set; }
 
         public X509Certificate2 GetCert() {
             return cert ?? (cert = new X509Certificate2(CertBytes));

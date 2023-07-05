@@ -42,7 +42,7 @@ namespace X509CryptoPOSH {
             var AssignedThumbprints = Aliases.Select(p => p.Thumbprint.ToUpper()).ToList();
 
             if (All) {
-                List<CertificateDto> certs = _certService.GetAllCertificates(Context);
+                List<CertificateDto> certs = _certService.GetAllX509CryptoCertificates(Context);
                 foreach (var cert in certs.Where(cert => !AssignedThumbprints.Contains(cert.Thumbprint.ToUpper()))) {
                     Result.Add(new X509AliasDescription(cert));
                 }
